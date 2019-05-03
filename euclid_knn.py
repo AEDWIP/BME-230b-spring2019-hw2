@@ -11,18 +11,41 @@
 
 
 from scipy.sparse import issparse
+from sklearn.decomposition import import PCA
 import numpy as np
 import pandas as pd
 
 #pca using sklearn's pca
 def pca(adata, pc=15):
-    pass
-    
+    '''
+    input:
+        adata: a numpy array
+        pc: the n_components argument. should be either
+            0 <= n_components <= 0
+            or 
+            an int greater than 0
+            
+            if <= 0, n_components specifies the amount of variation to preserve
+            else it is the number of dimension to reduce to 
+    ref: 
+        - https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+    '''
+    print("pca() begin input shape:{} pc:{}".format(adata.shape, pc))
+    pca = PCA(n_components=pc)
+    ret = pca.fit_transform(adata)
+    print("pca() end return shape:{}".format(ret.shape))
+    return ret
 
     
 class knnG():
     def __init__(self, adata = None, d_metric='euclidean', n_neighbors=15, method='umap'):
         #fill in this method
+        self.adata = adata
+        self.d_metric = d_metric
+        self.n_neighbors = n_neighbors
+        self.method = method
+        
+        self.get_distances()
         
         #calulcate k neighbors and umap connectivities:
         print('emptying .uns...')
@@ -43,6 +66,9 @@ class knnG():
         self.adata.uns['neighbors']['distances'] = self.distances
     
     def get_distances(self, rep='pca'):
+        self.adata = rep(self.adata, self.n_neighbors)
+        
+        aedip
         #fill in this method
         pass
     
