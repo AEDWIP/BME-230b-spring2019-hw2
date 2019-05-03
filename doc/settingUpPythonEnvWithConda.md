@@ -36,3 +36,7 @@ Goal create reproducable python environments with the miniumal set of dependecie
     + use conda install
     + use conda list
     
+## Eclipse pydev set up
+ref:
+- [conda, eclipse, pydev](https://docs.anaconda.com/anaconda/user-guide/tasks/integration/eclipse-pydev/)
+- [https://www.rose-hulman.edu/class/csse/resources/Eclipse/eclipse-python-configuration.htm](https://www.rose-hulman.edu/class/csse/resources/Eclipse/eclipse-python-configuration.htm)
