@@ -28,7 +28,11 @@ class euclid_knnTest(unittest.TestCase):
     ############################################################
     def testPairWise(self):
         '''
-        looks like pdist assumes row major
+        pdist assumes row major
+        X is m x n. 
+        m examples in n dimensions
+        
+        pdist() return is a condensed vector. see comments in euclid_knn get_distance() for the details
         '''
         self.logger.info("BEGIN ")
         
@@ -63,6 +67,11 @@ class euclid_knnTest(unittest.TestCase):
         
         self.logger.info("knng.reduced.shape: {}".format(knng.reduced.shape))
         self.logger.info("knng.distances.shape: {}".format(knng.distances.shape))
+        
+        self.assertTrue( (knng.reduced.shape   == (15476, 50)) )
+        self.assertTrue( (knng.distances.shape == (15476, 15476)) )
+        
+        print("knng.distna:\n{}".format(knng.distances[0:5,0:5]))
         
         self.logger.info("END ")
         pass

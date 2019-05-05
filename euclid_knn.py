@@ -9,7 +9,7 @@
 # note that the updating of the adata object needs to be done within the get_knn() method
 
 import logging
-from scipy.spatial.distance import pdist
+from scipy.spatial.distance import pdist, squareform
 from scipy.sparse import issparse
 from sklearn.decomposition import PCA
 import numpy as np
@@ -82,13 +82,30 @@ class knnG():
         # this template is really weird
         
         # reduce to 50 dimensions
+        tmp = None
         if rep == 'pca':
             self.reduced = myPCA(self.adata.X, 50)
-            # https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.spatial.distance.pdist.html
-            self.distances = pdist(self.reduced, metric=self.d_metric)
-        else :
-            self.distances = pdist(self.reduced, metric=self.d_metric)
+            tmp = self.reduced
             
+        # TODO: do not use pdist. It easier to just write a nest for loop
+        # pdist might be faster if it is multi-threaded. 
+        #
+        # https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.spatial.distance.pdist.html
+        # pdist() is strange
+        #  X is a m x n. where m = number of examples and n is the number of dimensions
+        # pdist() returns a condensed distance matrix of only the upper triangular values - the diagonal 
+        # upper and lower are sysmetric, diagonal is zero
+        #
+        # we are told our distance matrix should be n x n where n =15,476
+        # pdist() returns a shape shape: (119745550,)
+        # 15,476 * 15,476  = 239,506,576
+        # 119,745,550 * 2 + n = 239,506,576 # coificient of 2 give us upper and lower traingle +n is the diagonal
+        #
+        condensedDistances = pdist(tmp, metric=self.d_metric)
+            
+        # https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.spatial.distance.squareform.html#scipy.spatial.distance.squareform
+        # convert Converts a vector-form distance vector to a square-form distance matrix, and vice-versa
+        self.distances = squareform(condensedDistances)
         self.logger.info("self.distances.shape:{}".format(self.distances.shape))
     
     def get_neighbors(self, D):
