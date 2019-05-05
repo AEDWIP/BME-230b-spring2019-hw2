@@ -13,10 +13,14 @@
 from scipy.sparse import issparse
 import numpy as np
 import pandas as pd
+from sklearn import decomposition
 
 #pca using sklearn's pca
 def pca(adata, pc=15):
-    pass
+    myPCA = decomposition.PCA(n_components=pc)
+    myPCA.fit(adata)
+    adata = myPCA.transform(adata)
+    return adata
     
 
     

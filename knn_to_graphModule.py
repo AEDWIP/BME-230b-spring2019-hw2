@@ -1,6 +1,8 @@
 import igraph as ig
-import numpy 
+import numpy as np
 import networkx as nx
+import scanpy as sc
+import collections
 
 def get_igraph_from_adjacency(adjacency, directed=None):
         """Get igraph graph from adjacency matrix."""
@@ -16,18 +18,18 @@ def get_igraph_from_adjacency(adjacency, directed=None):
         except:
             pass
         if g.vcount() != adjacency.shape[0]:
-            logg.warn('The constructed graph has only {} nodes. '
+            log.warn('The constructed graph has only {} nodes. '
                       'Your adjacency matrix contained redundant nodes.'
                       .format(g.vcount()))
         return g
 
-def convertIGraphToNxGraph(igraph):
-    node_names = igraph.vs["community"]
-    edge_list = igraph.get_edgelist()
-    weight_list = igraph.es["weight"]
-    node_dict = defaultdict(str)
+def convertIGraphToNxGraph(myig):
+    node_names = myig.vs["community"]
+    edge_list = myig.get_edgelist()
+    weight_list = myig.es["weight"]
+    node_dict = collections.defaultdict(str)
 
-    for idx, node in enumerate(igraph.vs):
+    for idx, node in enumerate(myig.vs):
         node_dict[node.index] = node_names[idx]
 
     convert_list = []
@@ -40,14 +42,14 @@ def convertIGraphToNxGraph(igraph):
     convert_graph.add_weighted_edges_from(convert_list)
     return convert_graph
 
-pbmc = sc.read('PBMC.merged.h5ad')
+pbmc = sc.read('/Users/jcasaletto/PycharmProjects/BME230B/HW2/BME-230b-spring2019-hw2/PBMC.merged.h5ad')
 adjacency = pbmc.uns['neighbors']['connectivities']
+
+# get igraph from adjacency matrix
+g = get_igraph_from_adjacency(adjacency, directed=False)
 
 # Assign community labels to each node
 g.vs['community'] = [x for x in range(pbmc.shape[0])]
 
-# iGraph
-ig = get_igraph_from_adjacency(adjacency, directed=False)
-
 # xNetwork
-xg = convertIGraphToNxGraph(adjacency)
+xg = convertIGraphToNxGraph(g)

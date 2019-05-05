@@ -2,7 +2,7 @@
 
 import numpy as np
 import scipy
-from knn import knnG
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import pairwise_distances
 from scanpy.neighbors import compute_connectivities_umap
 
