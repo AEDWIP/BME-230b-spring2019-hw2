@@ -4,6 +4,8 @@ import networkx as nx
 import scanpy as sc
 import collections
 
+# JC
+
 def get_igraph_from_adjacency(adjacency, directed=None):
         """Get igraph graph from adjacency matrix."""
         sources, targets = adjacency.nonzero()

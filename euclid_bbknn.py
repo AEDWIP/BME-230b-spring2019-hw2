@@ -1,5 +1,7 @@
 #! /usr/bin/env/ python
 
+# JC
+
 import numpy as np
 import scipy
 from sklearn.neighbors import KNeighborsClassifier

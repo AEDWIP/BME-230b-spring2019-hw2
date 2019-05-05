@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+# JC
 
 #EXAMPLE USAGE
 #1st run PCA with sklearn pca module (use 50 componenets)
