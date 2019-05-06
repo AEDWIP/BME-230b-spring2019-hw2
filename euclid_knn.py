@@ -14,13 +14,15 @@ from scipy.sparse import issparse
 from sklearn.decomposition import PCA
 import numpy as np
 import pandas as pd
+from scipy.interpolate.interpolate_wrapper import nearest
+from sklearn.neighbors.unsupervised import NearestNeighbors
 
 # this file is strange it has functions and classes
 # create a logger we can use in the functions
 logger = logging.getLogger(__name__)
 
-#pca using sklearn's pca
-# this is really weird python why break out a 2 line call given we pass a string which looks like it should
+# pca using sklearn's pca
+# this is really weird  why break out a 2 line call given we pass a string which looks like it should
 # be an enumeration that is used in a case statement? 
 def myPCA(adata, pc=15):
     '''
@@ -55,12 +57,14 @@ class knnG():
         self.distances = None # pairwise distance
         self.d_metric = d_metric
         self.n_neighbors = n_neighbors
+        self.nearestNeighborsGraph = dict() # graph is adj list TODO what is expected format
         self.method = method
         self.reduced = None # adata.X after dimensionality has been reduced 
         
-        self.get_distances(rep='pca') # this is weird python
-        
         #calulcate k neighbors and umap connectivities:
+        self.get_distances(rep='pca') # this is weird 
+        # aedwip self.get_neighbors(self.distances)
+        
         print('emptying .uns...')
         
         adata.uns['neighbors']['connectivities'] = None
@@ -79,7 +83,7 @@ class knnG():
         self.adata.uns['neighbors']['distances'] = self.distances
     
     def get_distances(self, rep='pca'):
-        # this template is really weird
+        # this template is really weird. we do we need the 'rep' argument
         
         # reduce to 50 dimensions
         tmp = None
@@ -87,8 +91,6 @@ class knnG():
             self.reduced = myPCA(self.adata.X, 50)
             tmp = self.reduced
             
-        # TODO: do not use pdist. It easier to just write a nest for loop
-        # pdist might be faster if it is multi-threaded. 
         #
         # https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.spatial.distance.pdist.html
         # pdist() is strange
@@ -109,8 +111,10 @@ class knnG():
         self.logger.info("self.distances.shape:{}".format(self.distances.shape))
     
     def get_neighbors(self, D):
-        #fill in this method
-        pass
+        n = D.shape[0]
+        for i in range(n):
+            row = D[i,:]
+            self.nearestNeighborsGraph[i] = sorted(row)[1: self.n_neighbors + 1]
     
     def get_umap_connectivities(self, knn_d, knn_i):
         #fill in this method

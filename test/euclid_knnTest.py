@@ -53,7 +53,7 @@ class euclid_knnTest(unittest.TestCase):
         
         self.assertTrue( (ret == expected).all() )
         
-        self.logger.info("END ")
+        self.logger.info("END \n")
 
     ############################################################
     def testGetDistance(self):
@@ -73,9 +73,34 @@ class euclid_knnTest(unittest.TestCase):
         
         print("knng.distna:\n{}".format(knng.distances[0:5,0:5]))
         
-        self.logger.info("END ")
-        pass
+        self.logger.info("END \n")
 
+    ############################################################
+    def testGetNeighbors(self):
+        '''
+        TODO:
+        '''
+        self.logger.info("BEGIN ")
+        
+        anndata = sc.read("../PBMC.merged.h5ad")
+        knng = knnG(anndata)
+        
+        # call get_neighbors using our test data
+        D = np.array([
+                        [ 0, 1, 2, 3, 4, 5],
+                        [11, 0, 9, 8, 7, 6],
+                        [12, 3, 0, 5, 4, 2]
+                    ])
+        
+        knng.n_neighbors = 4
+        knng.get_neighbors(D)
+        self.logger.info("nearestNeighbors:\n{}".format(knng.nearestNeighborsGraph))
+        
+        expected = {0: [1, 2, 3, 4], 1: [6, 7, 8, 9], 2: [2, 3, 4, 5]}
+        self.assertTrue(knng.nearestNeighborsGraph == expected)
+        
+        self.logger.info("END \n")
+        
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()
