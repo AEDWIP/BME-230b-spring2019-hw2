@@ -8,6 +8,7 @@
 # knn_indices, knn_distances = clf.get_knn()
 # note that the updating of the adata object needs to be done within the get_knn() method
 
+#from knn_to_graphModule import get_igraph_from_adjacency
 import logging
 from scipy.spatial.distance import pdist, squareform
 from scipy.sparse import issparse
@@ -57,18 +58,22 @@ class knnG():
         self.distances = None # pairwise distance
         self.d_metric = d_metric
         self.n_neighbors = n_neighbors
+        
+        # AEDWIP: nearestNeighborsGraph is a adj matrix not a dict    
         self.nearestNeighborsGraph = dict() # graph is adj list TODO what is expected format
         self.method = method
         self.reduced = None # adata.X after dimensionality has been reduced 
         
-        #calulcate k neighbors and umap connectivities:
-        self.get_distances(rep='pca') # this is weird 
-        # aedwip self.get_neighbors(self.distances)
-        
-        print('emptying .uns...')
-        
-        adata.uns['neighbors']['connectivities'] = None
-        adata.uns['neighbors']['distances'] = None
+        # wrapped initialization
+        if self.adata:
+            #calulcate k neighbors and umap connectivities:
+            self.get_distances(rep='pca') # this is weird 
+            self.get_neighbors(self.distances)
+            
+            print('emptying .uns...')
+            
+            adata.uns['neighbors']['connectivities'] = self.nearestNeighborsGraph
+            adata.uns['neighbors']['distances'] = self.distances
         
         
     def update_adata(self):
@@ -84,9 +89,11 @@ class knnG():
     
     def get_distances(self, rep='pca'):
         # this template is really weird. we do we need the 'rep' argument
+        # are we supposed to return a distance matrix or save it to a 
+        # data member
         
         # reduce to 50 dimensions
-        tmp = None
+        tmp = self.adata.X
         if rep == 'pca':
             self.reduced = myPCA(self.adata.X, 50)
             tmp = self.reduced
@@ -110,17 +117,64 @@ class knnG():
         self.distances = squareform(condensedDistances)
         self.logger.info("self.distances.shape:{}".format(self.distances.shape))
     
+#     def get_neighbors(self, D):
+#         # aedwip how is this differ then get_knn() ???
+#         n = D.shape[0]
+#         for i in range(n):
+#             row = D[i,:]
+#             self.nearestNeighborsGraph[i] = sorted(row)[1: self.n_neighbors + 1]
+#             
+#         # AEDWIP: TODO: get_igraph_from_adjacency(adjacency, directed=None):
+
+
+    def findNeigborsForRow(self, row, k):
+        '''
+        arguments:
+            row: a row in the pair wise distance matrix
+            k: the number of nearest neighbors to find
+        
+        returns:
+            a row in adjacency matrix format of k nearest neighbors
+        '''
+        
+        # create fast way to sort distances and look up 
+        # corresponding distances
+        distanceReverseIndex = { row[i]: i for i in range(len(row)) }
+        
+        distances = distanceReverseIndex.keys()
+        # skip the first sort distance. we know it is always zero
+        # it is the distance to our selves
+        neighborsDistances = sorted(distances)[1: k + 1]
+        
+        ret = np.zeros(row.shape)
+        for i in range(len(neighborsDistances)):
+            distance = neighborsDistances[i]
+            idx = distanceReverseIndex[ distance ]
+            ret[idx] = distance
+            
+        return ret
+    
+    
     def get_neighbors(self, D):
+        # aedwip how is this differ then get_knn() ???
+        self.nearestNeighborsGraph = np.zeros(D.shape)
         n = D.shape[0]
         for i in range(n):
             row = D[i,:]
-            self.nearestNeighborsGraph[i] = sorted(row)[1: self.n_neighbors + 1]
+#             self.nearestNeighborsGraph[i] = sorted(row)[1: self.n_neighbors + 1]
+            neigbors = self.findNeigborsForRow(row, self.n_neighbors)
+            self.nearestNeighborsGraph[i] = neigbors
+            
+        return self.nearestNeighborsGraph
+            
+        # AEDWIP: TODO: get_igraph_from_adjacency(adjacency, directed=None):
     
     def get_umap_connectivities(self, knn_d, knn_i):
         #fill in this method
         pass
     
     def get_knn(self):
+        # aedwip how is this different than get_neighbors
         #fill in this method
         pass
     

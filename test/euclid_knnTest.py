@@ -5,6 +5,7 @@ Created on May 5, 2019
 '''
 
 from euclid_knn import knnG
+#from knn_to_graphModule import get_igraph_from_adjacency
 import logging
 import numpy as np
 import scanpy.api as sc
@@ -32,7 +33,8 @@ class euclid_knnTest(unittest.TestCase):
         X is m x n. 
         m examples in n dimensions
         
-        pdist() return is a condensed vector. see comments in euclid_knn get_distance() for the details
+        pdist() return is a condensed vector. see comments in euclid_knn 
+        get_distance() for the details
         '''
         self.logger.info("BEGIN ")
         
@@ -76,7 +78,8 @@ class euclid_knnTest(unittest.TestCase):
         self.logger.info("END \n")
 
     ############################################################
-    def testGetNeighbors(self):
+    @unittest.skip("skip this test it assume adj list not adj matrix")
+    def testGetNeighborsAdjList(self):
         '''
         TODO:
         '''
@@ -93,6 +96,7 @@ class euclid_knnTest(unittest.TestCase):
                     ])
         
         knng.n_neighbors = 4
+        knng.nearestNeighborsGraph = {}
         knng.get_neighbors(D)
         self.logger.info("nearestNeighbors:\n{}".format(knng.nearestNeighborsGraph))
         
@@ -100,7 +104,55 @@ class euclid_knnTest(unittest.TestCase):
         self.assertTrue(knng.nearestNeighborsGraph == expected)
         
         self.logger.info("END \n")
+
+      
+    ############################################################
+    def testGetNeighborsAdjMatrix(self):
+        '''
+        TODO:
+        '''
+        self.logger.info("BEGIN ")
         
+        mockDistance = np.array([
+                        [ 0, .1, .2, .3, .4, .5],
+                        [.11, 0, .9, .8, .7, .6],
+                        [.12, .3, 0, .5, .4, .2]
+                    ])
+        
+        knng = knnG(None)
+        
+        knng.n_neighbors = 4
+        knng.nearestNeighborsGraph = {}
+        ret = knng.get_neighbors(mockDistance)
+        self.logger.info("nearestNeighbors:\n{}".format(ret))
+
+        expected = np.array([
+                            [0.,   0.1,  0.2,  0.3,  0.4,  0.  ],
+                             [0.11, 0.,   0.,   0.8,  0.7,  0.6 ],
+                             [0.12, 0.3,  0.,   0.,   0.4,  0.2 ]
+                             ])
+        
+        self.logger.info("expected:\n{}".format(expected))
+        
+        self.assertTrue( (ret == expected).all() )
+        
+        self.logger.info("END \n")
+        
+    ############################################################        
+    def test_get_igraph_from_adjacency(self):
+        self.logger.info("BEGIN ")
+        
+        adjacency = {
+                1:[1, 2, 3],
+                2:[2, 3],
+                3:[4]
+            }
+        ret = get_igraph_from_adjacency(adjacency)
+        self.logger.info("ret:\n{}".format(ret))
+        self.logger.info("END \n ")
+
+
+
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()
