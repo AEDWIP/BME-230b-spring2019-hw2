@@ -65,15 +65,16 @@ class euclid_knnTest(unittest.TestCase):
         self.logger.info("BEGIN ")
         
         anndata = sc.read("../PBMC.merged.h5ad")
-        knng = knnG(anndata)
+        knng = knnG(None)
+        ret = knng._calDistance(anndata.X, rep='pca')
         
         self.logger.info("knng.reduced.shape: {}".format(knng.reduced.shape))
-        self.logger.info("knng.distances.shape: {}".format(knng.distances.shape))
+        self.logger.info("ret.shape: {}".format(ret.shape))
         
         self.assertTrue( (knng.reduced.shape   == (15476, 50)) )
-        self.assertTrue( (knng.distances.shape == (15476, 15476)) )
+        self.assertTrue( (ret.shape == (15476, 15476)) )
         
-        print("knng.distna:\n{}".format(knng.distances[0:5,0:5]))
+        print("ret:\n{}".format(ret[0:5,0:5]))
         
         self.logger.info("END \n")
 
@@ -147,6 +148,7 @@ class euclid_knnTest(unittest.TestCase):
                 2:[2, 3],
                 3:[4]
             }
+        
         ret = get_igraph_from_adjacency(adjacency)
         self.logger.info("ret:\n{}".format(ret))
         self.logger.info("END \n ")

@@ -10,21 +10,28 @@
 
 #from knn_to_graphModule import get_igraph_from_adjacency
 import logging
+
+# look into this function on scanpy's documentation to see what arguments 
+# need to be passed to compute_connectivities_umap
+from scanpy.neighbors import compute_connectivities_umap 
+
 from scipy.spatial.distance import pdist, squareform
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csr_matrix
+
 from sklearn.decomposition import PCA
 import numpy as np
 import pandas as pd
 from scipy.interpolate.interpolate_wrapper import nearest
 from sklearn.neighbors.unsupervised import NearestNeighbors
 
+
 # this file is strange it has functions and classes
 # create a logger we can use in the functions
 logger = logging.getLogger(__name__)
 
 # pca using sklearn's pca
-# this is really weird  why break out a 2 line call given we pass a string which looks like it should
-# be an enumeration that is used in a case statement? 
+# this is really weird  why break out a 3 line call given we pass a string which 
+# looks like it should be an enumeration that is used in a case statement? 
 def myPCA(adata, pc=15):
     '''
     input:
@@ -43,7 +50,7 @@ def myPCA(adata, pc=15):
     
     pcaTransformer = PCA(n_components=pc)
     ret = pcaTransformer.fit_transform(adata)
-    
+        
     logger.info("END return shape:{}".format(ret.shape))
     
     return ret
@@ -55,26 +62,46 @@ class knnG():
     def __init__(self, adata = None, d_metric='euclidean', n_neighbors=15, method='umap'):
         #fill in this method
         self.adata = adata 
-        self.distances = None # pairwise distance
         self.d_metric = d_metric
         self.n_neighbors = n_neighbors
-        
-        # AEDWIP: nearestNeighborsGraph is a adj matrix not a dict    
-        self.nearestNeighborsGraph = dict() # graph is adj list TODO what is expected format
         self.method = method
+        
+        self.D = None # the pair wise distance adjacency numpy matrix. should be very sparse
+        self.connectivities = None
+        self.distances = None 
+        
+        self.nearestNeighborsGraph = None
         self.reduced = None # adata.X after dimensionality has been reduced 
         
-        # wrapped initialization
+        # wrapped initialization to make unit test faster an easier
+        # all the functionality is implemented as public functions that do
+        # not rely on the data members. 
+        # no need to init adata spend a lot of time recomputing distance, neighbors, ...
         if self.adata:
-            #calulcate k neighbors and umap connectivities:
-            self.get_distances(rep='pca') # this is weird 
-            self.get_neighbors(self.distances)
-            
             print('emptying .uns...')
-            
-            adata.uns['neighbors']['connectivities'] = self.nearestNeighborsGraph
-            adata.uns['neighbors']['distances'] = self.distances
+            adata.uns['neighbors']['connectivities'] = None
+            adata.uns['neighbors']['distances'] = None
         
+            # calulcate k neighbors and umap connectivities:
+            self.D = self.get_distances(rep='pca') # this is weird 
+            nearestNeighborsAdjMatrix =  self.get_neighbors(self.D)
+                        
+            # convert to a sparse matrix
+            sparceNN = csr_matrix(nearestNeighborsAdjMatrix)
+            
+            # pick out the i,j tuples for non-zero value
+            rowIdx, colIdx = sparceNN.nonzero()
+            knn_i = [i for i in zip(rowIdx, colIdx)]
+
+            # fetch the non zero distance
+            knn_d = sparceNN.data
+            
+            distances,connectivities = self.get_umap_connectivities(knn_d, knn_i)
+            self.distances = distances
+            self.connectivities = connectivities
+            
+            # this is weird
+            self.update_adata()
         
     def update_adata(self):
         #updating adata.uns
@@ -87,16 +114,20 @@ class knnG():
         self.adata.uns['neighbors']['connectivities'] = self.connectivities
         self.adata.uns['neighbors']['distances'] = self.distances
     
-    def get_distances(self, rep='pca'):
-        # this template is really weird. we do we need the 'rep' argument
-        # are we supposed to return a distance matrix or save it to a 
-        # data member
-        
+    def _calDistance(self, adataX, rep='pca'):  
+        '''
+        broke this out so that we can write unit tests with out having to
+        run all the computation. 
+        '''
+        self.logger.info("BEGIN")
         # reduce to 50 dimensions
-        tmp = self.adata.X
         if rep == 'pca':
-            self.reduced = myPCA(self.adata.X, 50)
+            self.reduced = myPCA(adataX, 50)
+            # this is really bad code
+            if self.adata:
+                self.adata.obsm['X_pca'] = self.reduced
             tmp = self.reduced
+            self.logger.info("reduced.shape:{}".format(self.reduced.shape))
             
         #
         # https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.spatial.distance.pdist.html
@@ -114,8 +145,20 @@ class knnG():
             
         # https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.spatial.distance.squareform.html#scipy.spatial.distance.squareform
         # convert Converts a vector-form distance vector to a square-form distance matrix, and vice-versa
-        self.distances = squareform(condensedDistances)
-        self.logger.info("self.distances.shape:{}".format(self.distances.shape))
+        ret = squareform(condensedDistances)
+        self.logger.info("self.distances.shape:{}".format(ret.shape))
+        
+        self.logger.info("END\n")
+        return ret
+    
+    def get_distances(self, rep='pca'):
+        # this template is really weird. we do we need the 'rep' argument
+        # are we supposed to return a distance matrix or save it to a 
+        # data member
+        self.logger.info("BEGIN")
+        ret =  self._calDistance(self.adata.X, rep)
+        self.logger.info("END\n")    
+        return ret
     
 #     def get_neighbors(self, D):
 #         # aedwip how is this differ then get_knn() ???
@@ -154,29 +197,49 @@ class knnG():
             
         return ret
     
-    
     def get_neighbors(self, D):
-        # aedwip how is this differ then get_knn() ???
-        self.nearestNeighborsGraph = np.zeros(D.shape)
+        '''
+        returns and adjacency numpy matrix. It should be very sparse
+        
+        AEDWIP: TODO: should we return a sparse matrix
+        '''
+        nearestNeighborsAdjMatrix = np.zeros(D.shape)
         n = D.shape[0]
         for i in range(n):
             row = D[i,:]
-#             self.nearestNeighborsGraph[i] = sorted(row)[1: self.n_neighbors + 1]
             neigbors = self.findNeigborsForRow(row, self.n_neighbors)
-            self.nearestNeighborsGraph[i] = neigbors
+            nearestNeighborsAdjMatrix[i] = neigbors
             
-        return self.nearestNeighborsGraph
+        return nearestNeighborsAdjMatrix
             
         # AEDWIP: TODO: get_igraph_from_adjacency(adjacency, directed=None):
-    
-    def get_umap_connectivities(self, knn_d, knn_i):
-        #fill in this method
-        pass
+        # looks like the adjMatrix should be in sparce format
+        
+    def get_umap_connectivities(self, knn_dists, knn_indices):
+        '''
+        ref:
+            https://icb-scanpy.readthedocs-hosted.com/en/stable/api/scanpy.Neighbors.html?highlight=scanpy.neighbors
+            
+        '''
+        # you have to read the code to figure out how to call compute_connectivities_umap
+        n_obs = self.adata.X.shape[0]
+        distances,connectivities =  compute_connectivities_umap(knn_indices, 
+                                                                knn_dists,
+                                                                n_obs, 
+                                                                self.n_neighbors)
+        return distances,connectivities
     
     def get_knn(self):
-        # aedwip how is this different than get_neighbors
-        #fill in this method
-        pass
+        '''
+        returns:
+            knn_indices 
+            knn_distances 
+        '''
+        # AEWIP where / when is this function called?
+        
+        # this is weird
+        self.update_adata()
+        return aedwip
     
  
         
