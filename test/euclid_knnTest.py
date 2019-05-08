@@ -79,32 +79,32 @@ class euclid_knnTest(unittest.TestCase):
         self.logger.info("END \n")
 
     ############################################################
-    @unittest.skip("skip this test it assume adj list not adj matrix")
-    def testGetNeighborsAdjList(self):
-        '''
-        TODO:
-        '''
-        self.logger.info("BEGIN ")
-        
-        anndata = sc.read("../PBMC.merged.h5ad")
-        knng = knnG(anndata)
-        
-        # call get_neighbors using our test data
-        D = np.array([
-                        [ 0, 1, 2, 3, 4, 5],
-                        [11, 0, 9, 8, 7, 6],
-                        [12, 3, 0, 5, 4, 2]
-                    ])
-        
-        knng.n_neighbors = 4
-        knng.nearestNeighborsGraph = {}
-        knng.get_neighbors(D)
-        self.logger.info("nearestNeighbors:\n{}".format(knng.nearestNeighborsGraph))
-        
-        expected = {0: [1, 2, 3, 4], 1: [6, 7, 8, 9], 2: [2, 3, 4, 5]}
-        self.assertTrue(knng.nearestNeighborsGraph == expected)
-        
-        self.logger.info("END \n")
+#     @unittest.skip("skip this test it assume adj list not adj matrix")
+#     def testGetNeighborsAdjList(self):
+#         '''
+#         TODO:
+#         '''
+#         self.logger.info("BEGIN ")
+#         
+#         anndata = sc.read("../PBMC.merged.h5ad")
+#         knng = knnG(anndata)
+#         
+#         # call get_neighbors using our test data
+#         D = np.array([
+#                         [ 0, 1, 2, 3, 4, 5],
+#                         [11, 0, 9, 8, 7, 6],
+#                         [12, 3, 0, 5, 4, 2]
+#                     ])
+#         
+#         knng.n_neighbors = 4
+#         knng.nearestNeighborsGraph = {}
+#         knng.get_neighbors(D)
+#         self.logger.info("nearestNeighbors:\n{}".format(knng.nearestNeighborsGraph))
+#         
+#         expected = {0: [1, 2, 3, 4], 1: [6, 7, 8, 9], 2: [2, 3, 4, 5]}
+#         self.assertTrue(knng.nearestNeighborsGraph == expected)
+#         
+#         self.logger.info("END \n")
 
       
     ############################################################
@@ -139,19 +139,30 @@ class euclid_knnTest(unittest.TestCase):
         
         self.logger.info("END \n")
         
-    ############################################################        
-    def test_get_igraph_from_adjacency(self):
-        self.logger.info("BEGIN ")
         
-        adjacency = {
-                1:[1, 2, 3],
-                2:[2, 3],
-                3:[4]
-            }
+    ############################################################
+    #     @unittest.skip("skip this test it assume adj list not adj matrix")
+    def testKitchenSink(self):     
+        self.logger.info("BEGIN")  
+         
+        anndata = sc.read("../PBMC.merged.h5ad")
+        knng = knnG(anndata)
+
+        self.logger.info("END\n")   
         
-        ret = get_igraph_from_adjacency(adjacency)
-        self.logger.info("ret:\n{}".format(ret))
-        self.logger.info("END \n ")
+#     ############################################################        
+#     def test_get_igraph_from_adjacency(self):
+#         self.logger.info("BEGIN ")
+#         
+#         adjacency = {
+#                 1:[1, 2, 3],
+#                 2:[2, 3],
+#                 3:[4]
+#             }
+#         
+#         ret = get_igraph_from_adjacency(adjacency)
+#         self.logger.info("ret:\n{}".format(ret))
+#         self.logger.info("END \n ")
 
 
 

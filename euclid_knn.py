@@ -23,6 +23,8 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate.interpolate_wrapper import nearest
 from sklearn.neighbors.unsupervised import NearestNeighbors
+from networkx.classes.function import neighbors
+from scanpy.neighbors.umap.umap_ import smooth_knn_dist
 
 
 # this file is strange it has functions and classes
@@ -84,28 +86,30 @@ class knnG():
         
             # calulcate k neighbors and umap connectivities:
             self.D = self.get_distances(rep='pca') # this is weird 
-            nearestNeighborsAdjMatrix =  self.get_neighbors(self.D)
-                        
-            # convert to a sparse matrix
-            sparceNN = csr_matrix(nearestNeighborsAdjMatrix)
+            knn_indices, knn_dist =  self.get_neighbors(self.D)
+#             nearestNeighborsAdjMatrix =  self.get_neighbors(self.D)
+#                         
+#             # convert to a sparse matrix
+#             sparceNN = csr_matrix(nearestNeighborsAdjMatrix)
+#             
+#             # pick out the i,j tuples for non-zero value
+#             rowIdx, colIdx = sparceNN.nonzero()
+#             knn_i = [i for i in zip(rowIdx, colIdx)]
+# 
+#             # fetch the non zero distance
+#             knn_d = sparceNN.data
             
-            # pick out the i,j tuples for non-zero value
-            rowIdx, colIdx = sparceNN.nonzero()
-            knn_i = [i for i in zip(rowIdx, colIdx)]
-
-            # fetch the non zero distance
-            knn_d = sparceNN.data
-            
-            distances,connectivities = self.get_umap_connectivities(knn_d, knn_i)
+            # AEDWIP: do we need to call get_umap_connectivities
+            # what is going on? we already have the distances and edge tuples already 
+            distances,connectivities = self.get_umap_connectivities(knn_indices, knn_dist)
             self.distances = distances
             self.connectivities = connectivities
-            
-            # this is weird
+
             self.update_adata()
         
     def update_adata(self):
         #updating adata.uns
-        print('updating adata object...')
+        self.logger.info('BEGIN')
         self.adata.uns['neighbors']={}
         self.adata.uns['neighbors']['params'] = {}
         self.adata.uns['neighbors']['params']['n_neighbors']=self.n_neighbors
@@ -113,6 +117,9 @@ class knnG():
         
         self.adata.uns['neighbors']['connectivities'] = self.connectivities
         self.adata.uns['neighbors']['distances'] = self.distances
+        
+        self.logger.info('END\n')
+
     
     def _calDistance(self, adataX, rep='pca'):  
         '''
@@ -152,6 +159,9 @@ class knnG():
         return ret
     
     def get_distances(self, rep='pca'):
+        '''
+        AEDWIP: TODO: #returns a square numpy "adjacency" matrix. values are pair wise distances
+        '''
         # this template is really weird. we do we need the 'rep' argument
         # are we supposed to return a distance matrix or save it to a 
         # data member
@@ -178,6 +188,9 @@ class knnG():
         
         returns:
             a row in adjacency matrix format of k nearest neighbors
+            two numpy arrays. The values in the first array are the indices 
+            for the row argument nearest neighbors. The values of the second
+            array are the distances
         '''
         
         # create fast way to sort distances and look up 
@@ -189,57 +202,102 @@ class knnG():
         # it is the distance to our selves
         neighborsDistances = sorted(distances)[1: k + 1]
         
-        ret = np.zeros(row.shape)
+        retIdx = np.zeros(k)
+        retDist = np.zeros(k)
         for i in range(len(neighborsDistances)):
             distance = neighborsDistances[i]
             idx = distanceReverseIndex[ distance ]
-            ret[idx] = distance
+            retIdx[i] = idx
+            retDist[i] = distance
             
-        return ret
+        return retIdx,retDist
     
     def get_neighbors(self, D):
         '''
+        arguments
+            D: pairwise distance matrix
+            
         returns and adjacency numpy matrix. It should be very sparse
         
         AEDWIP: TODO: should we return a sparse matrix
         '''
-        nearestNeighborsAdjMatrix = np.zeros(D.shape)
+        self.logger.info("BEGIN")
+        #nearestNeighborsAdjMatrix = np.zeros(D.shape)
         n = D.shape[0]
+        knn_i = np.zeros((n,self.n_neighbors))
+        knn_d = np.zeros((n,self.n_neighbors))
         for i in range(n):
             row = D[i,:]
-            neigbors = self.findNeigborsForRow(row, self.n_neighbors)
-            nearestNeighborsAdjMatrix[i] = neigbors
+#             neigbors = self.findNeigborsForRow(row, self.n_neighbors)
+#             nearestNeighborsAdjMatrix[i] = neigbors
+            neigborsIdx, neigborsDist = self.findNeigborsForRow(row, self.n_neighbors)
+            knn_i[i] = neigborsIdx
+            knn_d[i] = neigborsDist
             
-        return nearestNeighborsAdjMatrix
+        self.logger.info("END\n")
+        #return nearestNeighborsAdjMatrix
+        return knn_i, knn_d
             
         # AEDWIP: TODO: get_igraph_from_adjacency(adjacency, directed=None):
         # looks like the adjMatrix should be in sparce format
         
-    def get_umap_connectivities(self, knn_dists, knn_indices):
+    def get_umap_connectivities(self, knn_indices, knn_dists ):
         '''
         ref:
             https://icb-scanpy.readthedocs-hosted.com/en/stable/api/scanpy.Neighbors.html?highlight=scanpy.neighbors
-            
         '''
+        self.logger.info("BEGIN")
         # you have to read the code to figure out how to call compute_connectivities_umap
         n_obs = self.adata.X.shape[0]
-        distances,connectivities =  compute_connectivities_umap(knn_indices, 
+        
+        self.logger.info("type(knn_dists):{} knn_dists.shape:{}".format(type(knn_dists), knn_dists.shape))
+        self.logger.info("knn_dists[0:3:\n{}".format(knn_dists[0:3]))
+
+        self.logger.info("type(knn_indices):{}".format(type(knn_indices)))
+        # does not have 'shape' self.logger.info("knn_indices.shape:{}".format(knn_indices.shape)
+        self.logger.info("knn_indices[0:3]:\n{}".format(knn_indices[0:3]))
+        # ??? 
+        
+        try:
+#             knn_indices should be our nearestNeighboes adj matrx
+#             knn_dists is same struct
+            
+#             knn_indices is ?? array or rows. each contains the idx of its nearest neighbors
+#             knn_dists is a similar struct, the values are the distance to the neighboors  
+            distances,connectivities =  compute_connectivities_umap(knn_indices, 
                                                                 knn_dists,
                                                                 n_obs, 
                                                                 self.n_neighbors)
+        except Exception as e: # catch *all* exceptions
+            # problem logger does not always flush
+            self.logger.info(e)
+            self.logger.error(e)
+            raise e
+        
+        self.logger.info("type(distances):{}".format(type(distances)))
+        self.logger.info("distances:\n{}".format(distances))
+        
+        self.logger.info("type(connectivities):{}".format(type(connectivities)))
+        self.logger.info("connectivities:\n{}".format(connectivities))
+
+        self.logger.info("END")
+        
         return distances,connectivities
     
-    def get_knn(self):
-        '''
-        returns:
-            knn_indices 
-            knn_distances 
-        '''
-        # AEWIP where / when is this function called?
-        
-        # this is weird
-        self.update_adata()
-        return aedwip
+#     def get_knn(self):
+#         '''
+#         returns:
+#             knn_indices 
+#             knn_distances 
+#         '''
+#         self.logger.info("BEGIN")
+#         # AEWIP where / when is this function called?
+#         
+#         # this is weird everything should be initialiized in __init__
+#         self.update_adata()
+#         self.logger.info("END")
+# 
+#         return self.connectivities, self.distances
     
  
         
