@@ -166,13 +166,13 @@ class euclid_knnTest(unittest.TestCase):
         self.logger.info("knn_indices:\n{}".format(knn_indices))
         self.logger.info("knn_dist:\n{}".format(knn_dist))
         
-        self.assertEqual((expectedKnn_indices == knn_indices).all())
-        self.assertEqual((expectedKnn_dist == knn_dist).all())
+        self.assertTrue((expectedKnn_indices == knn_indices).all())
+        self.assertTrue((expectedKnn_dist == knn_dist).all())
         
         self.logger.info("END\n")
         
     ############################################################
-    #     @unittest.skip("skip this test it assume adj list not adj matrix")
+    @unittest.skip("skip this test very long run time")
     def testKitchenSink(self):     
         self.logger.info("BEGIN")  
          
