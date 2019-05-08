@@ -5,7 +5,6 @@ Created on May 5, 2019
 '''
 
 from euclid_knn import knnG
-#from knn_to_graphModule import get_igraph_from_adjacency
 import logging
 import numpy as np
 import scanpy.api as sc
@@ -107,12 +106,43 @@ class euclid_knnTest(unittest.TestCase):
 #         self.logger.info("END \n")
 
       
+#     ############################################################
+#     @unittest.skip("skip this test it assume adj list not adj matrix")
+#     def testGetNeighborsAdjMatrix(self):
+#         '''
+#         TODO:
+#         '''
+#         self.logger.info("BEGIN ")
+#         
+#         mockDistance = np.array([
+#                         [ 0, .1, .2, .3, .4, .5],
+#                         [.11, 0, .9, .8, .7, .6],
+#                         [.12, .3, 0, .5, .4, .2]
+#                     ])
+#         
+#         knng = knnG(None)
+#         
+#         knng.n_neighbors = 4
+#         knng.nearestNeighborsGraph = {}
+#         ret = knng.get_neighbors(mockDistance)
+#         self.logger.info("nearestNeighbors:\n{}".format(ret))
+# 
+#         expected = np.array([
+#                             [0.,   0.1,  0.2,  0.3,  0.4,  0.  ],
+#                              [0.11, 0.,   0.,   0.8,  0.7,  0.6 ],
+#                              [0.12, 0.3,  0.,   0.,   0.4,  0.2 ]
+#                              ])
+#         
+#         self.logger.info("expected:\n{}".format(expected))
+#         
+#         self.assertTrue( (ret == expected).all() )
+#         
+#         self.logger.info("END \n")
+#         
+        
     ############################################################
-    def testGetNeighborsAdjMatrix(self):
-        '''
-        TODO:
-        '''
-        self.logger.info("BEGIN ")
+    def testGetNeighbors(self):
+        self.logger.info("BEGIN")
         
         mockDistance = np.array([
                         [ 0, .1, .2, .3, .4, .5],
@@ -120,25 +150,26 @@ class euclid_knnTest(unittest.TestCase):
                         [.12, .3, 0, .5, .4, .2]
                     ])
         
+        expectedKnn_indices = [[1., 2., 3., 4.,],
+                               [0., 5., 4., 3.,],
+                               [0., 5., 1., 4.,]]
+        
+        expectedKnn_dist = [[ 0.1,  0.2,  0.3,  0.4 ],
+                            [0.11,  0.6,  0.7,  0.8 ],
+                            [0.12,  0.2,  0.3 , 0.4 ]]
+        
         knng = knnG(None)
         
         knng.n_neighbors = 4
         knng.nearestNeighborsGraph = {}
-        ret = knng.get_neighbors(mockDistance)
-        self.logger.info("nearestNeighbors:\n{}".format(ret))
-
-        expected = np.array([
-                            [0.,   0.1,  0.2,  0.3,  0.4,  0.  ],
-                             [0.11, 0.,   0.,   0.8,  0.7,  0.6 ],
-                             [0.12, 0.3,  0.,   0.,   0.4,  0.2 ]
-                             ])
+        knn_indices, knn_dist =  knng.get_neighbors(mockDistance)
+        self.logger.info("knn_indices:\n{}".format(knn_indices))
+        self.logger.info("knn_dist:\n{}".format(knn_dist))
         
-        self.logger.info("expected:\n{}".format(expected))
+        self.assertEqual((expectedKnn_indices == knn_indices).all())
+        self.assertEqual((expectedKnn_dist == knn_dist).all())
         
-        self.assertTrue( (ret == expected).all() )
-        
-        self.logger.info("END \n")
-        
+        self.logger.info("END\n")
         
     ############################################################
     #     @unittest.skip("skip this test it assume adj list not adj matrix")
@@ -147,25 +178,8 @@ class euclid_knnTest(unittest.TestCase):
          
         anndata = sc.read("../PBMC.merged.h5ad")
         knng = knnG(anndata)
-
         self.logger.info("END\n")   
         
-#     ############################################################        
-#     def test_get_igraph_from_adjacency(self):
-#         self.logger.info("BEGIN ")
-#         
-#         adjacency = {
-#                 1:[1, 2, 3],
-#                 2:[2, 3],
-#                 3:[4]
-#             }
-#         
-#         ret = get_igraph_from_adjacency(adjacency)
-#         self.logger.info("ret:\n{}".format(ret))
-#         self.logger.info("END \n ")
-
-
-
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()
