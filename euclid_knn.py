@@ -1,5 +1,21 @@
 #! /usr/bin/env python
 
+# BME-230B Spring 2019 HW 2 Question 1
+# Andrew Davidson aedavids@ucsc.edu
+# 
+# 
+# Question 1.a, 1.b see [euclid_knn.py](euclid_knn.py)
+# 
+# ## <span style="color:red">TODO implement 1.4</span>
+# 
+# ref: 
+# - [ Single-Cell Analysis in Python](https://scanpy.readthedocs.io/en/stable/api/index.html#tools-tl)
+# - [data exploration](exploreData.ipynb)
+# - [scanpy.tl.umap](https://icb-scanpy.readthedocs-hosted.com/en/stable/api/scanpy.tl.umap.html)
+# - <span style="color:red">scanpy.api.pl no longer exists</span>
+# - [scanpy.pl.umap](https://icb-scanpy.readthedocs-hosted.com/en/stable/api/scanpy.pl.umap.html#scanpy.pl.umap)
+
+#
 
 #EXAMPLE USAGE
 #1st run PCA with sklearn pca module (use 50 componenets)
@@ -16,24 +32,15 @@ import logging
 from scanpy.neighbors import compute_connectivities_umap 
 
 from scipy.spatial.distance import pdist, squareform
-from scipy.sparse import issparse, csr_matrix
 
 from sklearn.decomposition import PCA
 import numpy as np
-import pandas as pd
-from scipy.interpolate.interpolate_wrapper import nearest
-from sklearn.neighbors.unsupervised import NearestNeighbors
-from networkx.classes.function import neighbors
-from scanpy.neighbors.umap.umap_ import smooth_knn_dist
 
 
-# this file is strange it has functions and classes
-# create a logger we can use in the functions
+# create a logger for module level functions
 logger = logging.getLogger(__name__)
 
 # pca using sklearn's pca
-# this is really weird  why break out a 3 line call given we pass a string which 
-# looks like it should be an enumeration that is used in a case statement? 
 def myPCA(adata, pc=15):
     '''
     input:
@@ -59,6 +66,28 @@ def myPCA(adata, pc=15):
 
     
 class knnG():
+    '''
+    replaces scanpy pca and k nearest neighboors with our own
+    
+    updates:
+        adata.obsm['X_pca'] 
+        adata.uns['neighbors']['connectivities']
+        adata.uns['neighbors']['distances']
+    
+    Implementation is based on template file provide with homework
+    most of these functions should be private. I left the as they are becuase 
+    I did not want to break the grading test harness
+    
+    
+    usage:
+        knn = KnnG(adata)
+        scanpy.tl.umap(anndata)
+        scanpy.pl.umap(adata)
+        
+    public functions
+        __init__(self, adata = None, d_metric='euclidean', n_neighbors=15, method='umap')
+    '''
+    
     logger = logging.getLogger(__name__)
 
     def __init__(self, adata = None, d_metric='euclidean', n_neighbors=15, method='umap'):
@@ -72,35 +101,19 @@ class knnG():
         self.connectivities = None
         self.distances = None 
         
-        self.nearestNeighborsGraph = None
         self.reduced = None # adata.X after dimensionality has been reduced 
         
-        # wrapped initialization to make unit test faster an easier
-        # all the functionality is implemented as public functions that do
-        # not rely on the data members. 
-        # no need to init adata spend a lot of time recomputing distance, neighbors, ...
+        # wrapped initialization to make unit test run faster an easier easier to write
+        # the functions should really be private and do not rely on data members
+        # unit test should construct KnnG(adata=None)  ...
         if self.adata:
             print('emptying .uns...')
             adata.uns['neighbors']['connectivities'] = None
             adata.uns['neighbors']['distances'] = None
         
             # calulcate k neighbors and umap connectivities:
-            self.D = self.get_distances(rep='pca') # this is weird 
+            self.D = self.get_distances(rep='pca') 
             knn_indices, knn_dist =  self.get_neighbors(self.D)
-#             nearestNeighborsAdjMatrix =  self.get_neighbors(self.D)
-#                         
-#             # convert to a sparse matrix
-#             sparceNN = csr_matrix(nearestNeighborsAdjMatrix)
-#             
-#             # pick out the i,j tuples for non-zero value
-#             rowIdx, colIdx = sparceNN.nonzero()
-#             knn_i = [i for i in zip(rowIdx, colIdx)]
-# 
-#             # fetch the non zero distance
-#             knn_d = sparceNN.data
-            
-            # AEDWIP: do we need to call get_umap_connectivities
-            # what is going on? we already have the distances and edge tuples already 
             distances,connectivities = self.get_umap_connectivities(knn_indices, knn_dist)
             self.distances = distances
             self.connectivities = connectivities
@@ -108,7 +121,17 @@ class knnG():
             self.update_adata()
         
     def update_adata(self):
-        #updating adata.uns
+        '''
+        The trick to replacing scanpy implementation with our own is to 
+        update the anndata object with our intermediate values
+        
+        we replace the scanpy version of PCA by updating
+        adata.obsm['X_pca'] = our PCA() output
+        
+        we replace the scanpy version of k-nearest-neighbors by updating
+        self.adata.uns['neighbors']['connectivities'] = our knn() output
+        self.adata.uns['neighbors']['distances'] = out knn() output
+        '''
         self.logger.info('BEGIN')
         self.adata.uns['neighbors']={}
         self.adata.uns['neighbors']['params'] = {}
@@ -146,7 +169,7 @@ class knnG():
         # we are told our distance matrix should be n x n where n =15,476
         # pdist() returns a shape shape: (119745550,)
         # 15,476 * 15,476  = 239,506,576
-        # 119,745,550 * 2 + n = 239,506,576 # coificient of 2 give us upper and lower traingle +n is the diagonal
+        # 119,745,550 * 2 + n = 239,506,576 # coefficient of 2 give us upper and lower traingle + n is the diagonal
         #
         condensedDistances = pdist(tmp, metric=self.d_metric)
             
@@ -160,25 +183,18 @@ class knnG():
     
     def get_distances(self, rep='pca'):
         '''
-        AEDWIP: TODO: #returns a square numpy "adjacency" matrix. values are pair wise distances
+        returns a square numpy matrix. values are pair wise distances
+
+        arguments:
+            rep: representation: the algorithm to use to reduced the number of dimensions. default is 
+            principle component analysis
+            
+            TODO: replace 'rep' with an enumeration
         '''
-        # this template is really weird. we do we need the 'rep' argument
-        # are we supposed to return a distance matrix or save it to a 
-        # data member
         self.logger.info("BEGIN")
         ret =  self._calDistance(self.adata.X, rep)
         self.logger.info("END\n")    
         return ret
-    
-#     def get_neighbors(self, D):
-#         # aedwip how is this differ then get_knn() ???
-#         n = D.shape[0]
-#         for i in range(n):
-#             row = D[i,:]
-#             self.nearestNeighborsGraph[i] = sorted(row)[1: self.n_neighbors + 1]
-#             
-#         # AEDWIP: TODO: get_igraph_from_adjacency(adjacency, directed=None):
-
 
     def findNeigborsForRow(self, row, k):
         '''
@@ -187,7 +203,7 @@ class knnG():
             k: the number of nearest neighbors to find
         
         returns:
-            a row in adjacency matrix format of k nearest neighbors
+            a row in adjacency matrix format of k nearest neighbors as
             two numpy arrays. The values in the first array are the indices 
             for the row argument nearest neighbors. The values of the second
             array are the distances
@@ -217,30 +233,25 @@ class knnG():
         arguments
             D: pairwise distance matrix
             
-        returns and adjacency numpy matrix. It should be very sparse
-        
-        AEDWIP: TODO: should we return a sparse matrix
+        returns:
+            a row in adjacency matrix format of k nearest neighbors as
+            two numpy arrays. The values in the first array are the indices 
+            for the row argument nearest neighbors. The values of the second
+            array are the distances        
         '''
         self.logger.info("BEGIN")
-        #nearestNeighborsAdjMatrix = np.zeros(D.shape)
         n = D.shape[0]
         knn_i = np.zeros((n,self.n_neighbors))
         knn_d = np.zeros((n,self.n_neighbors))
         for i in range(n):
             row = D[i,:]
-#             neigbors = self.findNeigborsForRow(row, self.n_neighbors)
-#             nearestNeighborsAdjMatrix[i] = neigbors
             neigborsIdx, neigborsDist = self.findNeigborsForRow(row, self.n_neighbors)
             knn_i[i] = neigborsIdx
             knn_d[i] = neigborsDist
             
         self.logger.info("END\n")
-        #return nearestNeighborsAdjMatrix
         return knn_i, knn_d
-            
-        # AEDWIP: TODO: get_igraph_from_adjacency(adjacency, directed=None):
-        # looks like the adjMatrix should be in sparce format
-        
+                    
     def get_umap_connectivities(self, knn_indices, knn_dists ):
         '''
         ref:
@@ -258,21 +269,12 @@ class knnG():
         self.logger.info("knn_indices[0:3]:\n{}".format(knn_indices[0:3]))
         # ??? 
         
-        try:
-#             knn_indices should be our nearestNeighboes adj matrx
-#             knn_dists is same struct
-            
-#             knn_indices is ?? array or rows. each contains the idx of its nearest neighbors
-#             knn_dists is a similar struct, the values are the distance to the neighboors  
-            distances,connectivities =  compute_connectivities_umap(knn_indices, 
-                                                                knn_dists,
-                                                                n_obs, 
-                                                                self.n_neighbors)
-        except Exception as e: # catch *all* exceptions
-            # problem logger does not always flush
-            self.logger.info(e)
-            self.logger.error(e)
-            raise e
+        # knn_indices is ?? array of rows. each contains the idx of its nearest neighbors
+        # knn_dists is a similar structure, the values are the distance to the neighboors  
+        distances,connectivities =  compute_connectivities_umap(knn_indices, 
+                                                            knn_dists,
+                                                            n_obs, 
+                                                            self.n_neighbors)
         
         self.logger.info("type(distances):{}".format(type(distances)))
         self.logger.info("distances:\n{}".format(distances))
