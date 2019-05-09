@@ -19,7 +19,6 @@ class euclid_knnTest(unittest.TestCase):
     def setUp(self):
         pass
 
-
     def tearDown(self):
         # make sure all the logs are flushed
         # if assert we will not see partial test log entries
