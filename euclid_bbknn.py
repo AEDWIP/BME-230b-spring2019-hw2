@@ -2,7 +2,7 @@
 
 import numpy as np
 import scipy
-from knn import knnG
+from euclid_knn import knnG
 from sklearn.metrics import pairwise_distances
 from scanpy.neighbors import compute_connectivities_umap
 
@@ -27,8 +27,12 @@ class bbknn_graph():
         #fill in method
         
         #instantiating matrices for distances and indices
-        self.knn_distances = np.zeros((adata.shape[0],neighbors_within_batch*len(self.batch_unique)))
-        self.knn_indices = np.copy(self.knn_distances).astype(int)
+        if adata :
+            self.knn_distances = np.zeros((adata.shape[0],neighbors_within_batch*len(self.batch_unique)))
+            self.knn_indices = np.copy(self.knn_distances).astype(int)
+        else:
+        # unit test
+            
         #instantiating matrices for l-k-bbknn
         self.l_knn_indices = None
         self.l_knn_distances = None
