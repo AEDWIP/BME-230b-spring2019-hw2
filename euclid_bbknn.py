@@ -2,19 +2,14 @@
 
 import numpy as np
 import scipy
-from euclid_knn import knnG
+from knn import knnG
 from sklearn.metrics import pairwise_distances
 from scanpy.neighbors import compute_connectivities_umap
-from scanpy.tools._utils import doc_n_pcs
-from nbformat.v4.tests.nbexamples import cells
-from scipy.spatial.distance import pdist, squareform
 
 #EXAMPLE USAGE
 # >>> clf = bbknn_graph(adata, batchlabel='label', neighbors_within_batch=6, pcs=50) #method is always umap
-# >>> bbknn_indices, bbknn_distances = clf.bbknn() #this will compute batch balanced neighbors with 
-#            your choice of neighbors_within_batch
-# >>> l_k_bbknn_indices, l_k_bbknn_distances = clf.l_k_bbknn(l=3) # this will compute a 
-#            subsample of your bbknn by using the knn indices and distances computed by clf.bbknn()
+# >>> bbknn_indices, bbknn_distances = clf.bbknn() #this will compute batch balanced neighbors with your choice of neighbors_within_batch
+# >>> l_k_bbknn_indices, l_k_bbknn_distances = clf.l_k_bbknn(l=3) # this will compute a subsample of your bbknn by using the knn indices and distances computed by clf.bbknn()
 
 
 class bbknn_graph():
@@ -27,19 +22,9 @@ class bbknn_graph():
     
     Output: new knn distances and connectivites with shape (n_observations, n_neighbors*n_batches)
     
-    ref:
-    - [Fast Batch Alignment of Single Cell
-Transcriptomes Unifies Multiple Mouse Cell
-Atlases into an Integrated Landscape](https://www.biorxiv.org/content/biorxiv/early/2018/08/22/397042.full.pdf)
-    
     '''
     def __init__(self,adata, batchlabel = None, neighbors_within_batch=6, pcs=50, method='umap'):
         #fill in method
-        self.adata = adata
-        self.batchlabel = batchlabel
-        self.neighbors_within_batch = neighbors_within_batch
-        self.pcs=doc_n_pcs
-        self.method = method
         
         #instantiating matrices for distances and indices
         self.knn_distances = np.zeros((adata.shape[0],neighbors_within_batch*len(self.batch_unique)))
@@ -48,48 +33,12 @@ Atlases into an Integrated Landscape](https://www.biorxiv.org/content/biorxiv/ea
         self.l_knn_indices = None
         self.l_knn_distances = None
         
-        # compute pairwise distance
-        # see doc in euclid_knn get_distance()
-        condensedDistances = pdist(self.adata.obsm['X_pca'], metric=self.d_metric) 
-        D = squareform(condensedDistances)
-        
-        num3Prime, num5Prime = self._geNumCellsInEachBatch()
-        
-        #split D
-        # D is a (num3Prime + num5Prime) x (num3Prime + num5Prime)
-        # the cell rows are stacked horizontally 3' on top of 5'
-        # we know D[0
-        D1 = D[:,0:num3Prime] # pair wise distance for ever cell and the 3 prime cells
-        D2 = D[:,num5Prime:]  # pair wise distance for ever cell and the 5 prime cells
-        
-        our assumption that each row will contain a zero ie distance between cell_i and cell_i does not always apply
-        nn1 = knn(D1) 
-        nn2 = knn(D22)
-        
-        double check actual homework questions. should we concat or 
-        keep seperate. need to computer l_k_bbknn at some pont
-        bbknn = concat(nn1, nn1, axis='use rows aedwip')
-        
         
         self.connectivities = None
         self.distances = None
     
-    def _geNumCellsInEachBatch():
-        prime3Rows = anndata.obs['Method'] == '10X_3prime'
-        prime5Rows = anndata.obs['Method'] == '10X_5prime'
-        num3PrimeSeries = anndata.obs.loc[prime3Rows, ['n_counts']].count()
-        num5PrimeSeries = anndata.obs.loc[prime5Rows, ['n_counts']].count()
-#         print("num 3':{}".format(num3PrimeSeries.values[0]))
-#         print("num 5':{}".format(num5PrimeSeries.values[0]))
-        return num3PrimeSeries.values[0], num5PrimeSeries.values[0]
-
     def get_connectivities(self,knn_indices, knn_distances):
-        d, c = compute_connectivities_umap(knn_indices, 
-                                          knn_distances, 
-                                          knn_indices.shape[0], 
-                                          knn_indices.shape[1])
-        self.distances = d
-        self.connectivities = c
+        self.distances, self.connectivities = compute_connectivities_umap(knn_indices, knn_distances, knn_indices.shape[0], knn_indices.shape[1])
   
     def update_adata(self):
         #updating adata.uns
@@ -111,22 +60,17 @@ Atlases into an Integrated Landscape](https://www.biorxiv.org/content/biorxiv/ea
         #fill in method
         pass
     
-# AEDWIP this is implemented in KnnG() 
-#     def get_neighbors(self,D):
-#
-#         ''' 
-#         function returns k most similar neighbors for each sample(row)
-#             Input is a distance matrix calculaed from the get_distances method
-#             Output is are two matrices:
-#                 1. the distance of each sample (row) against every other sample (column) sorted from smallest distance (most similar) to greatest distance(least similar) for the k neighbors
-#                 2. the index matrix of the sorted k nearest neighbors corresponding to the sorted distances above
-#         '''
-#         aedwip can we use knnG get_neighboors
-#             it probably just cleaner to run pca again
-#             knng = knnG(adata=None)
-#             D = knng._calDistance(adataX, rep='DO NOT RUN PCA')
-        
-        
+    def get_neighbors(self,D):
+        ''' 
+        function returns k most similar neighbors for each sample(row)
+            Input is a distance matrix calculaed from the get_distances method
+            Output is are two matrices:
+                1. the distance of each sample (row) against every other sample (column) sorted from smallest distance (most similar) to greatest distance(least similar) for the k neighbors
+                2. the index matrix of the sorted k nearest neighbors corresponding to the sorted distances above
+        '''
+
+        #fill in method
+        pass
             
     
     def bbknn(self):
