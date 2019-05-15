@@ -1,20 +1,19 @@
 #! /usr/bin/env/ python
 
+from euclid_knn import KnnG
+import logging
 import numpy as np
-import scipy
-from euclid_knn import knnG
+import pandas as pd
+#import scipy
 from sklearn.metrics import pairwise_distances
 from scanpy.neighbors import compute_connectivities_umap
-import logging
-
-#EXAMPLE USAGE
-# >>> clf = bbknn_graph(adata, batchlabel='label', neighbors_within_batch=6, pcs=50) #method is always umap
-# >>> bbknn_indices, bbknn_distances = clf.bbknn() #this will compute batch balanced neighbors with your choice of neighbors_within_batch
-# >>> l_k_bbknn_indices, l_k_bbknn_distances = clf.l_k_bbknn(l=3) # this will compute a subsample of your bbknn by using the knn indices and distances computed by clf.bbknn()
 
 
+################################################################################
 class bbknn_graph():
     '''
+    TODO: AEDWIP:
+    
     Function performs batched balanced knn
     INPUT: 
         1. adata object with PCA done on it already
@@ -26,63 +25,175 @@ class bbknn_graph():
     '''
     
     logger = logging.getLogger(__name__)
-
-    def __init__(self,adata, batchlabel = None, neighbors_within_batch=6, 
-                 pcs=50, method='umap', batch_unique=2):
+    
+    ######################################################################
+    def __init__(self,adata, batchLabel = None, neighbors_within_batch=6, 
+                 runPCA =True, pcs=50, method='umap', batch_unique=2):
+        '''
+        input:
+            batch_unique: 
+                the number of batches in the combined data set adata.X.
+                assume the batches are stack in continuously blocks horizontally
+            
+        '''
         
-        #fill in method
-        self.batch_unique = batch_unique
-        self.neighbors_within_batch = neighbors_within_batch
+        self._adata = adata
+        self._batchlabel = batchLabel
+        self._neighbors_within_batch = neighbors_within_batch
+        self._runPCA = runPCA
+        self._psc = pcs
+        self._method = method
+        self._batch_unique = batch_unique 
         
-        #instantiating matrices for distances and indices
+        self._knn_distances = None
+        self._knn_indices = None
+        self.l_knn_indices = None
+        self.l_knn_distances = None
+        self._connectivities = None
+        self._distances = None
+        
         if adata :
-            self.knn_distances = np.zeros((adata.shape[0],neighbors_within_batch*len(self.batch_unique)))
-            self.knn_indices = np.copy(self.knn_distances).astype(int)
+            self._knn_distances = np.zeros((adata.shape[0],neighbors_within_batch*len(self.batch_unique)))
+            self._knn_indices = np.copy(self.knn_distances).astype(int)
+            
+            # run KnnG it will run pca and calculate nei
+            D = self._calcPairWiseDistanceMatrix()
+            
+            knn_indices, knn_dist = self._bbknn(D)
+            self._get_umap_connectivities(knn_indices, knn_dist)
+            self._update_adata()
         else:
-            # unit test ubur
+            # unit test 
+            pass
+
+    ######################################################################
+    def _bbknn(self, D):
+        '''
+        use Knng to compute nearest Neighbors for each batch and combine the results
+        '''
+        knng = KnnG(None) #init like unit test to reduce run time
         
-        # instantiating matrices for l-k-bbknn
-            self.l_knn_indices = None
-            self.l_knn_distances = None
+        knng._n_neighbors = self._neighbors_within_batch * self._batch_unique
+        
+        # split D up by batches
+        batchCounts = self._calcNumCellsInEachBatch()
+        splitsLocations = self._calcSplits(batchCounts)
+        #
+        # we split by cols
+        # explanation: assume we have two batchs with different number of cells
+        # when we calculate the nearest neighbors using the first split
+        # the results will be [[batch1 x batch 1], [batch2 x batch1]]
+        #
+        # when we use the second batch we get
+        # [[batch1 x batch2], [batch2 x batch2]]
+        #
+        byCols = 1
+        splits = np.split(D, splitsLocations, axis=byCols)
+        
+        # for each batch calculate the nearest neighbors
+        batchNNIdx = []
+        batchNNDist = []
+        for split in splits:
+            self.logger.info("split.shape:{}".format(split.shape))
+            batchIdx, batchDist =  knng._get_neighbors(split)
+            self.logger.info("batchIdx.shape:{} batchDist.shape{}".format(batchIdx.shape, batchDist.shape))
+            batchNNIdx.append(batchIdx)
+            batchNNDist.append(batchDist)
+            
+        # concatenate the batches to create the balanced batch nearest neighbors
+        byRows = 0
+        aedwip = np.concatenate(batchNNIdx, axis=byRows)
+        aedwip = np.concatenate(batchNNDist, axis=byRows)
+
+    ######################################################################                
+    def _calcSplits(self, batchCounts):
+        '''
+        calculates how to split D base on batch sizes
+        '''
+        splits = []
+        start = 0
+        for i in range(len(batchCounts)):
+            bk, bc = batchCounts[i]
+            splits.append(start + bc)
+            start += bc
+        self.logger.info("splits:{}".format(splits))        
         
         
-        self.connectivities = None
-        self.distances = None
+    ######################################################################                
+    def _calcNumCellsInEachBatch(self):
+        '''
+        returns
+            example [('0', 8098), ('1', 7378)]
+        '''
+        df = self._adata.obs[['batch']]
+        batchIdx = df['batch'].unique()
+        batchKeys = [i for i in batchIdx]
+
+        ret = []
+        for bk in batchKeys:
+            #print("bk:{} type(bk):{}".format(bk, type(bk)))
+            rows = df.loc[:, ['batch']] == bk #int(bk)
+            print(sum(rows.values))
+            ret.append((bk, sum(rows.values)[0]))
+            
+        return ret
     
+    ######################################################################                
+    def _calcPairWiseDistanceMatrix(self):
+        '''
+        use KnnG to compute the pair wise distance 
+        we are in the same package and make use of non public parts of the implement
+        '''
+        knng = KnnG(None) # init like a unit test to reduce run time
+        knng._adata = self._adata
+        knng._PCA(npc=50)
+        knng._calDistance()
+        
+        return knng._D
+        
+    ######################################################################    
     def get_connectivities(self,knn_indices, knn_distances):
-        self.distances, self.connectivities = compute_connectivities_umap(knn_indices, knn_distances, knn_indices.shape[0], knn_indices.shape[1])
+        d,c = compute_connectivities_umap(knn_indices, 
+                                          knn_distances, 
+                                          knn_indices.shape[0], 
+                                          knn_indices.shape[1])
+        self._distances = d
+        self._connectivities = c
     
+    ######################################################################    
     def update_adata(self):
         #updating adata.uns
-        self.adata.uns['neighbors']={}
-        self.adata.uns['neighbors']['params'] = {}
-        self.adata.uns['neighbors']['params']['n_neighbors']=self.neighbors_within_batch
-        self.adata.uns['neighbors']['params']['method'] = self.method
+        self._adata.uns['neighbors']={}
+        self._adata.uns['neighbors']['params'] = {}
+        self._adata.uns['neighbors']['params']['n_neighbors']=self._neighbors_within_batch
+        self._adata.uns['neighbors']['params']['method'] = self._method
     
         assert self.connectivities is not None
         assert self.distances is not None
         
-        self.adata.uns['neighbors']['connectivities'] = self.connectivities
-        self.adata.uns['neighbors']['distances'] = self.distances
+        self._adata.uns['neighbors']['connectivities'] = self._connectivities
+        self._adata.uns['neighbors']['distances'] = self._distances
     
-    def querry(self,querry, ref):
-        #return distances and indices of each new querry sample based on the knn obtained from get_knn
-        # default is euclidean distance
+#     ######################################################################    
+#     def querry(self,querry, ref):
+#         #return distances and indices of each new querry sample based on the knn obtained from get_knn
+#         # default is euclidean distance
+#     
+#         #fill in method
+#         pass
     
-        #fill in method
-        pass
-    
-    def get_neighbors(self,D):
-        ''' 
-        function returns k most similar neighbors for each sample(row)
-            Input is a distance matrix calculaed from the get_distances method
-            Output is are two matrices:
-                1. the distance of each sample (row) against every other sample (column) sorted from smallest distance (most similar) to greatest distance(least similar) for the k neighbors
-                2. the index matrix of the sorted k nearest neighbors corresponding to the sorted distances above
-        '''
-    
-        #fill in method
-        pass
+#     ######################################################################
+#     def get_neighbors(self,D):
+#         ''' 
+#         function returns k most similar neighbors for each sample(row)
+#             Input is a distance matrix calculaed from the get_distances method
+#             Output is are two matrices:
+#                 1. the distance of each sample (row) against every other sample (column) sorted from smallest distance (most similar) to greatest distance(least similar) for the k neighbors
+#                 2. the index matrix of the sorted k nearest neighbors corresponding to the sorted distances above
+#         '''
+#     
+#         #fill in method
+#         pass
             
     
 #     def bbknn(self):
@@ -110,7 +221,8 @@ class bbknn_graph():
 #                 
 #                 #the first k columns are batch1-batch1 and batch1-batch2
 #                 #the next k columns are batch2-batch1 and batch2-batch2
-                
+           
+    ######################################################################
     def l_k_bbknn(self,l=2):
         '''
         this method makes an l subsampling of the bbknn computed in the graph() 
@@ -132,7 +244,8 @@ class bbknn_graph():
             rowIndices = self.knn_indices[rowIdx,:]
             rowDist = self.knn_distances[rowIdx, :]
             
-            # split into batch_unique number of arrays            
+            # split into batch_unique number of arrays 
+            aedwip we can not assume patches are the same size           
             rowIndicesSplits = np.split(rowIndices, self.batch_unique)
             rowDistSplits = np.split(rowDist, self.batch_unique)
                         
@@ -158,9 +271,4 @@ class bbknn_graph():
             
             self.logger.debug("tmpIdx:{}".format(tmpIndices))
             self.logger.debug("tmpIdx:{}\n".format(tmpDistances))
-
-
-
-
-
 
