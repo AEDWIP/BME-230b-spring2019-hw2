@@ -127,9 +127,18 @@ class KnnG():
         distanceReverseIndex = { row[i]: i for i in range(len(row)) }
         
         distances = distanceReverseIndex.keys()
-        # skip the first sort distance. we know it is always zero
-        # it is the distance to our selves
-        neighborsDistances = sorted(distances)[1: k + 1]
+        
+        # 
+        # if we are running using results for true knn the diagonal will be 0
+        # if we are running bb-knn some the distance matrix is not square
+        # that is to say we may or may not have a zero
+        # 
+        sortedDistances = sorted(distances)
+        start = 0
+        if sortedDistances[0] == 0:
+            start = 1 
+            
+        neighborsDistances = sorted(distances)[start: k + start]
         
         retIdx = np.zeros(k)
         retDist = np.zeros(k)

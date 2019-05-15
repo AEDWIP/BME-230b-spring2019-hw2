@@ -109,23 +109,39 @@ class bbknn_graph():
         #
         byCols = 1
         splits = np.split(D, splitsLocations, axis=byCols)
+        # np.split(D, [3,6] returns
+        # [:3], [3:6], [6:]
+        # we need to remove this last split
+        del splits[-1]
+        
         self.logger.info("AEDWIP len(splits):{}".format(len(splits)))
         for split in splits:
             self.logger.info("AEDWIP split.shape():{}".format(split.shape))
+            self.logger.info("split\n{}\n".format(split))
 
         # for each batch calculate the nearest neighbors
         batchNNIdx = []
         batchNNDist = []
-        for split in splits:
+        for i in range(len(splits)):
+            split = splits[i]
             self.logger.info("split.shape:{}".format(split.shape))
+            self.logger.info("$$$$$$$split\n{}".format(split))
             batchIdx, batchDist =  knng._get_neighbors(split)
+            
+            # we need to adj the indexs so that they map back to the columns
+            # in our original matrix
+            offset = self._calcBatcholOffset(splitsLocations, i)
+            batchIdx = batchIdx + offset
             self.logger.info("batchIdx.shape:{} batchDist.shape{}".format(batchIdx.shape, batchDist.shape))
             
-            # TODO: fix this bug this is a hack
-            if split.shape[1] == 0:
-                self.logger.warn("AEDWIP fix this ugly hack")
-                break
+#             # TODO: fix this bug this is a hack
+#             if split.shape[1] == 0:
+#                 # why did split return an extra split
+#                 self.logger.warn("AEDWIP fix this ugly hack")
+#                 break
             
+            self.logger.info("batchIdx:\n{}".format(batchIdx))
+#             self.logger.info("batchNNDist:\n{}".format(batchNNDist))
             batchNNIdx.append(batchIdx)
             batchNNDist.append(batchDist)
             
@@ -137,6 +153,18 @@ class bbknn_graph():
         return knn_indices,knn_dist
 
     ######################################################################                
+    def _calcBatcholOffset(self, splitsLocations, i):
+        '''
+        np.split() returns matrix slices. the indexing starts at zero
+        we need to calculate the offset back to the original matrix
+        '''
+        ret = 0
+        if i > 0:
+            ret = splitsLocations[i - 1]
+            
+        return ret
+        
+    ######################################################################                
     def _calcSplits(self, batchCounts):
         '''
         calculates how to split D base on batch sizes
@@ -147,6 +175,7 @@ class bbknn_graph():
             bk, bc = batchCounts[i]
             splits.append(start + bc)
             start += bc 
+            
         self.logger.info("splits:{}".format(splits))        
         
         return splits
