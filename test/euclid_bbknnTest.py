@@ -17,8 +17,8 @@ class Test(unittest.TestCase):
     logger = logging.getLogger(__name__)
 
     def setUp(self):
-        pass
-
+        # make test reproducable
+        np.random.seed(42)
 
     def tearDown(self):
         # make sure all the logs are flushed
@@ -56,27 +56,37 @@ class Test(unittest.TestCase):
                                     [11, 12, 13, 14],                                    
                                     [21, 22, 23, 24],
                                     [31, 32, 33, 34],
-                                    [41, 42, 43, 44],
                                     [41, 52, 53, 54],
                                     [51, 62, 63, 64],
                                     [61, 62, 63, 64]
                                     ])
         
         bbknn = bbknn_graph(adata=None, batchlabel = None, 
-                            neighbors_within_batch=2, pcs=None, method=None)
+                            neighbors_within_batch=2, pcs=None, method=None,
+                            batch_unique=2)
+        
         
         bbknn.knn_indices = bb2nnIdx
         bbknn.knn_distances = bb2nnDists
-        set seed = 42
         
         bbknn.l_k_bbknn(l=1)
         
         # get results
         retl_knn_indices = bbknn.l_knn_indices
-        retl_knn_distances = bbknn.l_knn_distances
+        self.logger.info("retl_knn_indices:\n{}".format(retl_knn_indices))
         
-        assert retl_knn_indices == aedwip
-        assert retl_knn_distances = aedwp
+        retl_knn_distances = bbknn.l_knn_distances
+        self.logger.info("retl_knn_distances:\n{}".format(retl_knn_distances))
+
+        expectedIdx = np.array([[1, 4],[1, 6],[1, 4],
+                                [1, 6],[1, 4],[1, 6],[1, 6]])
+        np.testing.assert_array_equal(expectedIdx, retl_knn_indices)
+        
+        expectedDist = np.array([[ 1.,4.],[11., 13.],[21., 24.],
+                                 [31., 33.],[41., 54.],[51., 63.]])
+        np.testing.assert_array_equal(expectedDist, retl_knn_distances)
+
+       
 
         self.logger.info("END\n")
 
