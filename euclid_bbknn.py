@@ -287,7 +287,7 @@ class bbknn_graph():
         self._adata.uns['neighbors']['params']['n_neighbors']=self._neighbors_within_batch
         self._adata.uns['neighbors']['params']['method'] = self._method
     
-        assert self._connectivities is not None
+        assert self._connectivities is not None 
         assert self._distances is not None
         
         self._adata.uns['neighbors']['connectivities'] = self._connectivities
