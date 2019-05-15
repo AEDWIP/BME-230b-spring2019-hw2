@@ -27,12 +27,10 @@ class bbknn_graph():
     
     ######################################################################
     def __init__(self,adata, batchLabel = None, neighbors_within_batch=6, 
-                 runPCA =True, pcs=50, method='umap', batch_unique=2):
+                 runPCA =True, pcs=50, method='umap'):
         '''
         input:
-            batch_unique: 
-                the number of batches in the combined data set adata.X.
-                assume the batches are stack in continuously blocks horizontally
+            TODO: AEDWIP
             
         '''
         
@@ -42,7 +40,7 @@ class bbknn_graph():
         self._runPCA = runPCA
         self._psc = pcs
         self._method = method
-        self._batch_unique = batch_unique 
+        self.numBatches = None # TODO: AEDWIP: we should figure this out from teh code
         
         self._knn_distances = None
         self._knn_indices = None
@@ -52,14 +50,18 @@ class bbknn_graph():
         self._distances = None
         
         if adata :
-            self._knn_distances = np.zeros((adata.shape[0],neighbors_within_batch*len(self._batch_unique)))
-            self._knn_indices = np.copy(self.knn_distances).astype(int)
+            batchCounts = self._calcNumCellsInEachBatch()
+            self.numBatches = len(batchCounts)
+            numRows = adata.shape[0]
+            numCols = neighbors_within_batch*self.numBatches
+            self._knn_distances = np.zeros((numRows,numCols))
+            self._knn_indices   = np.zeros((numRows,numCols), dtype=int)
             
             # run KnnG it will run pca and calculate nei
             D = self._calcPairWiseDistanceMatrix()
             
-            knn_indices, knn_dist = self._bbknn(D)
-            self._get_umap_connectivities(knn_indices, knn_dist)
+            knn_indices, knn_dist = self._bbknn(D, batchCounts)
+            self._get_connectivities(knn_indices, knn_dist)
             self._update_adata()
         else:
             # unit test 
@@ -113,7 +115,7 @@ class bbknn_graph():
             split = splits[i]
             batchIdx, batchDist =  knng._get_neighbors(split)
             
-            # we need to adj the indexs so that they map back to the columns
+            # we need to adj the indexes so that they map back to the columns
             # in our original matrix
             offset = self._calcBatcholOffset(splitsLocations, i)
             batchIdx = batchIdx + offset
@@ -158,7 +160,7 @@ class bbknn_graph():
         for bk in batchKeys:
             #print("bk:{} type(bk):{}".format(bk, type(bk)))
             rows = df.loc[:, ['batch']] == bk #int(bk)
-            print(sum(rows.values))
+            #print(sum(rows.values))
             ret.append((bk, sum(rows.values)[0]))
             
         return ret
@@ -232,17 +234,17 @@ class bbknn_graph():
             rowDist = self.knn_distances[rowIdx, :]
             
             # split into batch_unique number of arrays   
-            rowIndicesSplits = np.split(rowIndices, self._batch_unique)
-            rowDistSplits = np.split(rowDist, self._batch_unique)
+            rowIndicesSplits = np.split(rowIndices, self.numBatches)
+            rowDistSplits = np.split(rowDist, self.numBatches)
                         
             # init storage for tmp results
-            tmpIndices = np.zeros(self._batch_unique * l, dtype=int)
-            tmpDistances = np.zeros(self._batch_unique * l)
+            tmpIndices = np.zeros(self.numBatches * l, dtype=int)
+            tmpDistances = np.zeros(self.numBatches * l)
             
             for splitIdx in range(len(rowIndicesSplits)):
                 # randomly select index values 
                 low = 0 
-                high = self._batch_unique 
+                high = self.numBatches 
                 rIdx = np.random.randint(low, high, l)
                             
                 # copy split selections to final results    
@@ -285,8 +287,8 @@ class bbknn_graph():
         self._adata.uns['neighbors']['params']['n_neighbors']=self._neighbors_within_batch
         self._adata.uns['neighbors']['params']['method'] = self._method
     
-        assert self.connectivities is not None
-        assert self.distances is not None
+        assert self._connectivities is not None
+        assert self._distances is not None
         
         self._adata.uns['neighbors']['connectivities'] = self._connectivities
         self._adata.uns['neighbors']['distances'] = self._distances
