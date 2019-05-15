@@ -72,19 +72,32 @@ class bbknn_graph():
             pass
 
     ######################################################################
-    def _bbknn(self, D):
+    def _bbknn(self, D, batchCounts):
         '''
         use Knng to compute nearest Neighbors for each batch and combine the results
         
         returns balanced knn_indices,knn_dist
+        
+        input:
+            D: pair wise distance matrix
+            
+            batchCounts:
+                pass none in production
+                unit test should pass something like [('0', 8098), ('1', 7378)]
         '''
         knng = KnnG(None) #init like unit test to reduce run time
         
-        knng._n_neighbors = self._neighbors_within_batch * self._batch_unique
+        knng._n_neighbors = self._neighbors_within_batch
         
         # split D up by batches
-        batchCounts = self._calcNumCellsInEachBatch()
+        if not batchCounts:
+            batchCounts = self._calcNumCellsInEachBatch()
+            
+        self.logger.info("batchCounts:{}".format(batchCounts))
         splitsLocations = self._calcSplits(batchCounts)
+        self.logger.info("splitsLocations:{}".format(splitsLocations))
+
+        
         #
         # we split by cols
         # explanation: assume we have two batchs with different number of cells
@@ -96,7 +109,10 @@ class bbknn_graph():
         #
         byCols = 1
         splits = np.split(D, splitsLocations, axis=byCols)
-        
+        self.logger.info("AEDWIP len(splits):{}".format(len(splits)))
+        for split in splits:
+            self.logger.info("AEDWIP split.shape():{}".format(split.shape))
+
         # for each batch calculate the nearest neighbors
         batchNNIdx = []
         batchNNDist = []
@@ -104,13 +120,19 @@ class bbknn_graph():
             self.logger.info("split.shape:{}".format(split.shape))
             batchIdx, batchDist =  knng._get_neighbors(split)
             self.logger.info("batchIdx.shape:{} batchDist.shape{}".format(batchIdx.shape, batchDist.shape))
+            
+            # TODO: fix this bug this is a hack
+            if split.shape[1] == 0:
+                self.logger.warn("AEDWIP fix this ugly hack")
+                break
+            
             batchNNIdx.append(batchIdx)
             batchNNDist.append(batchDist)
             
         # concatenate the batches to create the balanced batch nearest neighbors
-        byRows = 0
-        knn_indices  = np.concatenate(batchNNIdx, axis=byRows)
-        knn_dist = np.concatenate(batchNNDist, axis=byRows)
+        byCols = 1
+        knn_indices  = np.concatenate(batchNNIdx, axis=byCols)
+        knn_dist = np.concatenate(batchNNDist, axis=byCols)
         
         return knn_indices,knn_dist
 
@@ -124,9 +146,10 @@ class bbknn_graph():
         for i in range(len(batchCounts)):
             bk, bc = batchCounts[i]
             splits.append(start + bc)
-            start += bc
+            start += bc 
         self.logger.info("splits:{}".format(splits))        
         
+        return splits
         
     ######################################################################                
     def _calcNumCellsInEachBatch(self):

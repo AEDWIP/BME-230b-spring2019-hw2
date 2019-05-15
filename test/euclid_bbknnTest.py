@@ -86,7 +86,50 @@ class Test(unittest.TestCase):
                                  [31., 33.],[41., 44.],[51., 53.], [61., 63.]])
         np.testing.assert_array_equal(expectedDist, retl_knn_distances)
 
-       
+        self.logger.info("END\n")
+        
+    def testBbknn(self):
+        self.logger.info("BEGIN")
+        # two batches
+        # batch0 has 3 cells
+        # batch1 has 4 cells
+        pairwiseDist=np. array([
+                                [2,3,4,6,5,4,3],
+                                [12,11,13,16,15,14,13],
+                                [22,21,23,26,25,24,23],
+                                [32,31,33,36,35,34,33],
+                                [42,41,43,46,45,44,43],
+                                [52,51,53,56,55,54,53],
+                                [62,61,63,66,65,64,63]
+                                ])
+        
+        bb2nnIdx = np.array([
+                                [1, 2, 6, 4],
+                                [1, 2, 6, 4],
+                                [1, 2, 6, 4],
+                                [1, 2, 6, 4],
+                                [1, 2, 6, 4],
+                                [1, 2, 6, 4],
+                                [1, 2, 6, 4]
+            ])
+        
+        bb2nnDists = np.array([
+                                    [ 1,  2,  3,  4],
+                                    [11, 12, 13, 14],                                    
+                                    [21, 22, 23, 24],
+                                    [31, 32, 33, 34],
+                                    [41, 52, 43, 44],
+                                    [51, 62, 53, 54],
+                                    [61, 62, 63, 64]
+                                    ])      
+        
+        
+        bbknn = bbknn_graph(None, neighbors_within_batch=2, batch_unique=2)  
+        
+        batchCounts= [('0', 3), ('1', 4)]
+        retBBKNNIdx,retBBKNNDist = bbknn._bbknn(D=pairwiseDist, batchCounts=batchCounts)
+        self.logger.info("retBBKNNIdx:\n{}".format(retBBKNNIdx))
+        self.logger.info("retBBKNNDist:\n{}".format(retBBKNNDist))
 
         self.logger.info("END\n")
 
