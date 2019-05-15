@@ -137,7 +137,10 @@ class Eculid_bbknnTest(unittest.TestCase):
         self.logger.info("expectedBB2NNIdx:\n{}".format(expectedBB2NNIdx))
         np.testing.assert_array_equal(expectedBB2NNIdx, retBBKNNIdx)
 
-        #self.logger.info("retBBKNNDist:\n{}".format(retBBKNNDist))
+        self.logger.info("retBBKNNDist:\n{}".format(retBBKNNDist))
+        self.logger.info("expectedBB2NNDists:\n{}".format(expectedBB2NNDists))
+        np.testing.assert_array_equal(expectedBB2NNDists, retBBKNNDist)
+
 
         self.logger.info("END\n")
         
