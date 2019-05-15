@@ -61,7 +61,7 @@ class Test(unittest.TestCase):
                                     [61, 62, 63, 64]
                                     ])
         
-        bbknn = bbknn_graph(adata=None, batchlabel = None, 
+        bbknn = bbknn_graph(adata=None, 
                             neighbors_within_batch=2, pcs=None, method=None,
                             batch_unique=2)
         

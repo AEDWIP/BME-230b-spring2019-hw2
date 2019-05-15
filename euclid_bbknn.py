@@ -22,6 +22,11 @@ class bbknn_graph():
     
     Output: new knn distances and connectivites with shape (n_observations, n_neighbors*n_batches)
     
+    public functions:
+        def __init__(self,adata, batchLabel = None, neighbors_within_batch=6, 
+                 runPCA =True, pcs=50, method='umap', batch_unique=2)
+                 
+        def l_k_bbknn(self,l=2):
     '''
     
     logger = logging.getLogger(__name__)
@@ -53,7 +58,7 @@ class bbknn_graph():
         self._distances = None
         
         if adata :
-            self._knn_distances = np.zeros((adata.shape[0],neighbors_within_batch*len(self.batch_unique)))
+            self._knn_distances = np.zeros((adata.shape[0],neighbors_within_batch*len(self._batch_unique)))
             self._knn_indices = np.copy(self.knn_distances).astype(int)
             
             # run KnnG it will run pca and calculate nei
@@ -70,6 +75,8 @@ class bbknn_graph():
     def _bbknn(self, D):
         '''
         use Knng to compute nearest Neighbors for each batch and combine the results
+        
+        returns balanced knn_indices,knn_dist
         '''
         knng = KnnG(None) #init like unit test to reduce run time
         
@@ -102,8 +109,10 @@ class bbknn_graph():
             
         # concatenate the batches to create the balanced batch nearest neighbors
         byRows = 0
-        aedwip = np.concatenate(batchNNIdx, axis=byRows)
-        aedwip = np.concatenate(batchNNDist, axis=byRows)
+        knn_indices  = np.concatenate(batchNNIdx, axis=byRows)
+        knn_dist = np.concatenate(batchNNDist, axis=byRows)
+        
+        return knn_indices,knn_dist
 
     ######################################################################                
     def _calcSplits(self, batchCounts):
@@ -152,7 +161,7 @@ class bbknn_graph():
         return knng._D
         
     ######################################################################    
-    def get_connectivities(self,knn_indices, knn_distances):
+    def _get_connectivities(self,knn_indices, knn_distances):
         d,c = compute_connectivities_umap(knn_indices, 
                                           knn_distances, 
                                           knn_indices.shape[0], 
@@ -161,7 +170,7 @@ class bbknn_graph():
         self._connectivities = c
     
     ######################################################################    
-    def update_adata(self):
+    def _update_adata(self):
         #updating adata.uns
         self._adata.uns['neighbors']={}
         self._adata.uns['neighbors']['params'] = {}
@@ -229,7 +238,7 @@ class bbknn_graph():
         method. if k=4, meaning you are finding 4 neighbors between batches, 
         and l=2: subsample 2 neighbors from batch1 and 2 neighbors from batch2
         '''
-        if l >= self.neighbors_within_batch:
+        if l >= self._neighbors_within_batch:
             raise ValueError('l cannot be equal or larger than k')
             
         # init storage for results
@@ -244,19 +253,18 @@ class bbknn_graph():
             rowIndices = self.knn_indices[rowIdx,:]
             rowDist = self.knn_distances[rowIdx, :]
             
-            # split into batch_unique number of arrays 
-            aedwip we can not assume patches are the same size           
-            rowIndicesSplits = np.split(rowIndices, self.batch_unique)
-            rowDistSplits = np.split(rowDist, self.batch_unique)
+            # split into batch_unique number of arrays   
+            rowIndicesSplits = np.split(rowIndices, self._batch_unique)
+            rowDistSplits = np.split(rowDist, self._batch_unique)
                         
             # init storage for tmp results
-            tmpIndices = np.zeros(self.batch_unique * l, dtype=int)
-            tmpDistances = np.zeros(self.batch_unique * l)
+            tmpIndices = np.zeros(self._batch_unique * l, dtype=int)
+            tmpDistances = np.zeros(self._batch_unique * l)
             
             for splitIdx in range(len(rowIndicesSplits)):
                 # randomly select index values 
                 low = 0 
-                high = self.batch_unique 
+                high = self._batch_unique 
                 rIdx = np.random.randint(low, high, l)
                             
                 # copy split selections to final results    
@@ -271,4 +279,7 @@ class bbknn_graph():
             
             self.logger.debug("tmpIdx:{}".format(tmpIndices))
             self.logger.debug("tmpIdx:{}\n".format(tmpDistances))
+            
+        # TODO: AEDWIP:
+        self.logger.error("AEDWIP: need to call _get_connectivities() and _update()")
 
