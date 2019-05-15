@@ -112,58 +112,43 @@ class bbknn_graph():
 #                 #the next k columns are batch2-batch1 and batch2-batch2
                 
     def l_k_bbknn(self,l=2):
-        #this method makes an l subsampling of the bbknn computed in the graph() method
-        # if k=4, meaning you are finding 4 neighbors between batches, and l=2:
-                ## subsample 2 neighbors from batch1 and 2 neighbors from batch2
-            
-            
+        '''
+        this method makes an l subsampling of the bbknn computed in the graph() 
+        method. if k=4, meaning you are finding 4 neighbors between batches, 
+        and l=2: subsample 2 neighbors from batch1 and 2 neighbors from batch2
+        '''
         if l >= self.neighbors_within_batch:
             raise ValueError('l cannot be equal or larger than k')
             
+        # init storage for results
         self.l_knn_indices = np.zeros((self.knn_indices.shape[0], 2*l)).astype(int)
         self.l_knn_distances = np.zeros((self.knn_distances.shape[0], 2*l))
             
         nCols = self.knn_indices.shape[0]
-        self.logger.info("nCols:{}".format(nCols))
+        self.logger.debug("nCols:{}".format(nCols))
         
-        #         for i in range(len(self.batch_unique)):
-        #             #fill in loop
-        #             pass
         for rowIdx in range(self.l_knn_indices.shape[0]):
-            # select random index for each k groups
-            # if k=3, self.knn_indices has 6 columns
-            # so here we are going to select l random indices from first three columns, and second three columns
-            # for the above example i am assuming two neighbors
-                
-            # split into batch_unique arrays
+            # select the current rows to process   
             rowIndices = self.knn_indices[rowIdx,:]
             rowDist = self.knn_distances[rowIdx, :]
             
-            self.logger.info("rowIndices:{}".format(rowIndices))
-            self.logger.info("rowDist   :{}".format(rowDist))
-
-            
+            # split into batch_unique number of arrays            
             rowIndicesSplits = np.split(rowIndices, self.batch_unique)
             rowDistSplits = np.split(rowDist, self.batch_unique)
-            
-            self.logger.info("rowIndicesSplits:\n{}".format(rowIndicesSplits))
-            self.logger.info("rowDistSplits:\n{}".format(rowDistSplits))
-            
+                        
+            # init storage for tmp results
             tmpIndices = np.zeros(self.batch_unique * l, dtype=int)
             tmpDistances = np.zeros(self.batch_unique * l)
             
-            self.logger.info("***********8")
             for splitIdx in range(len(rowIndicesSplits)):
-                low = 0 # splitIdx * self.batch_unique
-                high = self.batch_unique #, low + self.batch_unique
+                # randomly select index values 
+                low = 0 
+                high = self.batch_unique 
                 rIdx = np.random.randint(low, high, l)
-                
-                self.logger.info("l:{} low:{} high:{}  rIdx:{}".format(l, low, high, rIdx))
-                self.logger.info("splitIdx:{}".format(splitIdx))
-                
+                            
+                # copy split selections to final results    
                 start = splitIdx * l
                 end = start + l
-                self.logger.info("start:{} end:{}\n".format(start, end))
                 tmpIndices[start:end]   = rowIndicesSplits[splitIdx][rIdx]
                 tmpDistances[start:end] = rowDistSplits[splitIdx][rIdx]
                 
@@ -171,8 +156,8 @@ class bbknn_graph():
             self.l_knn_indices[rowIdx]   = tmpIndices
             self.l_knn_distances[rowIdx] = tmpDistances
             
-            self.logger.info("%%%% tmpIdx:{}".format(tmpIndices))
-            self.logger.info("%%% tmpIdx:{}\n".format(tmpDistances))
+            self.logger.debug("tmpIdx:{}".format(tmpIndices))
+            self.logger.debug("tmpIdx:{}\n".format(tmpDistances))
 
 
 

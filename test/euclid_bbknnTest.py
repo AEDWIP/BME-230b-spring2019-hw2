@@ -56,8 +56,8 @@ class Test(unittest.TestCase):
                                     [11, 12, 13, 14],                                    
                                     [21, 22, 23, 24],
                                     [31, 32, 33, 34],
-                                    [41, 52, 53, 54],
-                                    [51, 62, 63, 64],
+                                    [41, 52, 43, 44],
+                                    [51, 62, 53, 54],
                                     [61, 62, 63, 64]
                                     ])
         
@@ -83,7 +83,7 @@ class Test(unittest.TestCase):
         np.testing.assert_array_equal(expectedIdx, retl_knn_indices)
         
         expectedDist = np.array([[ 1.,4.],[11., 13.],[21., 24.],
-                                 [31., 33.],[41., 54.],[51., 63.]])
+                                 [31., 33.],[41., 44.],[51., 53.], [61., 63.]])
         np.testing.assert_array_equal(expectedDist, retl_knn_distances)
 
        
