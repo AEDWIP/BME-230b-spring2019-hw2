@@ -93,14 +93,12 @@ class bbknn_graph():
         if not batchCounts:
             batchCounts = self._calcNumCellsInEachBatch()
             
-        self.logger.info("batchCounts:{}".format(batchCounts))
         splitsLocations = self._calcSplits(batchCounts)
-        self.logger.info("splitsLocations:{}".format(splitsLocations))
 
         
         #
         # we split by cols
-        # explanation: assume we have two batchs with different number of cells
+        # explanation: assume we have two batches with different number of cells
         # when we calculate the nearest neighbors using the first split
         # the results will be [[batch1 x batch 1], [batch2 x batch1]]
         #
@@ -111,21 +109,14 @@ class bbknn_graph():
         splits = np.split(D, splitsLocations, axis=byCols)
         # np.split(D, [3,6] returns
         # [:3], [3:6], [6:]
-        # we need to remove this last split
+        # we need to remove this last split. It is empty
         del splits[-1]
         
-        self.logger.info("AEDWIP len(splits):{}".format(len(splits)))
-        for split in splits:
-            self.logger.info("AEDWIP split.shape():{}".format(split.shape))
-            self.logger.info("split\n{}\n".format(split))
-
         # for each batch calculate the nearest neighbors
         batchNNIdx = []
         batchNNDist = []
         for i in range(len(splits)):
             split = splits[i]
-            self.logger.info("split.shape:{}".format(split.shape))
-            self.logger.info("$$$$$$$split\n{}".format(split))
             batchIdx, batchDist =  knng._get_neighbors(split)
             
             # we need to adj the indexs so that they map back to the columns
@@ -134,13 +125,7 @@ class bbknn_graph():
             batchIdx = batchIdx + offset
             self.logger.info("batchIdx.shape:{} batchDist.shape{}".format(batchIdx.shape, batchDist.shape))
             
-#             # TODO: fix this bug this is a hack
-#             if split.shape[1] == 0:
-#                 # why did split return an extra split
-#                 self.logger.warn("AEDWIP fix this ugly hack")
-#                 break
-            
-            self.logger.info("batchIdx:\n{}".format(batchIdx))
+#             self.logger.info("batchIdx:\n{}".format(batchIdx))
 #             self.logger.info("batchNNDist:\n{}".format(batchNNDist))
             batchNNIdx.append(batchIdx)
             batchNNDist.append(batchDist)
@@ -168,6 +153,8 @@ class bbknn_graph():
     def _calcSplits(self, batchCounts):
         '''
         calculates how to split D base on batch sizes
+        
+        return example [3, 7]
         '''
         splits = []
         start = 0
@@ -235,54 +222,7 @@ class bbknn_graph():
         self._adata.uns['neighbors']['connectivities'] = self._connectivities
         self._adata.uns['neighbors']['distances'] = self._distances
     
-#     ######################################################################    
-#     def querry(self,querry, ref):
-#         #return distances and indices of each new querry sample based on the knn obtained from get_knn
-#         # default is euclidean distance
-#     
-#         #fill in method
-#         pass
-    
-#     ######################################################################
-#     def get_neighbors(self,D):
-#         ''' 
-#         function returns k most similar neighbors for each sample(row)
-#             Input is a distance matrix calculaed from the get_distances method
-#             Output is are two matrices:
-#                 1. the distance of each sample (row) against every other sample (column) sorted from smallest distance (most similar) to greatest distance(least similar) for the k neighbors
-#                 2. the index matrix of the sorted k nearest neighbors corresponding to the sorted distances above
-#         '''
-#     
-#         #fill in method
-#         pass
-            
-    
-#     def bbknn(self):
-#         '''
-#         Function computes distances for all combinations of batches.
-#         Fill in the below for loops
-#         '''
-#         for i in range(len(self.batch_unique)):
-#             #get ref batch
-#     
-#     
-#             for j in range(len(self.batch_unique)):
-#     
-#                 #querry new batch with ref batch
-#                 #this means that the distances between the querry batch and the ref_batch are calculated
-#     
-#                 #Example:
-#                 # if you have batches =3 and neighbors=3
-#                 # your knn indices and distances matrices will have dims (pca_matrix.shape[0], n_batches*neighbors) = (n_obs, 9)
-#                 # in order ot update these matrices you need to do the following:
-#                 # for the first batch update the 0-k (n_neighbbors) columns
-#                 # for the second batch update the k-2*k (k=n_neighbors) columns
-#                 # for the third batch update the 2*k - 3*k (k=n_neighbors) columns
-#                 # the indeces for the rows are always what you're querrying
-#                 
-#                 #the first k columns are batch1-batch1 and batch1-batch2
-#                 #the next k columns are batch2-batch1 and batch2-batch2
-           
+
     ######################################################################
     def l_k_bbknn(self,l=2):
         '''
