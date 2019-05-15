@@ -63,7 +63,7 @@ class KnnG():
         # wrapped initialization to make unit test run faster an easier to write
         # unit test should construct KnnG(adata=None)
         if self._adata:
-            print('emptying .uns...')
+            self.logger.info("calculating please be patient")
             self._adata.uns['neighbors']['connectivities'] = None
             self._adata.uns['neighbors']['distances'] = None
         
@@ -72,7 +72,7 @@ class KnnG():
                 self._PCA(nPC)
             
             self._calDistance()
-            knn_indices, knn_dist =  self._get_neighbors(self.D)
+            knn_indices, knn_dist =  self._get_neighbors(self._D)
             self._get_umap_connectivities(knn_indices, knn_dist)
 
             self._update_adata()
@@ -178,7 +178,7 @@ class KnnG():
         '''
         self.logger.info("BEGIN")
         # you have to read the code to figure out how to call compute_connectivities_umap
-        n_obs = self.adata.X.shape[0]
+        n_obs = self._adata.X.shape[0]
         
         self.logger.info("type(knn_dists):{} knn_dists.shape:{}".format(type(knn_dists), knn_dists.shape))
         self.logger.info("knn_dists[0:3:\n{}".format(knn_dists[0:3]))
@@ -193,7 +193,7 @@ class KnnG():
         distances,connectivities =  compute_connectivities_umap(knn_indices, 
                                                             knn_dists,
                                                             n_obs, 
-                                                            self.n_neighbors)
+                                                            self._n_neighbors)
         
         self.logger.info("type(distances):{}".format(type(distances)))
         self.logger.info("distances:\n{}".format(distances))
@@ -203,8 +203,8 @@ class KnnG():
 
         self.logger.info("END")
         
-        self.distances = distances
-        self.connectivities = connectivities
+        self._distances = distances
+        self._connectivities = connectivities
     
     ######################################################################
     def _PCA(self, npc=15):
@@ -243,12 +243,12 @@ class KnnG():
         self.adata.uns['neighbors']['distances'] = out knn() output
         '''
         self.logger.info('BEGIN')
-        self.adata.uns['neighbors']={}
-        self.adata.uns['neighbors']['params'] = {}
-        self.adata.uns['neighbors']['params']['n_neighbors']=self.n_neighbors
-        self.adata.uns['neighbors']['params']['method'] = self.method
+        self._adata.uns['neighbors']={}
+        self._adata.uns['neighbors']['params'] = {}
+        self._adata.uns['neighbors']['params']['n_neighbors']=self._n_neighbors
+        self._adata.uns['neighbors']['params']['method'] = self._method
         
-        self.adata.uns['neighbors']['connectivities'] = self.connectivities
-        self.adata.uns['neighbors']['distances'] = self.distances
+        self._adata.uns['neighbors']['connectivities'] = self._connectivities
+        self._adata.uns['neighbors']['distances'] = self._distances
         
         self.logger.info('END\n')
