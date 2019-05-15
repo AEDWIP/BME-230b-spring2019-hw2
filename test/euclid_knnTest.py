@@ -4,7 +4,7 @@ Created on May 5, 2019
 @author: andrewdavidson
 '''
 
-from euclid_knn import knnG
+from euclid_knn import KnnG
 import logging
 import numpy as np
 import scanpy.api as sc
@@ -56,20 +56,23 @@ class euclid_knnTest(unittest.TestCase):
         self.logger.info("END \n")
 
     ############################################################
-    def testGetDistance(self):
+    def testCalcDistance(self):
         '''
         TODO:
         '''
         self.logger.info("BEGIN ")
         
         anndata = sc.read("../PBMC.merged.h5ad")
-        knng = knnG(None)
-        ret = knng._calDistance(anndata.X, rep='pca')
+        knng = KnnG(None) 
+        knng._adata = anndata
+        knng._PCA(npc=50)
+        knng._calDistance()
+        ret = knng._D
         
-        self.logger.info("knng.reduced.shape: {}".format(knng.reduced.shape))
+        self.logger.info("knng.reduced.shape: {}".format(knng._adata.obsm['X_pca'].shape))
         self.logger.info("ret.shape: {}".format(ret.shape))
         
-        self.assertTrue( (knng.reduced.shape   == (15476, 50)) )
+        self.assertTrue( (knng._adata.obsm['X_pca'].shape == (15476, 50)) )
         self.assertTrue( (ret.shape == (15476, 15476)) )
         
         print("ret:\n{}".format(ret[0:5,0:5]))
@@ -157,11 +160,11 @@ class euclid_knnTest(unittest.TestCase):
                             [0.11,  0.6,  0.7,  0.8 ],
                             [0.12,  0.2,  0.3 , 0.4 ]]
         
-        knng = knnG(None)
+        knng = KnnG(None)
         
-        knng.n_neighbors = 4
-        knng.nearestNeighborsGraph = {}
-        knn_indices, knn_dist =  knng.get_neighbors(mockDistance)
+        knng._n_neighbors = 4
+        #knng.nearestNeighborsGraph = {}
+        knn_indices, knn_dist =  knng._get_neighbors(mockDistance)
         self.logger.info("knn_indices:\n{}".format(knn_indices))
         self.logger.info("knn_dist:\n{}".format(knn_dist))
         
@@ -176,7 +179,7 @@ class euclid_knnTest(unittest.TestCase):
         self.logger.info("BEGIN")  
          
         anndata = sc.read("../PBMC.merged.h5ad")
-        knng = knnG(anndata)
+        knng = KnnG(anndata)
         self.logger.info("END\n")   
         
 if __name__ == "__main__":
