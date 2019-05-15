@@ -3,23 +3,12 @@
 from euclid_knn import KnnG
 import logging
 import numpy as np
-import pandas as pd
 #import scipy
-from sklearn.metrics import pairwise_distances
 from scanpy.neighbors import compute_connectivities_umap
-
 
 ################################################################################
 class bbknn_graph():
     '''
-    TODO: AEDWIP:
-    
-    Function performs batched balanced knn
-    INPUT: 
-        1. adata object with PCA done on it already
-        2. batch label
-        3. neighbors within each batch
-    
     Output: new knn distances and connectivites with shape (n_observations, n_neighbors*n_batches)
     
     public functions:
@@ -27,6 +16,11 @@ class bbknn_graph():
                  runPCA =True, pcs=50, method='umap', batch_unique=2)
                  
         def l_k_bbknn(self,l=2):
+        
+    updates:
+        adata.obsm['X_pca'] 
+        adata.uns['neighbors']['connectivities']
+        adata.uns['neighbors']['distances']
     '''
     
     logger = logging.getLogger(__name__)
@@ -149,24 +143,7 @@ class bbknn_graph():
             
         return ret
         
-    ######################################################################                
-    def _calcSplits(self, batchCounts):
-        '''
-        calculates how to split D base on batch sizes
-        
-        return example [3, 7]
-        '''
-        splits = []
-        start = 0
-        for i in range(len(batchCounts)):
-            bk, bc = batchCounts[i]
-            splits.append(start + bc)
-            start += bc 
-            
-        self.logger.info("splits:{}".format(splits))        
-        
-        return splits
-        
+      
     ######################################################################                
     def _calcNumCellsInEachBatch(self):
         '''
@@ -185,7 +162,7 @@ class bbknn_graph():
             ret.append((bk, sum(rows.values)[0]))
             
         return ret
-    
+      
     ######################################################################                
     def _calcPairWiseDistanceMatrix(self):
         '''
@@ -199,6 +176,24 @@ class bbknn_graph():
         
         return knng._D
         
+    ######################################################################                
+    def _calcSplits(self, batchCounts):
+        '''
+        calculates how to split D base on batch sizes
+        
+        return example [3, 7]
+        '''
+        splits = []
+        start = 0
+        for i in range(len(batchCounts)):
+            bk, bc = batchCounts[i]
+            splits.append(start + bc)
+            start += bc 
+            
+        self.logger.info("splits:{}".format(splits))        
+        
+        return splits
+
     ######################################################################    
     def _get_connectivities(self,knn_indices, knn_distances):
         d,c = compute_connectivities_umap(knn_indices, 
@@ -208,27 +203,18 @@ class bbknn_graph():
         self._distances = d
         self._connectivities = c
     
-    ######################################################################    
-    def _update_adata(self):
-        #updating adata.uns
-        self._adata.uns['neighbors']={}
-        self._adata.uns['neighbors']['params'] = {}
-        self._adata.uns['neighbors']['params']['n_neighbors']=self._neighbors_within_batch
-        self._adata.uns['neighbors']['params']['method'] = self._method
-    
-        assert self.connectivities is not None
-        assert self.distances is not None
-        
-        self._adata.uns['neighbors']['connectivities'] = self._connectivities
-        self._adata.uns['neighbors']['distances'] = self._distances
-    
-
     ######################################################################
-    def l_k_bbknn(self,l=2):
+    def _l_k_bbknnImplementation(self,l=2):
         '''
+        split this out to make testing easier. It does not cause any side effects
+        
         this method makes an l subsampling of the bbknn computed in the graph() 
         method. if k=4, meaning you are finding 4 neighbors between batches, 
         and l=2: subsample 2 neighbors from batch1 and 2 neighbors from batch2
+        
+        results are stored in
+            self.l_knn_indices
+            self.l_knn_distances
         '''
         if l >= self._neighbors_within_batch:
             raise ValueError('l cannot be equal or larger than k')
@@ -272,6 +258,35 @@ class bbknn_graph():
             self.logger.debug("tmpIdx:{}".format(tmpIndices))
             self.logger.debug("tmpIdx:{}\n".format(tmpDistances))
             
-        # TODO: AEDWIP:
-        self.logger.error("AEDWIP: need to call _get_connectivities() and _update()")
 
+       
+    ###################################################################### 
+    def l_k_bbknn(self, l=2):
+        '''
+        this method makes an l subsampling of the bbknn computed in the graph() 
+        method. if k=4, meaning you are finding 4 neighbors between batches, 
+        and l=2: subsample 2 neighbors from batch1 and 2 neighbors from batch2
+        
+        updates:
+            adata.obsm['X_pca'] 
+            adata.uns['neighbors']['connectivities']
+            adata.uns['neighbors']['distances']        
+        '''
+        self._l_k_bbknnImplementation(l)
+        
+        self._get_umap_connectivities(self.l_knn_indices, self.l_knn_distances)
+        self._update_adata()
+
+    ######################################################################    
+    def _update_adata(self):
+        #updating adata.uns
+        self._adata.uns['neighbors']={}
+        self._adata.uns['neighbors']['params'] = {}
+        self._adata.uns['neighbors']['params']['n_neighbors']=self._neighbors_within_batch
+        self._adata.uns['neighbors']['params']['method'] = self._method
+    
+        assert self.connectivities is not None
+        assert self.distances is not None
+        
+        self._adata.uns['neighbors']['connectivities'] = self._connectivities
+        self._adata.uns['neighbors']['distances'] = self._distances

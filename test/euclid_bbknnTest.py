@@ -73,7 +73,7 @@ class Eculid_bbknnTest(unittest.TestCase):
         bbknn.knn_indices = bb2nnIdx
         bbknn.knn_distances = bb2nnDists
         
-        bbknn.l_k_bbknn(l=1)
+        bbknn._l_k_bbknnImplementation(l=1)
         
         # get results
         retl_knn_indices = bbknn.l_knn_indices
