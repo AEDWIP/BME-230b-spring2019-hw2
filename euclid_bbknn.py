@@ -277,14 +277,27 @@ class bbknn_graph():
         self._l_k_bbknnImplementation(l)
         
         self._get_connectivities(self._l_knn_indices, self._l_knn_distances)
-        self._update_adata()
+        self._update_adata(l)
 
     ######################################################################    
-    def _update_adata(self):
+    def _update_adata(self, l=None):
+        '''
+        set up data correctly for scanpy.louvain:
+        if l_k_bbnn
+            'n_neighbors' = self._numBatches * l
+        else bbknn
+            'n_neighbors' = self._neighbors_within_batch
+        '''
+        
         #updating adata.uns
         self._adata.uns['neighbors']={}
         self._adata.uns['neighbors']['params'] = {}
-        self._adata.uns['neighbors']['params']['n_neighbors']=self._neighbors_within_batch
+        
+        n = self._neighbors_within_batch
+        if l:
+            n = self._numBatches * l
+            
+        self._adata.uns['neighbors']['params']['n_neighbors']=n
         self._adata.uns['neighbors']['params']['method'] = self._method
     
         assert self._connectivities is not None 
