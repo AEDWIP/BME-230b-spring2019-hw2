@@ -276,7 +276,7 @@ class bbknn_graph():
         '''
         self._l_k_bbknnImplementation(l)
         
-        self._get_umap_connectivities(self._l_knn_indices, self._l_knn_distances)
+        self._get_connectivities(self._l_knn_indices, self._l_knn_distances)
         self._update_adata()
 
     ######################################################################    

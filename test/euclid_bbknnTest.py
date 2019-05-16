@@ -82,12 +82,22 @@ class Eculid_bbknnTest(unittest.TestCase):
         retl_knn_distances = bbknn._l_knn_distances
         self.logger.info("retl_knn_distances:\n{}".format(retl_knn_distances))
 
-        expectedIdx = np.array([[1, 4],[1, 6],[1, 4],
-                                [1, 6],[1, 4],[1, 6],[1, 6]])
+        expectedIdx = np.array([[1, 4],
+                                [1, 6],
+                                [1, 4],
+                                [1, 6],
+                                [1, 4],
+                                [1, 6],
+                                [1, 6]])
         np.testing.assert_array_equal(expectedIdx, retl_knn_indices)
         
-        expectedDist = np.array([[ 1.,4.],[11., 13.],[21., 24.],
-                                 [31., 33.],[41., 44.],[51., 53.], [61., 63.]])
+        expectedDist = np.array([[ 1.,4.],
+                                 [11., 13.],
+                                 [21., 24.],
+                                 [31., 33.],
+                                 [41., 44.],
+                                 [51., 53.], 
+                                 [61., 63.]])
         np.testing.assert_array_equal(expectedDist, retl_knn_distances)
 
         self.logger.info("END\n")
