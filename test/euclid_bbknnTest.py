@@ -66,20 +66,20 @@ class Eculid_bbknnTest(unittest.TestCase):
                                     ])
         
         bbknn = bbknn_graph(adata=None, 
-                            neighbors_within_batch=2, pcs=None, method=None,
-                            batch_unique=2)
+                            neighbors_within_batch=2, pcs=None, method=None)
         
-        # initi bbknn with our test data
-        bbknn.knn_indices = bb2nnIdx
-        bbknn.knn_distances = bb2nnDists
+        # init bbknn with our test data
+        bbknn._knn_indices = bb2nnIdx
+        bbknn._knn_distances = bb2nnDists
+        bbknn._numBatches = 2
         
         bbknn._l_k_bbknnImplementation(l=1)
         
         # get results
-        retl_knn_indices = bbknn.l_knn_indices
+        retl_knn_indices = bbknn._l_knn_indices
         self.logger.info("retl_knn_indices:\n{}".format(retl_knn_indices))
         
-        retl_knn_distances = bbknn.l_knn_distances
+        retl_knn_distances = bbknn._l_knn_distances
         self.logger.info("retl_knn_distances:\n{}".format(retl_knn_distances))
 
         expectedIdx = np.array([[1, 4],[1, 6],[1, 4],
@@ -129,7 +129,7 @@ class Eculid_bbknnTest(unittest.TestCase):
                                 ])      
         
         
-        bbknn = bbknn_graph(None, neighbors_within_batch=2, batch_unique=2)  
+        bbknn = bbknn_graph(None, neighbors_within_batch=2)  
         
         batchCounts= [('0', 3), ('1', 4)]
         retBBKNNIdx,retBBKNNDist = bbknn._bbknn(D=pairwiseDist, batchCounts=batchCounts)

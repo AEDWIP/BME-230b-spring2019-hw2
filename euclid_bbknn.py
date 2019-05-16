@@ -40,28 +40,28 @@ class bbknn_graph():
         self._runPCA = runPCA
         self._psc = pcs
         self._method = method
-        self.numBatches = None # TODO: AEDWIP: we should figure this out from teh code
+        self._numBatches = None 
         
         self._knn_distances = None
         self._knn_indices = None
-        self.l_knn_indices = None
-        self.l_knn_distances = None
+        self._l_knn_indices = None
+        self._l_knn_distances = None
         self._connectivities = None
         self._distances = None
         
         if adata :
             batchCounts = self._calcNumCellsInEachBatch()
-            self.numBatches = len(batchCounts)
+            self._numBatches = len(batchCounts)
             numRows = adata.shape[0]
-            numCols = neighbors_within_batch*self.numBatches
+            numCols = neighbors_within_batch*self._numBatches
             self._knn_distances = np.zeros((numRows,numCols))
             self._knn_indices   = np.zeros((numRows,numCols), dtype=int)
             
             # run KnnG it will run pca and calculate nei
             D = self._calcPairWiseDistanceMatrix()
             
-            knn_indices, knn_dist = self._bbknn(D, batchCounts)
-            self._get_connectivities(knn_indices, knn_dist)
+            self._knn_indices, self._knn_dist = self._bbknn(D, batchCounts)
+            self._get_connectivities(self._knn_indices, self._knn_dist)
             self._update_adata()
         else:
             # unit test 
@@ -215,36 +215,36 @@ class bbknn_graph():
         and l=2: subsample 2 neighbors from batch1 and 2 neighbors from batch2
         
         results are stored in
-            self.l_knn_indices
-            self.l_knn_distances
+            self._l_knn_indices
+            self._l_knn_distances
         '''
         if l >= self._neighbors_within_batch:
             raise ValueError('l cannot be equal or larger than k')
             
         # init storage for results
-        self.l_knn_indices = np.zeros((self.knn_indices.shape[0], 2*l)).astype(int)
-        self.l_knn_distances = np.zeros((self.knn_distances.shape[0], 2*l))
+        self._l_knn_indices = np.zeros((self._knn_indices.shape[0], 2*l)).astype(int)
+        self._l_knn_distances = np.zeros((self._knn_distances.shape[0], 2*l))
             
-        nCols = self.knn_indices.shape[0]
+        nCols = self._knn_indices.shape[0]
         self.logger.debug("nCols:{}".format(nCols))
         
-        for rowIdx in range(self.l_knn_indices.shape[0]):
+        for rowIdx in range(self._l_knn_indices.shape[0]):
             # select the current rows to process   
-            rowIndices = self.knn_indices[rowIdx,:]
-            rowDist = self.knn_distances[rowIdx, :]
+            rowIndices = self._knn_indices[rowIdx,:]
+            rowDist = self._knn_distances[rowIdx, :]
             
             # split into batch_unique number of arrays   
-            rowIndicesSplits = np.split(rowIndices, self.numBatches)
-            rowDistSplits = np.split(rowDist, self.numBatches)
+            rowIndicesSplits = np.split(rowIndices, self._numBatches)
+            rowDistSplits = np.split(rowDist, self._numBatches)
                         
             # init storage for tmp results
-            tmpIndices = np.zeros(self.numBatches * l, dtype=int)
-            tmpDistances = np.zeros(self.numBatches * l)
+            tmpIndices = np.zeros(self._numBatches * l, dtype=int)
+            tmpDistances = np.zeros(self._numBatches * l)
             
             for splitIdx in range(len(rowIndicesSplits)):
                 # randomly select index values 
                 low = 0 
-                high = self.numBatches 
+                high = self._numBatches 
                 rIdx = np.random.randint(low, high, l)
                             
                 # copy split selections to final results    
@@ -254,8 +254,8 @@ class bbknn_graph():
                 tmpDistances[start:end] = rowDistSplits[splitIdx][rIdx]
                 
             
-            self.l_knn_indices[rowIdx]   = tmpIndices
-            self.l_knn_distances[rowIdx] = tmpDistances
+            self._l_knn_indices[rowIdx]   = tmpIndices
+            self._l_knn_distances[rowIdx] = tmpDistances
             
             self.logger.debug("tmpIdx:{}".format(tmpIndices))
             self.logger.debug("tmpIdx:{}\n".format(tmpDistances))
@@ -276,7 +276,7 @@ class bbknn_graph():
         '''
         self._l_k_bbknnImplementation(l)
         
-        self._get_umap_connectivities(self.l_knn_indices, self.l_knn_distances)
+        self._get_umap_connectivities(self._l_knn_indices, self._l_knn_distances)
         self._update_adata()
 
     ######################################################################    
