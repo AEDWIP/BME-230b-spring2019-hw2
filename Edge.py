@@ -18,3 +18,7 @@ class Edge(object):
         self._targetId = targetId
         self._weight = weight
         
+        
+    ############################################################                
+    def __repr__(self):
+        return "srcId:{} targetId:{} weight:{}".format(self._srcId, self._targetId, self._weight)

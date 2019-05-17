@@ -15,9 +15,14 @@ class Cluster(object):
     logger = logging.getLogger(__name__)
     
     ############################################################      
-    def __init__(self, nodeList):
+    def __init__(self, clusterId, nodeList):
+        self._clusterId = clusterId
         self._nodeList = nodeList
         
+    ############################################################                
+    def __repr__(self):
+        return "clusterId:{} numNodes:{}".format(self.clusterId, len(self._nodeList))
+    
     ############################################################
     def _calculateM(self):
         '''
@@ -28,6 +33,6 @@ class Cluster(object):
         '''
         m = 0
         for node in self._nodeList:
-            m += node._calculateM() 
+            m += node.getM() 
             
         return m       

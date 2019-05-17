@@ -10,6 +10,7 @@ import scanpy.api as sc
 from scipy.spatial.distance import pdist
 from setupLogging import setupLogging
 import unittest
+from louvain import Louvain
 
 ############################################################
 class LouvainTest(unittest.TestCase):
@@ -56,17 +57,31 @@ class LouvainTest(unittest.TestCase):
         g = self.createSimpleGraph()
         self.logger.info("g:\n:{}".format(g))
         self.logger.info("g.es['weight']:\n:{}".format(g.es['weight']))
-        self.logger.info("END")
+        self.logger.info("END\n")
 
     ############################################################
-    def testModularity(self):
+    def testBootStrapModularity(self):
         self.logger.info("BEGIN")
         
         g = self.createSimpleGraph()
-        expectedModularity = g.modularity()
+        
+        # modularity membership is a list with length = number of nodes
+        # the value in the list corresponds to the cluster the node is
+        ml = [i for i in range(g.vcount())]
+        expectedModularity = g.modularity(ml)
         self.logger.info("expectedModularity:{}".format(expectedModularity))
         
-        self.logger.info("END")
+        # test out code
+        listOfEdges = [ e.tuple for e in g.es]
+        self.logger.info("listOfEdges:\n{}".format(listOfEdges))
+        
+        listOfWeight = list(g.es['weight']) #[e['weights'] for e in g.es]
+        self.logger.info("listOfWeight:\n{}".format(listOfWeight))
+
+        louvainLevel0 = Louvain(None)
+        louvainLevel0.bootStrapInit(listOfEdges, listOfWeight)
+        self.logger.info("Q:{}".format(louvainLevel0._Q))
+        self.logger.info("END\n")
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

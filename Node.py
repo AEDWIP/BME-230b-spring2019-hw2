@@ -24,14 +24,20 @@ class Node(object):
         self._edges = {} # key is the edge's target id, value is the edge obj
         self._adjEdgeWeight = None
         
+    ############################################################                
+    def __repr__(self):
+        return "clusterId:{} nodeId:{} numEdges:{} adjEdgeWeight:{}".format(self._clusterId, 
+                                                           self._nodeId, len(self._edges.keys()),
+                                                           self._adjEdgeWeight)
+    
     ############################################################
     def addEdge(self, edge):
         '''
         can raise ValueError
         '''
         
-        if not self._edges[edge._targetId]:
-            self._adjEdgeWeight[edge._targetId] = edge
+        if not edge._targetId in self._edges:
+            self._edges[edge._targetId] = edge
         else:
             eMsg = "clusterId:{} nodeId:{} edge.targetId:{} was already added".format(self._clusterId, self._nodeId, edge._targetId)
             self.logger.error("ValueError:{}".format(eMsg))
@@ -45,7 +51,7 @@ class Node(object):
         '''
         if not self._adjEdgeWeight:
             w = 0
-            for targetId,edge in self._edges :
+            for key,edge in self._edges.items() :
                 w += edge._weight
                 
             self._adjEdgeWeight = w

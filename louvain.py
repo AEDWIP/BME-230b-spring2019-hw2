@@ -74,15 +74,15 @@ class Louvain(object):
         '''
         todo:
         '''
-        if nodeId in self._nodesLookup:
-            n = self._nodesLookup[nodeId]
+        if nodeId in self._nodeLookup:
+            n = self._nodeLookup[nodeId]
         else:
             n = Node(self._clusterId, nodeId)
-            self._clusterId += 1
-            self._nodesLookUp[nodeId] = n
-            cluster = Cluster([n])
+            self._nodeLookup[nodeId] = n
+            cluster = Cluster(self._clusterId, [n])
+            self._clusterId += 1            
             self._clusters.append(cluster)
-            self._nodesLookup[nodeId] = n
+            self._nodeLookup[nodeId] = n
             
         n.addEdge(targetEdge)
 
@@ -94,7 +94,6 @@ class Louvain(object):
         '''
         eMsg = "AEDWIP NOT IMPLEMENTED YET!"
         self.logger.error(eMsg)
-        raise Exception(eMsg)
         
     
     ############################################################
@@ -117,7 +116,7 @@ class Louvain(object):
         '''
         calculates modularity for graph
         '''
-                
+        self.logger.info("BEGIN")
         # note implemenation already multiplied by 1/2
         # TODO should we move the mulply out? it should technically be faster
         # does not effect Big O
@@ -125,21 +124,29 @@ class Louvain(object):
         
         modularitySumTerm = 0
         for edge in self._edges:
+            self.logger.info("\n{}".format(edge))
+            
             nodeI = self._nodeLookup[edge._srcId]
             nodeJ = self._nodeLookup[edge._targetId]
+            self.logger.info("nodeI:{}".format(nodeI))
+            self.logger.info("nodeJ:{}".format(nodeJ))
             
             # calculate the sigma term
             if not (nodeI._clusterId == nodeJ._clusterId):
+                self.logger.info("not in same cluster")
                 continue
             
             Aij = nodeI.getWeightForEdge(edge._targetId)
             ki = nodeI.getSumAdjWeight()
             kj = nodeI.getSumAdjWeight()
-            
-            modularitySumTerm += (Aij - ki*kj)
+            term = Aij - ki*kj
+            self.logger("Aij:{} - ki:{}*kj:{} == {}".format(Aij, ki, kj, term))
+            modularitySumTerm += term 
         
 
         self._Q = modularitySumTerm/m
+        self.logger.info("END\n")
+
     
     ############################################################
     def getModularity(self): 
