@@ -5,12 +5,12 @@ Created on May 16, 2019
 '''
 import igraph as ig
 import logging
+from louvain import Louvain
 import numpy as np
-import scanpy.api as sc
-from scipy.spatial.distance import pdist
+# import scanpy.api as sc
+# from scipy.spatial.distance import pdist
 from setupLogging import setupLogging
 import unittest
-from louvain import Louvain
 
 ############################################################
 class LouvainTest(unittest.TestCase):
@@ -28,7 +28,7 @@ class LouvainTest(unittest.TestCase):
         logging.shutdown()
         
     ############################################################
-    def createSimpleGraph(self):
+    def createSimpleIGraph(self):
         '''
         example from iGraph tutorial 
         https://igraph.org/python/doc/tutorial/tutorial.html
@@ -52,7 +52,7 @@ class LouvainTest(unittest.TestCase):
         return g
         
     ############################################################
-    def testCreateSimpleGraph(self):
+    def testCreateSimpleIGraph(self):
         self.logger.info("BEGIN")
         g = self.createSimpleGraph()
         self.logger.info("g:\n:{}".format(g))
@@ -62,14 +62,17 @@ class LouvainTest(unittest.TestCase):
     ############################################################
     def testBootStrapModularity(self):
         self.logger.info("BEGIN")
+        #g.community_multilevel()
         
-        g = self.createSimpleGraph()
+        g = self.createSimpleIGraph()
         
         # modularity membership is a list with length = number of nodes
         # the value in the list corresponds to the cluster the node is
         ml = [i for i in range(g.vcount())]
+        self.logger.info("membership:{}".format(ml))
         expectedModularity = g.modularity(ml)
         self.logger.info("expectedModularity:{}".format(expectedModularity))
+        self.logger.warn("the cluster only have a single node. no edge is inside how come modularity is not 0")
         
         # test out code
         listOfEdges = [ e.tuple for e in g.es]

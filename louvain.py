@@ -44,8 +44,14 @@ class Louvain(object):
         returns a Louvain object
         '''
         self._clusters = []
-        self._nodeLookup = {} # key is nodeId, value is node object
+        
+        # dictionary of all the the nodes in the graph
+        # key is nodeId, value is node object
+        self._nodeLookup = {} 
+        
+        # list of all the edges in the garpy
         self._edges = []
+        
         self._Q = None
         
         # TODO: AEDWIP: assert number of nodes == number of cells
@@ -115,12 +121,23 @@ class Louvain(object):
     def _calculateQ(self):
         '''
         calculates modularity for graph
+        
+        from igraph? looks wrong?
+        
+        Q=1/(2m) * sum( Aij-ki*kj / (2m) delta(ci,cj),i,j). 
+        m is the number of edges, 
+        Aij is the element of the A adjacency matrix in row i and column j, 
+        ki is the degree of node i, 
+        kj is the degree of node j, 
+        Ci and cj are the types of the two vertices (i and j). 
+        delta(x,y) is one iff x=y, 0 otherwise.
         '''
         self.logger.info("BEGIN")
         # note implemenation already multiplied by 1/2
         # TODO should we move the mulply out? it should technically be faster
         # does not effect Big O
         m = self._calculateM()
+        self.logger.info("m:{}".format(m))
         
         modularitySumTerm = 0
         for edge in self._edges:
@@ -139,8 +156,8 @@ class Louvain(object):
             Aij = nodeI.getWeightForEdge(edge._targetId)
             ki = nodeI.getSumAdjWeight()
             kj = nodeI.getSumAdjWeight()
-            term = Aij - ki*kj
-            self.logger("Aij:{} - ki:{}*kj:{} == {}".format(Aij, ki, kj, term))
+            term = Aij - ki*kj / 2*m
+            self.logger("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
             modularitySumTerm += term 
         
 

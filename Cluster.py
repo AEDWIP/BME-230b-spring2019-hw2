@@ -24,7 +24,7 @@ class Cluster(object):
         return "clusterId:{} numNodes:{}".format(self.clusterId, len(self._nodeList))
     
     ############################################################
-    def _calculateM(self):
+    def _getM(self):
         '''
         the partial m term in the Louvain paper
         "Fast unfolding of communities in large networks"
