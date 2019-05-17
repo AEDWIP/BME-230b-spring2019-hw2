@@ -9,6 +9,7 @@ import unittest
 from Edge import Edge
 from Node import Node
 from Cluster import Cluster
+from louvain import Louvain
 
 ############################################################
 class Test(unittest.TestCase):
@@ -61,15 +62,11 @@ class Test(unittest.TestCase):
         self.assertEqual(2, n1.getSumAdjWeight())
         self.assertEqual(2, n2.getSumAdjWeight())        
 
-        #
-        # create  cluster
-        #
+        # create  cluster0
         cluster0 = Cluster(clusterId="c0", nodeList=[n0, n1, n2])
         self.assertEqual(3, cluster0._getM())
 
-        #
         # create disjoint graph
-        #
         n3 = Node(clusterId="c1", nodeId=3)
         e6 = Edge(weight=1, srcId=3, targetId=4)
         n3.addEdge(e6)
@@ -81,7 +78,7 @@ class Test(unittest.TestCase):
         cluster1 = Cluster(clusterId="c1", nodeList=[n3, n4])
         self.assertEqual(1, cluster1._getM())
 
-
+        level0 = Louvain([cluster0, cluster1])
         
         self.logger.info("END\n")
 
