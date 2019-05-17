@@ -45,7 +45,7 @@ class Louvain(object):
         '''
         self._clusters = []
         self._nodeLookup = {} # key is nodeId, value is node object
-        self._edges []
+        self._edges = []
         self._Q = None
         
         # TODO: AEDWIP: assert number of nodes == number of cells
@@ -57,8 +57,8 @@ class Louvain(object):
             node1Id, node2Id = edgeTuple
             
             # construct our object
-            edge1 = Edge(srcId=node1Id, targetId=node2Id, weight)
-            edge2 = Edge(srcId=node2Id, targetId=node1Id, weight)
+            edge1 = Edge(weight, srcId=node1Id, targetId=node2Id)
+            edge2 = Edge(weight, srcId=node2Id, targetId=node1Id)
             
             # edge1 and edge 2 are identical 
             self._edges.append(edge1)
@@ -77,7 +77,7 @@ class Louvain(object):
         if nodeId in self._nodesLookup:
             n = self._nodesLookup[nodeId]
         else:
-            n = Node(clusterId=self._clusterId, nodeId)
+            n = Node(self._clusterId, nodeId)
             self._clusterId += 1
             self._nodesLookUp[nodeId] = n
             cluster = Cluster([n])
@@ -130,7 +130,7 @@ class Louvain(object):
             
             # calculate the sigma term
             if not (nodeI._clusterId == nodeJ._clusterId):
-                continue:
+                continue
             
             Aij = nodeI.getWeightForEdge(edge._targetId)
             ki = nodeI.getSumAdjWeight()

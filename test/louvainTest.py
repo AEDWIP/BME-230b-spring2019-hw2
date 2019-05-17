@@ -52,10 +52,21 @@ class LouvainTest(unittest.TestCase):
         
     ############################################################
     def testCreateSimpleGraph(self):
+        self.logger.info("BEGIN")
         g = self.createSimpleGraph()
         self.logger.info("g:\n:{}".format(g))
         self.logger.info("g.es['weight']:\n:{}".format(g.es['weight']))
+        self.logger.info("END")
 
+    ############################################################
+    def testModularity(self):
+        self.logger.info("BEGIN")
+        
+        g = self.createSimpleGraph()
+        expectedModularity = g.modularity()
+        self.logger.info("expectedModularity:{}".format(expectedModularity))
+        
+        self.logger.info("END")
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
