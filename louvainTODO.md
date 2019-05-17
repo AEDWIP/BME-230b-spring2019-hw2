@@ -16,3 +16,10 @@ Array of dim (number of samples) that stores the subgroup id ('0', '1', …) for
 
 AnnData
         ```
+        
+## Assumptions
+1. edges are weighted
+2. graph is undirected
+3. no self loops
+4. only a single edge between a given pair of vertexs
+    a. if you have multiple edges, model them as a single edge with a combined weight
