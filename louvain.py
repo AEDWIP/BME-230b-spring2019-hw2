@@ -40,9 +40,9 @@ class Louvain(object):
         returns a Louvain object
         '''
         self._clusters = []
+        self._nodeLookup = {} # key is nodeId, value is node object
         
         # TODO: AEDWIP: assert number of nodes == number of cells
-        nodesLookup = () # key is nodeId, value is node object
         self._clusterId = 0
         for i in range(len(listOfEdges)):
             # parse input
@@ -54,23 +54,25 @@ class Louvain(object):
             edge1 = Edge(targetId=node1Id, weight)
             edge2 = Edge(targetId=node2Id, weight)
 
-            self._build(nodesLookup, node1Id, targetEdge=edge2)
-            self._build(nodesLookup, node2Id, targetEdge=edge1)
+            self._build(node1Id, targetEdge=edge2)
+            self._build(node2Id, targetEdge=edge1)
+            
+        self._calculateQ()
 
     ############################################################
-    def _build(self, nodesLookup, nodeId, targetEdge):
+    def _build(self, nodeId, targetEdge):
         '''
         todo:
         '''
-        if nodeId in nodesLookup:
-            n = nodesLookup[nodeId]
+        if nodeId in self._nodesLookup:
+            n = self._nodesLookup[nodeId]
         else:
             n = Node(clusterId=self._clusterId, nodeId)
             self._clusterId += 1
             self._nodesLookUp[nodeId] = n
             cluster = Cluster([n])
             self._clusters.append(cluster)
-            nodesLookup[nodeId] = n
+            self._nodesLookup[nodeId] = n
             
         n.addEdge(targetEdge)
 
@@ -80,13 +82,31 @@ class Louvain(object):
         arguments:
             clusters: a list of cluster objects
         '''
-        self._clusters = clusters
+        eMsg = "AEDWIP NOT IMPLEMENTED YET!"
+        self.logger.error(eMsg)
+        raise Exception(eMsg)
         
-        self._Q = self._calculateQ()
-        
+    ############################################################
     def _calculateQ(self):
         '''
         calculates modularity
         '''
     
         return Q 
+    
+    ############################################################
+    def _calculateM(self):
+        '''
+        the m term in the Louvain paper
+        "Fast unfolding of communities in large networks"
+        
+        returns 1/2 the sum of all edges in the graph
+        '''
+        
+        m = 0
+        for cluster in self._clusters:
+            m += cluster._calculateM()
+    
+        return Q     
+    
+    

@@ -17,9 +17,24 @@ class Cluster(object):
 
     logger = logging.getLogger(__name__)
     
-   ############################################################      
+    ############################################################      
     def __init__(self, nodeList):
         self._nodeList = nodeList
+        
+    ############################################################
+    def _calculateM(self):
+        '''
+        the partial m term in the Louvain paper
+        "Fast unfolding of communities in large networks"
+        
+        returns 1/2 the sum of all edges in the the cluster
+        '''
+        m = 0
+        for node in self._nodeList:
+            m += node._calculateM() 
+            
+        return m       
+        
 #        '''
 #         arguments
 #             graph: 

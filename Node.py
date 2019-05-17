@@ -21,23 +21,90 @@ class Node(object):
         
         self._clusterId = clusterId
         self._nodeId = nodeId
-        self._edges = []
+        self._edges = {} # key is the edge's target id, value is the edge obj
         self._adjEdgeWeight = None
         
     ############################################################
     def addEdge(self, edge):
-        self._edges.append(edge)
+        '''
+        can raise ValueError
+        '''
+        
+        if not self._edges[edge._targetId]:
+            self._adjEdgeWeight[edge._targetId] = edge
+        else:
+            eMsg = "clusterId:{} nodeId:{} edge.targetId:{} was already added".format(self._clusterId, self._nodeId, edge._targetId)
+            self.logger.error("ValueError:{}".format(eMsg))
+            raise ValueError(eMsg)
           
     ############################################################
-    def sumAdjWeight(self):
-        ret = self._adjEdgeWeight
+    def getSumAdjWeight(self):
+        '''
+        This is the Ki term in Louvain paper 
+        "Fast unfolding of communities in large networks"
+        '''
         if not self._adjEdgeWeight:
             w = 0
-            for edge in self._edges :
+            for targetId,edge in self._edges :
                 w += edge._weight
                 
             self._adjEdgeWeight = w
                 
-            
+        return self._adjEdgeWeight
+    
+    ############################################################
+    def getM(self):   
+        '''
+        The nodes contribution to m in 
+        "Fast unfolding of communities in large networks"
         
+        returns 1/2 * self.getSumAdjWeight()
+        '''
+        return 0.5 * self.getSumAdjWeight()
+         
+   
+    ############################################################
+    def getWeightForEdge(self, edgeTargetId):
+        '''
+        This is the Aij term in Louvain paper 
+        "Fast unfolding of communities in large networks"
+        
+        can raise ValueError
+        '''
+        ret = 0
+        if edgeTargetId in self._edges:
+            ret = self._edges[edgeTargetId]._weight
+        else:
+            eMsg = "clusterId:{} nodeId:{} edge.targetId:{} missing".format(self._clusterId, self._nodeId, edgeTargetId)
+            self.logger.error("ValueError:{}".format(eMsg))
+            raise ValueError(eMsg)        
+        
+        return ret
+    
+    ############################################################
+    def getSigma(self, nodeLookup, edgeTargetId):
+        '''
+        This is the sigma(c1, c2)  term in Louvain paper 
+        "Fast unfolding of communities in large networks"
+        
+        arguments:
+            nodeLookup: dictionary with key == 'nodeId', value = node object
+        
+        return 1 if targetId is in same cluster else 0
+        
+        can raise ValueError
+        '''
+        ret = 0
+        if edgeTargetId in self._edges:
+            if nodeLookup[edgeTargetId] == self._clusterId:
+                ret = 1
+        else:
+            eMsg = "clusterId:{} nodeId:{} edge.targetId:{} missing".format(self._clusterId, self._nodeId, edgeTargetId)
+            self.logger.error("ValueError:{}".format(eMsg))
+            raise ValueError(eMsg)        
+        
+        return ret    
+    
+    
+   
         
