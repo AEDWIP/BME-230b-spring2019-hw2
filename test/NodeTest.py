@@ -8,6 +8,7 @@ from setupLogging import setupLogging
 import unittest
 from Edge import Edge
 from Node import Node
+from Cluster import Cluster
 
 ############################################################
 class Test(unittest.TestCase):
@@ -32,7 +33,7 @@ class Test(unittest.TestCase):
         n1 = Node(clusterId="c0", nodeId=1)
         n2 = Node(clusterId="c0", nodeId=2)
 
-        # undirected graph
+        # undirected  triangle graph
         e0 = Edge(weight=1, srcId=0, targetId=1)
         n0.addEdge(e0)
 
@@ -60,13 +61,11 @@ class Test(unittest.TestCase):
         self.assertEqual(2, n1.getSumAdjWeight())
         self.assertEqual(2, n2.getSumAdjWeight())        
 
-#         
-#         e1 = Edge(weight=1, srcId=0, targetId=2)
-#         e2 = Edge(weight=1, srcId=0, targetId=1)
-#         e1 = Edge(weight=1, srcId=0, targetId=2)
-#         
-#         # in cartesian coordinates e3 weight should be > 1
-#         e2 = Edge(weight=1, srcId=1, targetId=2)
+        #
+        # create  cluster
+        #
+        cluster0 = Cluster(clusterId="c0", nodeList=[n0, n1, n2])
+        self.assertEqual(3, cluster0._getM())
 #         
 
 
