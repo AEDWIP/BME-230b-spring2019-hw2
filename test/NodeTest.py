@@ -34,12 +34,31 @@ class Test(unittest.TestCase):
 
         # undirected graph
         e0 = Edge(weight=1, srcId=0, targetId=1)
-        e1 = Edge(weight=1, srcId=1, targetId=0)
         n0.addEdge(e0)
+
+        e1 = Edge(weight=1, srcId=1, targetId=0)
         n1.addEdge(e1)
         
         self.assertEqual(1, n0.getSumAdjWeight())
         self.assertEqual(1, n1.getSumAdjWeight())
+        
+        e2 = Edge(weight=1, srcId=0, targetId=2)
+        n0.addEdge(e2)   
+        
+        e3 = Edge(weight=1, srcId=2, targetId=0) 
+        n2.addEdge(e3)    
+        
+        self.assertEqual(2, n0.getSumAdjWeight())
+        self.assertEqual(1, n2.getSumAdjWeight())
+
+        e4 = Edge(weight=1, srcId=2, targetId=1)
+        n1.addEdge(e4)
+        
+        e5 = Edge(weight=1, srcId=1, targetId=2) 
+        n2.addEdge(e5) 
+        
+        self.assertEqual(2, n1.getSumAdjWeight())
+        self.assertEqual(2, n2.getSumAdjWeight())        
 
 #         
 #         e1 = Edge(weight=1, srcId=0, targetId=2)
