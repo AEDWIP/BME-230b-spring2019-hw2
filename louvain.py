@@ -11,8 +11,12 @@ from Cluster import Cluster
 
 ############################################################
 class Louvain(object):
-    '''
-    classdocs
+    '''    
+    public functions:
+    
+        bootStrapInit(self, listOfEdges, listOfWeight)
+        getModularity()
+        __init__(self, clusters)
     '''
     logger = logging.getLogger(__name__)
 
@@ -41,6 +45,8 @@ class Louvain(object):
         '''
         self._clusters = []
         self._nodeLookup = {} # key is nodeId, value is node object
+        self._edges []
+        self._Q = None
         
         # TODO: AEDWIP: assert number of nodes == number of cells
         self._clusterId = 0
@@ -51,11 +57,15 @@ class Louvain(object):
             node1Id, node2Id = edgeTuple
             
             # construct our object
-            edge1 = Edge(targetId=node1Id, weight)
-            edge2 = Edge(targetId=node2Id, weight)
+            edge1 = Edge(srcId=node1Id, targetId=node2Id, weight)
+            edge2 = Edge(srcId=node2Id, targetId=node1Id, weight)
+            
+            # edge1 and edge 2 are identical 
+            self._edges.append(edge1)
+            # TODO:AEDWIP double check if we need to either remove 1/2 or add edge2
 
-            self._build(node1Id, targetEdge=edge2)
-            self._build(node2Id, targetEdge=edge1)
+            self._build(node1Id, targetEdge=edge1)
+            self._build(node2Id, targetEdge=edge2)
             
         self._calculateQ()
 
@@ -86,13 +96,6 @@ class Louvain(object):
         self.logger.error(eMsg)
         raise Exception(eMsg)
         
-    ############################################################
-    def _calculateQ(self):
-        '''
-        calculates modularity
-        '''
-    
-        return Q 
     
     ############################################################
     def _calculateM(self):
@@ -107,6 +110,37 @@ class Louvain(object):
         for cluster in self._clusters:
             m += cluster._calculateM()
     
-        return Q     
+        return m 
     
+    ############################################################
+    def _calculateQ(self):
+        '''
+        calculates modularity for graph
+        '''
+                
+        # note implemenation already multiplied by 1/2
+        # TODO should we move the mulply out? it should technically be faster
+        # does not effect Big O
+        m = self._calculateM()
+        
+        modularitySumTerm = 0
+        for edge in self._edges:
+            nodeI = self._nodeLookup[edge._srcId]
+            nodeJ = self._nodeLookup[edge._targetId]
+            
+            # calculate the sigma term
+            if not (nodeI._clusterId == nodeJ._clusterId):
+                continue:
+            
+            Aij = nodeI.getWeightForEdge(edge._targetId)
+            ki = nodeI.getSumAdjWeight()
+            kj = nodeI.getSumAdjWeight()
+            
+            modularitySumTerm += (Aij - ki*kj)
+        
+
+        self._Q = modularitySumTerm/m
     
+    ############################################################
+    def getModularity(self): 
+        return self.Q   

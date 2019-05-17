@@ -13,7 +13,8 @@ class Edge(object):
     logger = logging.getLogger(__name__)
         
     ############################################################        
-    def __init__(self, targetId, weight):
+    def __init__(self, srcId, targetId, weight):
+        self._srcId = srcId
         self._targetId = targetId
         self._weight = weight
         

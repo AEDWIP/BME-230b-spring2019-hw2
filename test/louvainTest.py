@@ -16,7 +16,7 @@ class LouvainTest(unittest.TestCase):
     setupLogging( default_path='logging.test.ini.json')
     logger = logging.getLogger(__name__)
 
-   ############################################################
+    ############################################################
     def setUp(self):
         pass
 

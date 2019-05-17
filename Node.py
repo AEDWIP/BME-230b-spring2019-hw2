@@ -81,30 +81,5 @@ class Node(object):
         
         return ret
     
-    ############################################################
-    def getSigma(self, nodeLookup, edgeTargetId):
-        '''
-        This is the sigma(c1, c2)  term in Louvain paper 
-        "Fast unfolding of communities in large networks"
-        
-        arguments:
-            nodeLookup: dictionary with key == 'nodeId', value = node object
-        
-        return 1 if targetId is in same cluster else 0
-        
-        can raise ValueError
-        '''
-        ret = 0
-        if edgeTargetId in self._edges:
-            if nodeLookup[edgeTargetId] == self._clusterId:
-                ret = 1
-        else:
-            eMsg = "clusterId:{} nodeId:{} edge.targetId:{} missing".format(self._clusterId, self._nodeId, edgeTargetId)
-            self.logger.error("ValueError:{}".format(eMsg))
-            raise ValueError(eMsg)        
-        
-        return ret    
-    
-    
    
         
