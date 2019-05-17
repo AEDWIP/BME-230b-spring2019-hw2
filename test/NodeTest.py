@@ -66,7 +66,20 @@ class Test(unittest.TestCase):
         #
         cluster0 = Cluster(clusterId="c0", nodeList=[n0, n1, n2])
         self.assertEqual(3, cluster0._getM())
-#         
+
+        #
+        # create disjoint graph
+        #
+        n3 = Node(clusterId="c1", nodeId=3)
+        e6 = Edge(weight=1, srcId=3, targetId=4)
+        n3.addEdge(e6)
+
+        n4 = Node(clusterId="c1", nodeId=4)
+        e6 = Edge(weight=1, srcId=4, targetId=3)
+        n4.addEdge(e6)
+        
+        cluster1 = Cluster(clusterId="c1", nodeList=[n3, n4])
+        self.assertEqual(1, cluster1._getM())
 
 
         
