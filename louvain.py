@@ -200,8 +200,8 @@ class Louvain(object):
                 continue
             
             Aij = nodeI.getWeightForEdge(edge._targetId)
-            ki = nodeI.getSumAdjWeight()
-            kj = nodeI.getSumAdjWeight()
+            ki = nodeI.getSumAdjWeights()
+            kj = nodeI.getSumAdjWeights()
             self.logger.info("Aij:{} ki:{} kj:{} 2*m:{}".format(Aij, ki, kj, 2*m))
             self.logger.info(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
             term = Aij - (ki*kj) / (2*m) 
