@@ -35,28 +35,28 @@ class Test(unittest.TestCase):
         n2 = Node(clusterId="c0", nodeId=2)
 
         # undirected  triangle graph
-        e0 = Edge(weight=1, srcId=0, targetId=1)
+        e0 = Edge(weight=1.0, srcId=0, targetId=1)
         n0.addEdge(e0)
 
-        e1 = Edge(weight=1, srcId=1, targetId=0)
+        e1 = Edge(weight=1.0, srcId=1, targetId=0)
         n1.addEdge(e1)
         
         self.assertEqual(1, n0.getSumAdjWeight())
         self.assertEqual(1, n1.getSumAdjWeight())
         
-        e2 = Edge(weight=1, srcId=0, targetId=2)
+        e2 = Edge(weight=1.0, srcId=0, targetId=2)
         n0.addEdge(e2)   
         
-        e3 = Edge(weight=1, srcId=2, targetId=0) 
+        e3 = Edge(weight=1.0, srcId=2, targetId=0) 
         n2.addEdge(e3)    
         
         self.assertEqual(2, n0.getSumAdjWeight())
         self.assertEqual(1, n2.getSumAdjWeight())
 
-        e4 = Edge(weight=1, srcId=1, targetId=2)
+        e4 = Edge(weight=1.0, srcId=1, targetId=2)
         n1.addEdge(e4)
         
-        e5 = Edge(weight=1, srcId=2, targetId=1) 
+        e5 = Edge(weight=1.0, srcId=2, targetId=1) 
         n2.addEdge(e5) 
         
         self.assertEqual(2, n1.getSumAdjWeight())
@@ -68,11 +68,11 @@ class Test(unittest.TestCase):
 
         # create disjoint graph
         n3 = Node(clusterId="c1", nodeId=3)
-        e6 = Edge(weight=1, srcId=3, targetId=4)
+        e6 = Edge(weight=1.0, srcId=3, targetId=4)
         n3.addEdge(e6)
 
         n4 = Node(clusterId="c1", nodeId=4)
-        e6 = Edge(weight=1, srcId=4, targetId=3)
+        e6 = Edge(weight=1.0, srcId=4, targetId=3)
         n4.addEdge(e6)
         
         cluster1 = Cluster(clusterId="c1", nodeList=[n3, n4])
@@ -82,6 +82,7 @@ class Test(unittest.TestCase):
         self.assertEqual(4, level0._getM())
         
         self.logger.info("level0._Q:{}".format(level0._Q))
+        self.assertEqual(level0._Q, 0.40625)
         
         self.logger.info("END\n")
 

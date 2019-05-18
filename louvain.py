@@ -180,14 +180,21 @@ class Louvain(object):
             Aij = nodeI.getWeightForEdge(edge._targetId)
             ki = nodeI.getSumAdjWeight()
             kj = nodeI.getSumAdjWeight()
-            term = Aij - ki*kj / 2*m 
+            self.logger.info("Aij:{} ki:{} kj:{} 2*m:{}".format(Aij, ki, kj, 2*m))
+            self.logger.info(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
+            term = Aij - (ki*kj) / (2*m) 
             self.logger.info("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
             modularitySumTerm += term 
         
 
-        self._Q = modularitySumTerm/m
+        self._Q = modularitySumTerm/(2*m)
+        
+        if not (-1.0 <= self._Q <= 1.0):
+            eMsg = "invalid Q=={} must be -1.0 <= Q <= 1.0".format(self._Q)
+            self.logger.error(eMsg)
+            raise ValueError(eMsg)
+        
         self.logger.info("END\n")
-
     
     ############################################################
     def getModularity(self): 
