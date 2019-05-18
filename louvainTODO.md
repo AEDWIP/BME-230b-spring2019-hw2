@@ -23,3 +23,10 @@ AnnData
 3. no self loops
 4. only a single edge between a given pair of vertexs
     a. if you have multiple edges, model them as a single edge with a combined weight
+    
+## add unit test
+- boot strap:
+    * knn : if b is a neighboor of a does not imply a is a neighboor of b. add test
+    
+ ## Code changes
+    - move bootstrap to a class method

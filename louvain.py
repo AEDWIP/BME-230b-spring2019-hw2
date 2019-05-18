@@ -55,24 +55,41 @@ class Louvain(object):
         self._Q = None
         
         # TODO: AEDWIP: assert number of nodes == number of cells
+        
         self._clusterId = 0
+        tmpDirectedEdgeLookup = set() # elements are (node1Id,node2Id)
         for i in range(len(listOfEdges)):
             # parse input
             edgeTuple = listOfEdges[i]
             weight = listOfWeight[i]
             node1Id, node2Id = edgeTuple
             
+            #
             # construct our object
-            edge1 = Edge(weight, srcId=node1Id, targetId=node2Id)
-            edge2 = Edge(weight, srcId=node2Id, targetId=node1Id)
+            # our design is node centric. To make debug, and unit test easier
+            # we want our nodes to have easy access to all their adj edges
+            # so if we have and edge from b to c, we want to insure there is an edge 
+            # from c to b. If the listOfEdges was generated from a pair wise distance
+            # matrix it would automatically contain both edge. How eve we are working
+            # with knn edges. given b is a nearest neighbor of c, does not imply c is
+            # nearest neighbor of b
+            #
+            # if b and c are symmetric, ie. b and c are both nearest neighbors of each other
+            # we need to be careful we do not add the same edge to the graph multiple times
+            #
             
-            # edge1 and edge 2 are identical 
-            self._edges.append(edge1)
-            # TODO:AEDWIP double check if we need to either remove 1/2 or add edge2
+            if not (node1Id, node2Id) in tmpDirectedEdgeLookup:
+                tmpDirectedEdgeLookup.add((node1Id, node2Id))
+                edge1 = Edge(weight, srcId=node1Id, targetId=node2Id)
+                self._edges.append(edge1)
+                self._build(node1Id, targetEdge=edge1)
 
-            self._build(node1Id, targetEdge=edge1)
-            self._build(node2Id, targetEdge=edge2)
-            
+            if not (node2Id, node1Id) in tmpDirectedEdgeLookup:
+                tmpDirectedEdgeLookup.add((node2Id, node1Id))  
+                edge2 = Edge(weight, srcId=node2Id, targetId=node1Id)
+                self._edges.append(edge2)
+                self._build(node2Id, targetEdge=edge2)
+
         self._calculateQ()
 
     ############################################################

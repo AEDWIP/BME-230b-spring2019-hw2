@@ -12,7 +12,7 @@ from Cluster import Cluster
 from louvain import Louvain
 
 ############################################################
-class Test(unittest.TestCase):
+class LouvainSimpleTest(unittest.TestCase):
     setupLogging( default_path='logging.test.ini.json')
     logger = logging.getLogger(__name__)
 
