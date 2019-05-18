@@ -93,10 +93,11 @@ class Louvain(object):
         n.addEdge(targetEdge)
 
     ############################################################
-    def __init__(self, clusters):
+    def __init__(self, clusters=None):
         '''
         arguments:
             clusters: a list of cluster objects
+            pass None for unit test
         '''
         self._clusters = clusters
         self._Q = None
@@ -107,6 +108,10 @@ class Louvain(object):
         
         # list of all the edges in the graph
         self._edges = []
+        
+        if not self._clusters:
+            self.logger.warn("self is not initialized. this is okay if you are running a unit test")
+            return
         
         for c in self._clusters:
             nodes = c._getNodes()

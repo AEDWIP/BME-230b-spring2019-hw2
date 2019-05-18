@@ -54,7 +54,7 @@ class LouvainTest(unittest.TestCase):
     ############################################################
     def testCreateSimpleIGraph(self):
         self.logger.info("BEGIN")
-        g = self.createSimpleGraph()
+        g = self.createSimpleIGraph()
         self.logger.info("g:\n:{}".format(g))
         self.logger.info("g.es['weight']:\n:{}".format(g.es['weight']))
         self.logger.info("END\n")
@@ -71,7 +71,8 @@ class LouvainTest(unittest.TestCase):
         ml = [i for i in range(g.vcount())]
         self.logger.info("membership:{}".format(ml))
         expectedModularity = g.modularity(ml)
-        self.logger.info("expectedModularity:{}".format(expectedModularity))
+        self.logger.info("iGraph Modularity:{}".format(expectedModularity))
+        self.logger.warn("iGraph Modularity can not be used to test bootstrap")
         self.logger.warn("the cluster only have a single node. no edge is inside how come modularity is not 0")
         
         # test out code
