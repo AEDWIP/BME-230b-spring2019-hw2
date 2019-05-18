@@ -187,6 +187,7 @@ class Louvain(object):
             modularitySumTerm += term 
         
 
+        self.logger.info("m:{} modularitySumTerm:{}".format(m, modularitySumTerm))
         self._Q = modularitySumTerm/(2*m)
         
         if not (-1.0 <= self._Q <= 1.0):

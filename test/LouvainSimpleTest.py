@@ -82,7 +82,7 @@ class Test(unittest.TestCase):
         self.assertEqual(4, level0._getM())
         
         self.logger.info("level0._Q:{}".format(level0._Q))
-        self.assertEqual(level0._Q, 0.40625)
+        self.assertEqual(level0._Q, 0.59375)
         
         self.logger.info("END\n")
 
