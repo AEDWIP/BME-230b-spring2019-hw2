@@ -45,6 +45,10 @@ class Node(object):
             raise ValueError(eMsg)
           
     ############################################################
+    def _getEdges(self):
+        return [v for k,v in self._edges.items()]
+        
+    ############################################################
     def getSumAdjWeight(self):
         '''
         This is the Ki term in Louvain paper 

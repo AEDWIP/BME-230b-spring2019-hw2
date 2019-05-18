@@ -27,7 +27,9 @@ class Cluster(object):
     def _getEdges(self):
         ret = []
         for n in self._nodeList:
-            ret += n._edges
+            ret += n._getEdges()
+            
+        self.logger.info("c:{} ret:\n{}".format(self._clusterId, ret))
         return ret
     
     ############################################################

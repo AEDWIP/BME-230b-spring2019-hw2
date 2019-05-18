@@ -109,12 +109,13 @@ class Louvain(object):
         self._edges = []
         
         for c in self._clusters:
-            nodes = c.getNodes()
+            nodes = c._getNodes()
             for n in nodes:
-                if n.nodeId not in self._nodeLookup:
-                    self._nodeLookup[n.nodeId] = n
+                if n._nodeId not in self._nodeLookup:
+                    self._nodeLookup[n._nodeId] = n
+                    self.logger.info("adding node:{}".format(n._nodeId))
                 else:
-                    eMsg = "processing cluster:{} node:was already in  _nodeLookup".format(c._clusterId, n.nodeId)
+                    eMsg = "processing cluster:{} node:was already in  _nodeLookup".format(c._clusterId, n._nodeId)
                     self.logger.error(eMsg)
                     raise ValueError(eMsg)
                 
@@ -179,8 +180,8 @@ class Louvain(object):
             Aij = nodeI.getWeightForEdge(edge._targetId)
             ki = nodeI.getSumAdjWeight()
             kj = nodeI.getSumAdjWeight()
-            term = Aij - ki*kj / 2*m
-            self.logger("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
+            term = Aij - ki*kj / 2*m 
+            self.logger.info("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
             modularitySumTerm += term 
         
 

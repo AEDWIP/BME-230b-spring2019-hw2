@@ -53,10 +53,10 @@ class Test(unittest.TestCase):
         self.assertEqual(2, n0.getSumAdjWeight())
         self.assertEqual(1, n2.getSumAdjWeight())
 
-        e4 = Edge(weight=1, srcId=2, targetId=1)
+        e4 = Edge(weight=1, srcId=1, targetId=2)
         n1.addEdge(e4)
         
-        e5 = Edge(weight=1, srcId=1, targetId=2) 
+        e5 = Edge(weight=1, srcId=2, targetId=1) 
         n2.addEdge(e5) 
         
         self.assertEqual(2, n1.getSumAdjWeight())
@@ -79,7 +79,9 @@ class Test(unittest.TestCase):
         self.assertEqual(1, cluster1._getM())
 
         level0 = Louvain([cluster0, cluster1])
-        self.assertEqual(5, level0._getM())
+        self.assertEqual(4, level0._getM())
+        
+        self.logger.info("level0._Q:{}".format(level0._Q))
         
         self.logger.info("END\n")
 
