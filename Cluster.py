@@ -24,6 +24,13 @@ class Cluster(object):
         return "clusterId:{} numNodes:{}".format(self.clusterId, len(self._nodeList))
     
     ############################################################
+    def _getEdges(self):
+        ret = []
+        for n in self._nodeList:
+            ret += n._edges
+        return ret
+    
+    ############################################################
     def _getM(self):
         '''
         the partial m term in the Louvain paper
@@ -36,3 +43,11 @@ class Cluster(object):
             m += node.getM() 
             
         return m       
+    
+    ############################################################
+    def _getNodes(self):
+        '''
+        returns a list of nodes
+        '''
+        return self._nodeList
+            

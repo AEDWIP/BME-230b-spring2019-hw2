@@ -79,6 +79,7 @@ class Test(unittest.TestCase):
         self.assertEqual(1, cluster1._getM())
 
         level0 = Louvain([cluster0, cluster1])
+        self.assertEqual(5, level0._getM())
         
         self.logger.info("END\n")
 

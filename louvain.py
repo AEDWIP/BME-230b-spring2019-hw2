@@ -49,7 +49,7 @@ class Louvain(object):
         # key is nodeId, value is node object
         self._nodeLookup = {} 
         
-        # list of all the edges in the garpy
+        # list of all the edges in the graph
         self._edges = []
         
         self._Q = None
@@ -98,12 +98,35 @@ class Louvain(object):
         arguments:
             clusters: a list of cluster objects
         '''
-        eMsg = "AEDWIP NOT IMPLEMENTED YET!"
-        self.logger.error(eMsg)
+        self._clusters = clusters
+        self._Q = None
+        
+        # dictionary of all the the nodes in the graph
+        # key is nodeId, value is node object
+        self._nodeLookup = {} 
+        
+        # list of all the edges in the graph
+        self._edges = []
+        
+        for c in self._clusters:
+            nodes = c.getNodes()
+            for n in nodes:
+                if n.nodeId not in self._nodeLookup:
+                    self._nodeLookup[n.nodeId] = n
+                else:
+                    eMsg = "processing cluster:{} node:was already in  _nodeLookup".format(c._clusterId, n.nodeId)
+                    self.logger.error(eMsg)
+                    raise ValueError(eMsg)
+                
+            self._edges += c._getEdges()
+
+        
+        # TODO: do we need Q? useful for debugging
+        self._calculateQ()
         
     
     ############################################################
-    def _calculateM(self):
+    def _getM(self):
         '''
         the m term in the Louvain paper
         "Fast unfolding of communities in large networks"
@@ -113,7 +136,7 @@ class Louvain(object):
         
         m = 0
         for cluster in self._clusters:
-            m += cluster._calculateM()
+            m += cluster._getM()
     
         return m 
     
@@ -136,7 +159,7 @@ class Louvain(object):
         # note implemenation already multiplied by 1/2
         # TODO should we move the mulply out? it should technically be faster
         # does not effect Big O
-        m = self._calculateM()
+        m = self._getM()
         self.logger.info("m:{}".format(m))
         
         modularitySumTerm = 0
