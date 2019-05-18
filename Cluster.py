@@ -23,7 +23,7 @@ class Cluster(object):
         
     ############################################################                
     def __repr__(self):
-        return "clusterId:{} numNodes:{} :weightsInsideCluster:{}".format(self.clusterId, len(self._nodeList),
+        return "clusterId:{} numNodes:{} :weightsInsideCluster:{}".format(self._clusterId, len(self._nodeList),
                                                  self._weightsInsideCluster )
     
     ############################################################

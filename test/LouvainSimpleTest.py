@@ -27,7 +27,7 @@ class LouvainSimpleTest(unittest.TestCase):
         logging.shutdown()
         
     ############################################################
-    def createTestGraph(self):
+    def createSimpleGraph(self):
         self.logger.info("BEGIN")
         n0 = Node(clusterId="c0", nodeId=0)
         n1 = Node(clusterId="c0", nodeId=1)
@@ -74,7 +74,7 @@ class LouvainSimpleTest(unittest.TestCase):
         ret = (level0, 
                [cluster0, cluster1], 
                [n0, n1, n2, n3, n4], 
-               [e0, e1, e2, e3, e4, e5. e6])
+               [e0, e1, e2, e3, e4, e5, e6])
         
         return (ret)
 
@@ -103,8 +103,14 @@ class LouvainSimpleTest(unittest.TestCase):
         e3 = Edge(weight=1.0, srcId=2, targetId=0) 
         n2.addEdge(e3)    
         
+        # test print functions
+        self.logger.info("e3:{}".format(e3))        
+        
         self.assertEqual(2, n0.getSumAdjWeights())
         self.assertEqual(1, n2.getSumAdjWeights())
+        
+        # test print functions
+        self.logger.info("n2:{}".format(n2))
 
         e4 = Edge(weight=1.0, srcId=1, targetId=2)
         n1.addEdge(e4)
@@ -118,6 +124,9 @@ class LouvainSimpleTest(unittest.TestCase):
         # create  cluster0
         cluster0 = Cluster(clusterId="c0", nodeList=[n0, n1, n2])
         self.assertEqual(3, cluster0._getM())
+
+        # test print functions
+        self.logger.info("cluster0:{}".format(cluster0))        
 
         # create disjoint graph
         n3 = Node(clusterId="c1", nodeId=3)
@@ -140,6 +149,21 @@ class LouvainSimpleTest(unittest.TestCase):
         
         # test 
         
+        self.logger.info("END\n")
+
+    ############################################################
+    def testQ(self):
+        self.logger.info("BEGIN")
+        
+        # test modularity calculation
+        ret = self.createSimpleGraph()
+        clusterList = ret[1]
+        self.logger.info("clusterList:\n{}".format(clusterList))
+        level0 = Louvain(clusterList)
+        self.assertEqual(4, level0._getM())
+        
+        self.logger.info("level0._Q:{}".format(level0._Q))
+        self.assertEqual(level0._Q, 0.59375)        
         self.logger.info("END\n")
 
 if __name__ == "__main__":
