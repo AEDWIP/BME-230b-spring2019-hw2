@@ -224,10 +224,25 @@ class LouvainSimpleTest(unittest.TestCase):
         
         cluster2 = Cluster(clusterId="2", nodeList=[n2, n4, n5])
         
-        louvain = Louvain([cluster1, cluster2])
+        louvain1 = Louvain([cluster1, cluster2])
         
-        self.logger.info("Q:{}".format(louvain._Q))
-        self.assertEqual(louvain._Q, 0.5599999999999999)
+        # calculate modularty of orginal graph
+        self.logger.info("louvain1._Q:{}".format(louvain1._Q))
+        self.assertEqual(louvain1._Q, 0.5599999999999999)
+        
+        # move node 2 from cluster 2 to cluster 1
+        n2._clusterId = "c1"
+        cluster1 = Cluster(clusterId="1", nodeList=[n0, n1, n2, n3])
+        cluster2 = Cluster(clusterId="2", nodeList=[n4, n5])
+        
+        # calculate modularty
+        louvain2 = Louvain([cluster1, cluster2])
+        self.logger.info("louvain2._Q:{}".format(louvain2._Q))
+        self.assertEqual(louvain2._Q, 0.5199999999999999)
+
+        self.logger.info("change in modularity:{}".format(louvain1._Q - louvain2._Q))
+        
+
 
 
 if __name__ == "__main__":
