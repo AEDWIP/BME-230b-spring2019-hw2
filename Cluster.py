@@ -23,8 +23,8 @@ class Cluster(object):
         
     ############################################################                
     def __repr__(self):
-        return "clusterId:{} numNodes:{} :weightsInsideCluster:{}".format(self._clusterId, len(self._nodeList),
-                                                 self._weightsInsideCluster )
+        return "clusterId:{} numNodes:{} :weightsInsideCluster:{} totalWeight:{}".\
+            format(self._clusterId, len(self._nodeList),self._weightsInsideCluster, self._totalWeight)
     
     ############################################################
     def _getEdges(self):
@@ -59,7 +59,7 @@ class Cluster(object):
     ############################################################
     def getSumOfWeightsInsideCluster(self, graphNodesLookup):
         '''
-        This is the 'Sigma in term' in Louvain paper 
+        This is the 'Sigma in' term: in Louvain paper 
         "Fast unfolding of communities in large networks"
         
         arguments:
@@ -70,7 +70,8 @@ class Cluster(object):
         if not self._weightsInCluster:
             self._weightsInCluster  = 0
             for n in self._nodeList:
-                self._weightsInsideCluster += n.getSumOfWeightsInsideCluster(graphNodesLookup)
+                kiin = n.getSumOfWeightsInsideCluster(self._clusterId, graphNodesLookup)
+                self._weightsInsideCluster += kiin
             
         return self._weightsInCluster                    
 
@@ -87,3 +88,23 @@ class Cluster(object):
             
         return self.self._totalWeight
         
+    ############################################################
+    def _removeNode(self, node):
+        '''
+        TODO
+        '''
+        recalculate self getSumOfWeights
+        recalculate self _weightsInCluster 
+
+        node.removedFromCluster(self._clusterId)
+        
+    ############################################################
+    def _addNode(self, node):
+        '''
+        TODO
+        '''
+        recalculate self getSumOfWeights   
+        recalculate self _weightsInCluster 
+        node.addedToCluster(self._clusterId) 
+        
+
