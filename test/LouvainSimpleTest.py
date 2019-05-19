@@ -226,8 +226,8 @@ class LouvainSimpleTest(unittest.TestCase):
         
         louvain = Louvain([cluster1, cluster2])
         
-        # Q:0.47000000000000003
         self.logger.info("Q:{}".format(louvain._Q))
+        self.assertEqual(louvain._Q, 0.5599999999999999)
 
 
 if __name__ == "__main__":
