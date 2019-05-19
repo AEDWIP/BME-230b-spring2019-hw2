@@ -137,7 +137,7 @@ class Louvain(object):
                     self._nodeLookup[n._nodeId] = n
                     self.logger.info("adding node:{}".format(n._nodeId))
                 else:
-                    eMsg = "processing cluster:{} node:was already in  _nodeLookup".format(c._clusterId, n._nodeId)
+                    eMsg = "processing cluster:{} node:{} was already in  _nodeLookup".format(c._clusterId, n._nodeId)
                     self.logger.error(eMsg)
                     raise ValueError(eMsg)
                 
@@ -201,8 +201,10 @@ class Louvain(object):
             
             Aij = nodeI.getWeightForEdge(edge._targetId)
             ki = nodeI.getSumAdjWeights()
-            kj = nodeI.getSumAdjWeights()
-            self.logger.info("Aij:{} ki:{} kj:{} 2*m:{}".format(Aij, ki, kj, 2*m))
+            kj = nodeJ.getSumAdjWeights()
+            i = edge._srcId
+            j = edge._targetId
+            self.logger.info("i:{} j:{} A{}{}:{} k{}:{} k{}:{} 2*m:{}".format(i,j, i, j, Aij, i, ki, j, kj, 2*m))
             self.logger.info(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
             term = Aij - (ki*kj) / (2*m) 
             self.logger.info("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))

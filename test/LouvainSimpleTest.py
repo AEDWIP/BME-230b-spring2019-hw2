@@ -28,6 +28,20 @@ class LouvainSimpleTest(unittest.TestCase):
         
     ############################################################
     def createSimpleGraph(self):
+        '''
+        creates two disjoint graphs, one is a triangle, the other is a pair of nodes
+        connected by a single edge
+        
+        creates two cluster. one for each of the disjoint graphs
+        
+        all edge weights are 1
+        
+        returns (level0Louvain, 
+               [cluster0, cluster1], 
+               [n0, n1, n2, n3, n4], 
+               [e0, e1, e2, e3, e4, e5, e6])
+        
+        '''
         self.logger.info("BEGIN")
         n0 = Node(clusterId="c0", nodeId=0)
         n1 = Node(clusterId="c0", nodeId=1)
@@ -165,6 +179,56 @@ class LouvainSimpleTest(unittest.TestCase):
         self.logger.info("level0._Q:{}".format(level0._Q))
         self.assertEqual(level0._Q, 0.59375)        
         self.logger.info("END\n")
+        
+    ############################################################
+    def testChangeInQ(self):
+        self.logger.info("BEGIN")
+        
+        n0 = Node(clusterId="c1", nodeId=0)
+        n1 = Node(clusterId="c1", nodeId=1)
+        n3 = Node(clusterId="c1", nodeId=3)
+        
+        e1 = Edge(weight=1.0, srcId=0, targetId=1) 
+        n0.addEdge(e1)
+        e2 = Edge(weight=1.0, srcId=0, targetId=2) 
+        n0.addEdge(e2)
+        e3 = Edge(weight=1.0, srcId=0, targetId=3) 
+        n0.addEdge(e3)
+
+        e4 = Edge(weight=1.0, srcId=1, targetId=0) 
+        n1.addEdge(e4)
+        
+
+        e5 = Edge(weight=1.0, srcId=3, targetId=0) 
+        n3.addEdge(e5)
+        
+        cluster1 = Cluster(clusterId="1", nodeList=[n0, n1, n3])
+
+        n2 = Node(clusterId="c2", nodeId=2)
+        e6 = Edge(weight=1.0, srcId=2, targetId=0) 
+        n2.addEdge(e6)
+
+        
+        n4 = Node(clusterId="c2", nodeId=4)
+        n5 = Node(clusterId="c2", nodeId=5)
+        e7 = Edge(weight=1.0, srcId=4, targetId=5) 
+        n4.addEdge(e7)
+        e8 = Edge(weight=1.0, srcId=5, targetId=4) 
+        n5.addEdge(e8)
+        
+        e9 = Edge(weight=1.0, srcId=4, targetId=2) 
+        n4.addEdge(e9)
+        
+        e10 = Edge(weight=1.0, srcId=2, targetId=4) 
+        n2.addEdge(e10)
+        
+        cluster2 = Cluster(clusterId="2", nodeList=[n2, n4, n5])
+        
+        louvain = Louvain([cluster1, cluster2])
+        
+        # Q:0.47000000000000003
+        self.logger.info("Q:{}".format(louvain._Q))
+
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
