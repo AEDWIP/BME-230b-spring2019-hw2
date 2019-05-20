@@ -73,10 +73,10 @@ class Cluster(object):
             for n in self._nodeList:
                 self.logger.info("clusterId:{} nodeId:{}".format(self._clusterId, n._nodeId))
                 kiin = n.getSumOfWeightsInsideCluster(self._clusterId, graphNodesLookup)
-                if not kiin:
+                if not kiin: # TODO: AEDWIP
                     self.logger.info("kiin WTF?")
-                elif not self._weightsInsideCluster:
-                    self.logger.info("_weightsInsideCluster WTF?")
+#                 elif not self._weightsInsideCluster: value of zero drops us into this block
+#                     self.logger.info("_weightsInsideCluster WTF? if value is zero okay:{}".format(self._weightsInsideCluster))
 
                 self._weightsInsideCluster += kiin
             
@@ -108,7 +108,7 @@ class Cluster(object):
         # TODO maintain an index remove in linear, index is constant time
         self._nodeList.remove(node)    
     ############################################################
-    def _addNode(self, node, graphNodesLookup):
+    def _addNode(self, node, targetClusterId, graphNodesLookup):
         '''
         TODO
         
@@ -116,7 +116,7 @@ class Cluster(object):
 
         '''
         self._totalWeight += node.getSumAdjWeights()
-        kiin = node.getSumOfWeightsInsideCluster(self._clusterId, graphNodesLookup)
+        kiin = node.getSumOfWeightsInsideCluster(targetClusterId, graphNodesLookup)
         self._weightsInsideCluster += kiin
         
         self._nodeList.append(node)
@@ -126,6 +126,7 @@ class Cluster(object):
         '''
         TODO
         '''
-        self._removeNode
-        targetCluster.addNode
-        node.moveToCluster(targetCluster, graphNodesLookup)
+        self._removeNode(node, graphNodesLookup)
+        targetClusterId = targetCluster._clusterId        
+        targetCluster._addNode(node, targetClusterId, graphNodesLookup)
+        node.moveToCluster(targetCluster._clusterId, graphNodesLookup)

@@ -199,11 +199,11 @@ class Node(object):
         TODO:
         '''
         # move does not effect self kiin for fromCluster or toCluster        
-        for e in self._edgesDict:
-            n = graphNodesLookup[e._targetId]
-            n._adjustKiin(nodeId=self._nodeId, 
-                         fromCluster=self._clusterId,
-                         toCluster=clusterId,
+        for key, e in self._edgesDict.items():
+            targetNode = graphNodesLookup[e._targetId]
+            targetNode._adjustKiin(nodeId=self._nodeId,  
+                         fromClusterId=self._clusterId,
+                         toClusterId=clusterId, 
                          weight=e._weight)
             
         self._clusterId = clusterId

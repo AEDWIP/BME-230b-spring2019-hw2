@@ -89,10 +89,10 @@ class LouvainSimpleTest(unittest.TestCase):
         nodeList = [n0, n1, n2, n3, n4]
         graphNodesLookup = { n._nodeId:n for n in nodeList}
         
-        for n in nodeList:
-            # because we used _addEdge() instead of addEdges()
-            # we need to make sure cache is set up
-            n._initKiinCache(graphNodesLookup)
+#         for n in nodeList:
+#             # because we used _addEdge() instead of addEdges()
+#             # we need to make sure cache is set up
+#             n._initKiinCache(graphNodesLookup)
             
         ret = (level0, 
                clusters, 
@@ -271,8 +271,12 @@ class LouvainSimpleTest(unittest.TestCase):
         eb = Edge(weight=1.0, srcId=nb._nodeId, targetId=na._nodeId)
         na._addEdge(ea)
         nb._addEdge(eb)
-
         
+        for n in nodes:
+            # because we used _addEdge() instead of addEdges()
+            # we need to make sure cache is set up
+            n._initKiinCache(graphNodesLookup)        
+            
         self.logger.info("")                    
         for n in nodes:
             # for lazy evaluation to run
@@ -297,7 +301,7 @@ class LouvainSimpleTest(unittest.TestCase):
         self.assertEqual(c1._totalWeight, 3.0)        
         
         # test move
-        c0.moveNode(c1, nodes[0], graphNodesLookup)
+        c0.moveNode(c1, na, graphNodesLookup)
         
         self.logger.info("after move:c0:{}".format(c0))
         self.logger.info("after move:c1:{}".format(c1))
