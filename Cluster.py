@@ -116,7 +116,7 @@ class Cluster(object):
 
         '''
         if self._clusterId == targetClusterId:
-            self.logger.info("do not pass target id it confusing")
+            self.logger.info("do not pass target id it confusing") # this is the case
         else:
             self.logger.info("we need the target id")
             

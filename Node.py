@@ -4,6 +4,7 @@ Created on May 16, 2019
 @author: andrewdavidson
 '''
 import logging
+from unittest import case
 
 ############################################################
 class Node(object):
@@ -213,19 +214,26 @@ class Node(object):
         '''
         a node we are connected to was moved into a new cluster.
         '''
-        needToDecriment = fromClusterId in self._weightsInClusterDict
-        needToIncrement = toClusterId in self._weightsInClusterDict
+#         decrement case
+#             our clusterId == from fromClusterI
+#             
+#         increment case
+#             our cluster id == to clusterId
+            
+#         needToDecriment = fromClusterId in self._weightsInClusterDict #fails looks like it always true
+#         needToIncrement = toClusterId in self._weightsInClusterDict
         
-        if not (needToDecriment or needToIncrement):
-            eMsg = "self.nodeId{} in not connected to nodeId:{} fromClusterId:{} toClusterId:{}"\
-                .format(self._nodeId, nodeId, fromClusterId, toClusterId)
-            self.logger.error(eMsg)
-            raise ValueError(eMsg)
+        needToDecriment = self._clusterId == fromClusterId
+#         if not (needToDecriment or needToIncrement):
+#             eMsg = "self.nodeId{} in not connected to nodeId:{} fromClusterId:{} toClusterId:{}"\
+#                 .format(self._nodeId, nodeId, fromClusterId, toClusterId)
+#             self.logger.error(eMsg)
+#             raise ValueError(eMsg)
         
         if needToDecriment:
             self._weightsInClusterDict[fromClusterId] -= weight
             
-        if needToIncrement:
+        else:
             self._weightsInClusterDict[fromClusterId] += weight
             
         

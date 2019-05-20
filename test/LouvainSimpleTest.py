@@ -322,7 +322,8 @@ class LouvainSimpleTest(unittest.TestCase):
         self.assertEqual(nodes[0]._weightsInClusterDict, {'c0': 2.0, 'c1': 1.0})
         self.assertEqual(nodes[1]._weightsInClusterDict, {'c0': 1.0})
         self.assertEqual(nodes[2]._weightsInClusterDict, {'c0': 1.0})
-
+        
+        self.assertEqual(nodes[4]._weightsInClusterDict, {'c1': 1.0})     
         
         self.logger.info("END\n")            
 
