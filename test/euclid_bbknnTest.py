@@ -60,8 +60,8 @@ class Eculid_bbknnTest(unittest.TestCase):
                                     [11, 12, 13, 14],                                    
                                     [21, 22, 23, 24],
                                     [31, 32, 33, 34],
-                                    [41, 52, 43, 44],
-                                    [51, 62, 53, 54],
+                                    [41, 42, 43, 44],
+                                    [51, 52, 53, 54],
                                     [61, 62, 63, 64]
                                     ])
         
@@ -99,6 +99,35 @@ class Eculid_bbknnTest(unittest.TestCase):
                                  [51., 53.], 
                                  [61., 63.]])
         np.testing.assert_array_equal(expectedDist, retl_knn_distances)
+        
+        # make sure random sub setting works as expected
+        bbknn._l_k_bbknnImplementation(l=1)
+        retl_knn_indices2 = bbknn._l_knn_indices
+        self.logger.info("retl_knn_indices2:\n{}".format(retl_knn_indices2))
+        
+        expectedIdx2 = np.array([[2, 6],
+                                 [2, 4],
+                                 [2, 6],
+                                 [2, 6],
+                                 [2, 4],
+                                 [2, 4],
+                                 [2, 4]])
+        
+        np.testing.assert_array_equal(expectedIdx2, retl_knn_indices2)
+        
+        
+        retl_knn_distances2 = bbknn._l_knn_distances
+        self.logger.info("retl_knn_distances2:\n{}".format(retl_knn_distances2))
+        expectedDist2 = np.array([[ 2.,  3.],
+                                  [12., 14.],
+                                  [22., 23.],
+                                  [32., 33.],
+                                  [42., 44.],
+                                  [52., 54.],
+                                  [62., 64.]])
+        
+        np.testing.assert_array_equal(expectedDist2, retl_knn_distances2)
+
 
         self.logger.info("END\n")
        
