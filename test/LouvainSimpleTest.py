@@ -3,13 +3,15 @@ Created on May 17, 2019
 
 @author: andrewdavidson
 '''
+from Cluster import Cluster
+from Edge import Edge
 import logging
+from louvain import Louvain
+from Node import Node
+import numpy as np
 from setupLogging import setupLogging
 import unittest
-from Edge import Edge
-from Node import Node
-from Cluster import Cluster
-from louvain import Louvain
+
 
 ############################################################
 class LouvainSimpleTest(unittest.TestCase):
@@ -252,6 +254,19 @@ class LouvainSimpleTest(unittest.TestCase):
         self.logger.info("change in modularity:{}".format(louvain1._Q - louvain2._Q))
     
     ############################################################
+    def checkClusterStats(self, msg, clusters, expectedClusterData):
+        self.logger.info("BEGIN")  
+        self.logger.info(msg)  
+        for c in clusters:
+            eMsg = "clusterId:{}".format(c._clusterId)
+            expectedData = expectedClusterData[c._clusterId]
+            self.assertEqual(len(c._nodeList), expectedData["numNodes"], eMsg)
+            self.assertEqual(c._weightsInsideCluster, expectedData["sigmaIn"], eMsg)
+            self.assertEqual(c._totalWeight, expectedData["sigmaTotal"], eMsg)
+
+        self.logger.info("END\n")    
+    
+    ############################################################
     def testMove(self):
         self.logger.info("BEGIN")    
                
@@ -292,31 +307,50 @@ class LouvainSimpleTest(unittest.TestCase):
             self.logger.info("cluster:{}".format(c))
                
         # test if cluster is init correctly
-        c0 = clusters[0]
-        self.assertEqual(c0._weightsInsideCluster, 6.0)
-        self.assertEqual(c0._totalWeight, 7.0)
+        beforeExpectedClusterData = np.array([
+                                            [],
+                                            [],
+                                             ])
+        beforeExpectedClusterData = {
+            "c0": {"numNodes":3, 'sigmaIn':6, 'sigmaTotal':7},
+            "c1": {"numNodes":2, 'sigmaIn':2, 'sigmaTotal':3}
+            }   
         
-        c1 = clusters[1]
-        self.assertEqual(c1._weightsInsideCluster, 2.0)
-        self.assertEqual(c1._totalWeight, 3.0)        
+        self.checkClusterStats("before move", clusters, beforeExpectedClusterData)
         
-#         n3 = nodes[3]
-#         self.logger.info("before move 3 is buggy node:{} \n_weightsInClusterDict:\n{}\n".format(n3, n3._weightsInClusterDict))
-        
-        # is data buggy?
-        for n in nodes:
-            self.logger.info("before move buggy? node:{} \n_weightsInClusterDict:\n{}\n".format(n, n._weightsInClusterDict))
-            
+# #         self.assertEqual(c0._weightsInsideCluster, 6.0)
+# #         self.assertEqual(c0._totalWeight, 7.0)
+# #         
+# #         c1 = clusters[1]
+# #         self.assertEqual(c1._weightsInsideCluster, 2.0)
+# #         self.assertEqual(c1._totalWeight, 3.0)        
+#         
+# #         n3 = nodes[3]
+# #         self.logger.info("before move 3 is buggy node:{} \n_weightsInClusterDict:\n{}\n".format(n3, n3._weightsInClusterDict))
+#         
+#         # is data buggy?
+#         for n in nodes:
+#             self.logger.info("before move buggy? node:{} \n_weightsInClusterDict:\n{}\n".format(n, n._weightsInClusterDict))
+#             
 
         # test move
+        c0 = clusters[0]
+        c1 = clusters[1]
         c0.moveNode(c1, na, graphNodesLookup)
         
-        self.logger.info("after move:c0:{}".format(c0))
-        self.logger.info("after move:c1:{}".format(c1))
+        afterExpectedClusterData = {
+            "c0": {"numNodes":2, 'sigmaIn':2, 'sigmaTotal':4},
+            "c1": {"numNodes":3, 'sigmaIn':4, 'sigmaTotal':6}
+            }  
         
+#         self.logger.info("after move:c0:{}".format(c0))
+#         self.logger.info("after move:c1:{}".format(c1))
+#         
         # check cluster
-        self.assertEqual(c0._totalWeight, 4.0)        
-        self.assertEqual(c1._totalWeight, 6.0)  
+        self.checkClusterStats("after move", clusters, afterExpectedClusterData)
+        
+#         self.assertEqual(c0._totalWeight, 4.0)        
+#         self.assertEqual(c1._totalWeight, 6.0)  
                 
         # TODO 
 #         self.assertEqual(c0._weightsInsideCluster, 2.0)
@@ -326,12 +360,12 @@ class LouvainSimpleTest(unittest.TestCase):
         for n in nodes:
             self.logger.info("node:{} \n_weightsInClusterDict:\n{}\n".format(n, n._weightsInClusterDict))
             
-        self.assertEqual(nodes[0]._weightsInClusterDict, {'c0': 2.0, 'c1': 1.0})
-        self.assertEqual(nodes[1]._weightsInClusterDict, {'c0': 1.0})
-        self.assertEqual(nodes[2]._weightsInClusterDict, {'c0': 1.0})
-        self.assertEqual(nodes[3]._weightsInClusterDict, {'c1': 2.0, 'c0': 0.0})
-
-        self.assertEqual(nodes[4]._weightsInClusterDict, {'c1': 1.0})     
+#         self.assertEqual(nodes[0]._weightsInClusterDict, {'c0': 2.0, 'c1': 1.0})
+#         self.assertEqual(nodes[1]._weightsInClusterDict, {'c0': 1.0})
+#         self.assertEqual(nodes[2]._weightsInClusterDict, {'c0': 1.0})
+#         self.assertEqual(nodes[3]._weightsInClusterDict, {'c1': 2.0, 'c0': 0.0})
+# 
+#         self.assertEqual(nodes[4]._weightsInClusterDict, {'c1': 1.0})     
         
         self.logger.info("END\n")            
 

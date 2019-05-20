@@ -107,7 +107,7 @@ class Louvain(object):
             self._clusters.append(cluster)
             self._nodeLookup[nodeId] = n
             
-        n.addEdge(targetEdge)
+        n.addEdge(targetEdge) # TODO todo we want to use addEdges
 
     ############################################################
     def __init__(self, clusters=None):
@@ -178,25 +178,25 @@ class Louvain(object):
         Ci and cj are the types of the two vertices (i and j). 
         delta(x,y) is one iff x=y, 0 otherwise.
         '''
-        self.logger.info("BEGIN")
+        self.logger.debug("BEGIN")
         # note implemenation already multiplied by 1/2
         # TODO should we move the mulply out? it should technically be faster
         # does not effect Big O
         m = self._getM()
-        self.logger.info("m:{}".format(m))
+        self.logger.debug("m:{}".format(m))
         
         modularitySumTerm = 0
         for edge in self._edges:
-            self.logger.info("\n{}".format(edge))
+            self.logger.debug("\n{}".format(edge))
             
             nodeI = self._nodeLookup[edge._srcId]
             nodeJ = self._nodeLookup[edge._targetId]
-            self.logger.info("nodeI:{}".format(nodeI))
-            self.logger.info("nodeJ:{}".format(nodeJ))
+            self.logger.debug("nodeI:{}".format(nodeI))
+            self.logger.debug("nodeJ:{}".format(nodeJ))
             
             # calculate the sigma term
             if not (nodeI._clusterId == nodeJ._clusterId):
-                self.logger.info("not in same cluster")
+                self.logger.debug("not in same cluster")
                 continue
             
             Aij = nodeI.getWeightForEdge(edge._targetId)
@@ -204,14 +204,14 @@ class Louvain(object):
             kj = nodeJ.getSumAdjWeights()
             i = edge._srcId
             j = edge._targetId
-            self.logger.info("i:{} j:{} A{}{}:{} k{}:{} k{}:{} 2*m:{}".format(i,j, i, j, Aij, i, ki, j, kj, 2*m))
-            self.logger.info(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
+            self.logger.debug("i:{} j:{} A{}{}:{} k{}:{} k{}:{} 2*m:{}".format(i,j, i, j, Aij, i, ki, j, kj, 2*m))
+            self.logger.debug(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
             term = Aij - (ki*kj) / (2*m) 
-            self.logger.info("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
+            self.logger.debug("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
             modularitySumTerm += term 
         
 
-        self.logger.info("m:{} modularitySumTerm:{}".format(m, modularitySumTerm))
+        self.logger.debug("m:{} modularitySumTerm:{}".format(m, modularitySumTerm))
         self._Q = modularitySumTerm/(2*m)
         
         if not (-1.0 <= self._Q <= 1.0):
@@ -219,7 +219,7 @@ class Louvain(object):
             self.logger.error(eMsg)
             raise ValueError(eMsg)
         
-        self.logger.info("END\n")
+        self.logger.debug("END\n")
     
     ############################################################
     def getModularity(self): 
