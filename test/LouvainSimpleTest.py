@@ -377,8 +377,8 @@ class LouvainSimpleTest(unittest.TestCase):
         
         # check kiin
         afterExpectedKiinData = {
-            "c0": {"k0in":2, "k1in":2, "k2in":2, "k3in":1, "k4in":0},
-            "c1": {"k0in":1, "k1in":0, "k2in":0, "k3in":1, "k4in":1}            
+            "c0": {"k0in":2, "k1in":1, "k2in":1, "k3in":0, "k4in":0},
+            "c1": {"k0in":2, "k1in":1, "k2in":1, "k3in":2, "k4in":1}            
             }
         self.checkKiinStats("********** after move", clusters, afterExpectedKiinData)    
         
