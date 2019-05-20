@@ -49,22 +49,22 @@ class LouvainSimpleTest(unittest.TestCase):
 
         # undirected  triangle graph
         e0 = Edge(weight=1.0, srcId=0, targetId=1)
-        n0.addEdge(e0)
+        n0._addEdge(e0)
 
         e1 = Edge(weight=1.0, srcId=1, targetId=0)
-        n1.addEdge(e1)
+        n1._addEdge(e1)
                 
         e2 = Edge(weight=1.0, srcId=0, targetId=2)
-        n0.addEdge(e2)   
+        n0._addEdge(e2)   
         
         e3 = Edge(weight=1.0, srcId=2, targetId=0) 
-        n2.addEdge(e3)    
+        n2._addEdge(e3)    
         
         e4 = Edge(weight=1.0, srcId=1, targetId=2)
-        n1.addEdge(e4)
+        n1._addEdge(e4)
         
         e5 = Edge(weight=1.0, srcId=2, targetId=1) 
-        n2.addEdge(e5) 
+        n2._addEdge(e5) 
         
         # create  cluster0
         cluster0 = Cluster(clusterId="c0", nodeList=[n0, n1, n2])
@@ -72,26 +72,35 @@ class LouvainSimpleTest(unittest.TestCase):
         # create disjoint graph
         n3 = Node(clusterId="c1", nodeId=3)
         e6 = Edge(weight=1.0, srcId=3, targetId=4)
-        n3.addEdge(e6)
+        n3._addEdge(e6)
 
         n4 = Node(clusterId="c1", nodeId=4)
         e6 = Edge(weight=1.0, srcId=4, targetId=3)
-        n4.addEdge(e6)
+        n4._addEdge(e6)
         
         cluster1 = Cluster(clusterId="c1", nodeList=[n3, n4])
         self.assertEqual(1, cluster1._getM())
+        clusters = [cluster0, cluster1]
 
         level0 = Louvain([cluster0, cluster1] )  
               
         self.logger.info("END\n")
         
+        nodeList = [n0, n1, n2, n3, n4]
+        graphNodesLookup = { n._nodeId:n for n in nodeList}
+        
+        for n in nodeList:
+            # because we used _addEdge() instead of addEdges()
+            # we need to make sure cache is set up
+            n._initKiinCache(graphNodesLookup)
+            
         ret = (level0, 
-               [cluster0, cluster1], 
-               [n0, n1, n2, n3, n4], 
-               [e0, e1, e2, e3, e4, e5, e6])
+               clusters, 
+               nodeList, 
+               [e0, e1, e2, e3, e4, e5, e6], 
+               graphNodesLookup)
         
         return (ret)
-
 
     ############################################################
     def testNode(self):
@@ -103,19 +112,19 @@ class LouvainSimpleTest(unittest.TestCase):
 
         # undirected  triangle graph
         e0 = Edge(weight=1.0, srcId=0, targetId=1)
-        n0.addEdge(e0)
+        n0._addEdge(e0)
 
         e1 = Edge(weight=1.0, srcId=1, targetId=0)
-        n1.addEdge(e1)
+        n1._addEdge(e1)
         
         self.assertEqual(1, n0.getSumAdjWeights())
         self.assertEqual(1, n1.getSumAdjWeights())
         
         e2 = Edge(weight=1.0, srcId=0, targetId=2)
-        n0.addEdge(e2)   
+        n0._addEdge(e2)   
         
         e3 = Edge(weight=1.0, srcId=2, targetId=0) 
-        n2.addEdge(e3)    
+        n2._addEdge(e3)    
         
         # test print functions
         self.logger.info("e3:{}".format(e3))        
@@ -127,10 +136,10 @@ class LouvainSimpleTest(unittest.TestCase):
         self.logger.info("n2:{}".format(n2))
 
         e4 = Edge(weight=1.0, srcId=1, targetId=2)
-        n1.addEdge(e4)
+        n1._addEdge(e4)
         
         e5 = Edge(weight=1.0, srcId=2, targetId=1) 
-        n2.addEdge(e5) 
+        n2._addEdge(e5) 
         
         self.assertEqual(2, n1.getSumAdjWeights())
         self.assertEqual(2, n2.getSumAdjWeights())        
@@ -145,11 +154,11 @@ class LouvainSimpleTest(unittest.TestCase):
         # create disjoint graph
         n3 = Node(clusterId="c1", nodeId=3)
         e6 = Edge(weight=1.0, srcId=3, targetId=4)
-        n3.addEdge(e6)
+        n3._addEdge(e6)
 
         n4 = Node(clusterId="c1", nodeId=4)
         e6 = Edge(weight=1.0, srcId=4, targetId=3)
-        n4.addEdge(e6)
+        n4._addEdge(e6)
         
         cluster1 = Cluster(clusterId="c1", nodeList=[n3, n4])
         self.assertEqual(1, cluster1._getM())
@@ -189,38 +198,38 @@ class LouvainSimpleTest(unittest.TestCase):
         n3 = Node(clusterId="c1", nodeId=3)
         
         e1 = Edge(weight=1.0, srcId=0, targetId=1) 
-        n0.addEdge(e1)
+        n0._addEdge(e1)
         e2 = Edge(weight=1.0, srcId=0, targetId=2) 
-        n0.addEdge(e2)
+        n0._addEdge(e2)
         e3 = Edge(weight=1.0, srcId=0, targetId=3) 
-        n0.addEdge(e3)
+        n0._addEdge(e3)
 
         e4 = Edge(weight=1.0, srcId=1, targetId=0) 
-        n1.addEdge(e4)
+        n1._addEdge(e4)
         
 
         e5 = Edge(weight=1.0, srcId=3, targetId=0) 
-        n3.addEdge(e5)
+        n3._addEdge(e5)
         
         cluster1 = Cluster(clusterId="1", nodeList=[n0, n1, n3])
 
         n2 = Node(clusterId="c2", nodeId=2)
         e6 = Edge(weight=1.0, srcId=2, targetId=0) 
-        n2.addEdge(e6)
+        n2._addEdge(e6)
 
         
         n4 = Node(clusterId="c2", nodeId=4)
         n5 = Node(clusterId="c2", nodeId=5)
         e7 = Edge(weight=1.0, srcId=4, targetId=5) 
-        n4.addEdge(e7)
+        n4._addEdge(e7)
         e8 = Edge(weight=1.0, srcId=5, targetId=4) 
-        n5.addEdge(e8)
+        n5._addEdge(e8)
         
         e9 = Edge(weight=1.0, srcId=4, targetId=2) 
-        n4.addEdge(e9)
+        n4._addEdge(e9)
         
         e10 = Edge(weight=1.0, srcId=2, targetId=4) 
-        n2.addEdge(e10)
+        n2._addEdge(e10)
         
         cluster2 = Cluster(clusterId="2", nodeList=[n2, n4, n5])
         
@@ -241,7 +250,40 @@ class LouvainSimpleTest(unittest.TestCase):
         self.assertEqual(louvain2._Q, 0.5199999999999999)
 
         self.logger.info("change in modularity:{}".format(louvain1._Q - louvain2._Q))
+    
+    ############################################################
+    def testMove(self):
+        self.logger.info("BEGIN")    
+               
+        graph = self.createSimpleGraph()
+        clusters = graph[1]
+        nodes = graph[2]
+        graphNodesLookup = graph[4]
         
+        self.logger.info("")                    
+        for n in nodes:
+            # for lazy evaluation to run
+            n.getSumAdjWeights()
+            n.getSumOfWeightsInsideCluster(n._clusterId, graphNodesLookup)
+            self.logger.info("node:{}".format(n))
+            
+        self.logger.info("")            
+        for c in clusters:
+            # run lazy eval
+            c.getSumOfWeights()
+            c.getSumOfWeightsInsideCluster(graphNodesLookup)
+            self.logger.info("cluster:{}".format(c))
+               
+        # test if cluster is init correctly
+        c0 = clusters[0]
+        self.assertEqual(c0._weightsInsideCluster, 6.0)
+        self.assertEqual(c0._totalWeight, 6.0)
+        
+        c1 = clusters[1]
+        self.assertEqual(c1._weightsInsideCluster, 2.0)
+        self.assertEqual(c1._totalWeight, 2.0)        
+        
+        self.logger.info("END\n")    
 
 
 

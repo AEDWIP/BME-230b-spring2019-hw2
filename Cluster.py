@@ -18,8 +18,8 @@ class Cluster(object):
     def __init__(self, clusterId, nodeList):
         self._clusterId = clusterId
         self._nodeList = nodeList
-        self._weightsInsideCluster = None
-        self._totalWeight = None
+        self._weightsInsideCluster = None # 'sigma in'
+        self._totalWeight = None # 'sigma tot'
         
     ############################################################                
     def __repr__(self):
@@ -67,13 +67,20 @@ class Cluster(object):
                 a dictionary or set of nodes in graph. keys should be 
                 node ids. 
         '''
-        if not self._weightsInCluster:
-            self._weightsInCluster  = 0
+        
+        if not self._weightsInsideCluster:
+            self._weightsInsideCluster  = 0
             for n in self._nodeList:
+                self.logger.info("clusterId:{} nodeId:{}".format(self._clusterId, n._nodeId))
                 kiin = n.getSumOfWeightsInsideCluster(self._clusterId, graphNodesLookup)
+                if not kiin:
+                    self.logger.info("kiin WTF?")
+                elif not self._weightsInsideCluster:
+                    self.logger.info("_weightsInsideCluster WTF?")
+
                 self._weightsInsideCluster += kiin
             
-        return self._weightsInCluster                    
+        return self._weightsInsideCluster                   
 
     ############################################################
     def getSumOfWeights(self):
@@ -86,25 +93,39 @@ class Cluster(object):
             for n in self._nodeList:
                 self._totalWeight += n.getSumAdjWeights()
             
-        return self.self._totalWeight
+        return self._totalWeight
         
     ############################################################
-    def _removeNode(self, node):
+    def _removeNode(self, node, graphNodesLookup):
+        '''
+        in production use move()
+        '''
+
+        self._totalWeight -= node.getSumAdjWeights()   
+        kiin = node.getSumOfWeightsInsideCluster(self._clusterId, graphNodesLookup)
+        self._weightsInsideCluster -= kiin
+        
+        # TODO maintain an index remove in linear, index is constant time
+        self._nodeList.remove(node)    
+    ############################################################
+    def _addNode(self, node, graphNodesLookup):
+        '''
+        TODO
+        
+        in production use move()
+
+        '''
+        self._totalWeight += node.getSumAdjWeights()
+        kiin = node.getSumOfWeightsInsideCluster(self._clusterId, graphNodesLookup)
+        self._weightsInsideCluster += kiin
+        
+        self._nodeList.append(node)
+        
+    ############################################################
+    def moveNode(self, targetCluster, node, graphNodesLookup):
         '''
         TODO
         '''
-        recalculate self getSumOfWeights
-        recalculate self _weightsInCluster 
-
-        node.removedFromCluster(self._clusterId)
-        
-    ############################################################
-    def _addNode(self, node):
-        '''
-        TODO
-        '''
-        recalculate self getSumOfWeights   
-        recalculate self _weightsInCluster 
-        node.addedToCluster(self._clusterId) 
-        
-
+        self._removeNode
+        targetCluster.addNode
+        node.moveToCluster(targetCluster, graphNodesLookup)
