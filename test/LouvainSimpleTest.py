@@ -283,6 +283,22 @@ class LouvainSimpleTest(unittest.TestCase):
         self.logger.info("END\n")  
 
     ############################################################    
+    def checkNodeStats(self, msg, clusters, expectedNodeData):
+        self.logger.info("BEGIN") 
+        self.logger.info(msg)   
+        for c in clusters:
+            cid = c._clusterId
+            for n in c._nodeList:
+                nid = n._nodeId
+                eMsg = "clusterId:{} nodeId:{}".format(cid, nid)
+                expectedData = expectedNodeData[nid]
+                self.assertEqual(len(n._edgesDict.keys()), expectedData["numEdges"], eMsg)
+                self.assertEqual(n._clusterId, expectedData["clusterId"], eMsg)
+                self.assertEqual(n._adjcentEdgeWeights, expectedData["adjEdgeWeights"], eMsg)
+
+        self.logger.info("END\n")    
+    
+    ############################################################        
     def testMove(self):
         self.logger.info("BEGIN")    
                
@@ -323,32 +339,18 @@ class LouvainSimpleTest(unittest.TestCase):
             self.logger.info("cluster:{}".format(c))
                
         # test if cluster is init correctly
-        beforeExpectedClusterData = np.array([
-                                            [],
-                                            [],
-                                             ])
         beforeExpectedClusterData = {
             "c0": {"numNodes":3, 'sigmaIn':6, 'sigmaTotal':7},
             "c1": {"numNodes":2, 'sigmaIn':2, 'sigmaTotal':3}
             }   
-        self.checkClusterStats("before move", clusters, beforeExpectedClusterData)
+        self.checkClusterStats("********** before move", clusters, beforeExpectedClusterData)
 
         beforeExpectedKiinData = {
             "c0": {"k0in":2, "k1in":2, "k2in":2, "k3in":1, "k4in":0},
             "c1": {"k0in":1, "k1in":0, "k2in":0, "k3in":1, "k4in":1}            
             }
-        self.checkKiinStats("before move", clusters, beforeExpectedKiinData)
+        self.checkKiinStats("********** before move", clusters, beforeExpectedKiinData)
         
-# #         self.assertEqual(c0._weightsInsideCluster, 6.0)
-# #         self.assertEqual(c0._totalWeight, 7.0)
-# #         
-# #         c1 = clusters[1]
-# #         self.assertEqual(c1._weightsInsideCluster, 2.0)
-# #         self.assertEqual(c1._totalWeight, 3.0)        
-#         
-# #         n3 = nodes[3]
-# #         self.logger.info("before move 3 is buggy node:{} \n_weightsInClusterDict:\n{}\n".format(n3, n3._weightsInClusterDict))
-#         
 #         # is data buggy?
 #         for n in nodes:
 #             self.logger.info("before move buggy? node:{} \n_weightsInClusterDict:\n{}\n".format(n, n._weightsInClusterDict))
@@ -359,37 +361,37 @@ class LouvainSimpleTest(unittest.TestCase):
         c1 = clusters[1]
         c0.moveNode(c1, na, graphNodesLookup)
         
-        # check cluster        
-        afterExpectedClusterData = {
-            "c0": {"numNodes":2, 'sigmaIn':2, 'sigmaTotal':4},
-            "c1": {"numNodes":3, 'sigmaIn':4, 'sigmaTotal':6}
-            }  
-        self.checkClusterStats("after move", clusters, afterExpectedClusterData)
+        # check nodes
+        self.logger.info("")
+        afterExpectedNodeData = {
+                    0:{'clusterId':'c1', 'numEdges':3, 'adjEdgeWeights':3.0},
+                    1:{'clusterId':'c0', 'numEdges':2, 'adjEdgeWeights':2.0},
+                    2:{'clusterId':'c0', 'numEdges':2, 'adjEdgeWeights':2.0},
+                    3:{'clusterId':'c1', 'numEdges':2, 'adjEdgeWeights':2.0},
+                    4:{'clusterId':'c1', 'numEdges':1, 'adjEdgeWeights':1.0}}
+        self.checkNodeStats("********** after move", clusters, afterExpectedNodeData)    
+      
+        for n in nodes:
+            self.logger.info("after node:{} \n_weightsInClusterDict:\n{}\n".format(n, n._weightsInClusterDict))
+
         
         # check kiin
         afterExpectedKiinData = {
             "c0": {"k0in":2, "k1in":2, "k2in":2, "k3in":1, "k4in":0},
             "c1": {"k0in":1, "k1in":0, "k2in":0, "k3in":1, "k4in":1}            
             }
-        self.checkKiinStats("after move", clusters, afterExpectedKiinData)        
+        self.checkKiinStats("********** after move", clusters, afterExpectedKiinData)    
         
-#         self.assertEqual(c0._totalWeight, 4.0)        
-#         self.assertEqual(c1._totalWeight, 6.0)  
-                
-        # TODO 
-#         self.assertEqual(c0._weightsInsideCluster, 2.0)
-#         self.assertEqual(c1._weightsInsideCluster, 4.0)
+        # check cluster        
+        afterExpectedClusterData = {
+            "c0": {"numNodes":2, 'sigmaIn':2, 'sigmaTotal':4},
+            "c1": {"numNodes":3, 'sigmaIn':4, 'sigmaTotal':6}
+            }  
+        self.checkClusterStats("********** after move", clusters, afterExpectedClusterData)
+                    
         
-        # check nodes
-        for n in nodes:
-            self.logger.info("node:{} \n_weightsInClusterDict:\n{}\n".format(n, n._weightsInClusterDict))
-            
-#         self.assertEqual(nodes[0]._weightsInClusterDict, {'c0': 2.0, 'c1': 1.0})
-#         self.assertEqual(nodes[1]._weightsInClusterDict, {'c0': 1.0})
-#         self.assertEqual(nodes[2]._weightsInClusterDict, {'c0': 1.0})
-#         self.assertEqual(nodes[3]._weightsInClusterDict, {'c1': 2.0, 'c0': 0.0})
-# 
-#         self.assertEqual(nodes[4]._weightsInClusterDict, {'c1': 1.0})     
+        
+             
         
         self.logger.info("END\n")            
 
