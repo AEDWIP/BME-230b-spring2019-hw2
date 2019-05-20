@@ -261,9 +261,8 @@ class LouvainSimpleTest(unittest.TestCase):
             eMsg = "clusterId:{}".format(c._clusterId)
             expectedData = expectedClusterData[c._clusterId]
             self.assertEqual(len(c._nodeList), expectedData["numNodes"], eMsg)
-            self.assertEqual(c._weightsInsideCluster, expectedData["sigmaIn"], eMsg)
             self.assertEqual(c._totalWeight, expectedData["sigmaTotal"], eMsg)
-
+            self.assertEqual(c._weightsInsideCluster, expectedData["sigmaIn"], eMsg)
         self.logger.info("END\n")    
     
 
@@ -350,12 +349,7 @@ class LouvainSimpleTest(unittest.TestCase):
             "c1": {"k0in":1, "k1in":0, "k2in":0, "k3in":1, "k4in":1}            
             }
         self.checkKiinStats("********** before move", clusters, beforeExpectedKiinData)
-        
-#         # is data buggy?
-#         for n in nodes:
-#             self.logger.info("before move buggy? node:{} \n_weightsInClusterDict:\n{}\n".format(n, n._weightsInClusterDict))
-#             
-
+           
         # test move
         c0 = clusters[0]
         c1 = clusters[1]
@@ -371,9 +365,8 @@ class LouvainSimpleTest(unittest.TestCase):
                     4:{'clusterId':'c1', 'numEdges':1, 'adjEdgeWeights':1.0}}
         self.checkNodeStats("********** after move", clusters, afterExpectedNodeData)    
       
-        for n in nodes:
-            self.logger.info("after node:{} \n_weightsInClusterDict:\n{}\n".format(n, n._weightsInClusterDict))
-
+#         for n in nodes:
+#             self.logger.info("after node:{} \n_weightsInClusterDict:\n{}\n".format(n, n._weightsInClusterDict))
         
         # check kiin
         afterExpectedKiinData = {
@@ -382,17 +375,16 @@ class LouvainSimpleTest(unittest.TestCase):
             }
         self.checkKiinStats("********** after move", clusters, afterExpectedKiinData)    
         
-        # check cluster        
+        # check cluster     
+        for c in clusters:
+            self.logger.info(c) 
+              
         afterExpectedClusterData = {
             "c0": {"numNodes":2, 'sigmaIn':2, 'sigmaTotal':4},
             "c1": {"numNodes":3, 'sigmaIn':4, 'sigmaTotal':6}
             }  
         self.checkClusterStats("********** after move", clusters, afterExpectedClusterData)
-                    
-        
-        
-             
-        
+ 
         self.logger.info("END\n")            
 
 

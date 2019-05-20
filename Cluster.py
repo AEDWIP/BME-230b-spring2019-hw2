@@ -100,13 +100,20 @@ class Cluster(object):
         '''
         in production use move()
         '''
-
+        
         self._totalWeight -= node.getSumAdjWeights()   
         kiin = node.getSumOfWeightsInsideCluster(self._clusterId, graphNodesLookup)
-        self._weightsInsideCluster -= kiin
+        self.logger.info("clusterId:{} nodeId:{}  _weightsInsideCluster:{} kiin:{}"\
+                .format(self._clusterId, node._nodeId, self._weightsInsideCluster, kiin))  
+                      
+        # account for edges that get transformed from inside our cluster to
+        # between our cluster. remember we model links between nodes a pair
+        # of directed edges
+        w = 2 * node._weightsInClusterDict[self._clusterId]
+        self._weightsInsideCluster -= 4
         
-        # TODO maintain an index remove in linear, index is constant time
-        self._nodeList.remove(node)    
+        self._nodeList.remove(node)  
+          
     ############################################################
     def _addNode(self, node, targetClusterId, graphNodesLookup):
         '''
@@ -115,14 +122,15 @@ class Cluster(object):
         in production use move()
 
         '''
-        if self._clusterId == targetClusterId:
-            self.logger.info("do not pass target id it confusing") # this is the case
-        else:
-            self.logger.info("we need the target id")
-            
         self._totalWeight += node.getSumAdjWeights()
         kiin = node.getSumOfWeightsInsideCluster(targetClusterId, graphNodesLookup)
-        self._weightsInsideCluster += kiin
+        self.logger.info("clusterId:{} nodeId:{} targetClusterId:{} _weightsInsideCluster:{} kiin:{}"\
+                .format(self._clusterId, node._nodeId, targetClusterId, self._weightsInsideCluster, kiin))
+        
+        # we gain twice. there is an edge between the node being moved
+        # and a node in the target cluster. There is also a node from the cluster with and 
+        # edge back to the node being moved
+        self._weightsInsideCluster += 2 * kiin
         
         self._nodeList.append(node)
         
@@ -131,9 +139,11 @@ class Cluster(object):
         '''
         TODO
         '''
+        self.logger.info("clusterId:{} nodeId:{} targetClusterId:{}"\
+                         .format(self._clusterId, node._nodeId, targetCluster._clusterId))
+        
         targetClusterId = targetCluster._clusterId        
         targetCluster._addNode(node, targetClusterId, graphNodesLookup)
-        
-        self._removeNode(node, graphNodesLookup)
-
+        self._removeNode(node, graphNodesLookup)    
         node.moveToCluster(targetCluster._clusterId, graphNodesLookup)
+            
