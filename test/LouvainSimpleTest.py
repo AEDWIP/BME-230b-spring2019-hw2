@@ -300,6 +300,14 @@ class LouvainSimpleTest(unittest.TestCase):
         self.assertEqual(c1._weightsInsideCluster, 2.0)
         self.assertEqual(c1._totalWeight, 3.0)        
         
+#         n3 = nodes[3]
+#         self.logger.info("before move 3 is buggy node:{} \n_weightsInClusterDict:\n{}\n".format(n3, n3._weightsInClusterDict))
+        
+        # is data buggy?
+        for n in nodes:
+            self.logger.info("before move buggy? node:{} \n_weightsInClusterDict:\n{}\n".format(n, n._weightsInClusterDict))
+            
+
         # test move
         c0.moveNode(c1, na, graphNodesLookup)
         
@@ -310,7 +318,6 @@ class LouvainSimpleTest(unittest.TestCase):
         self.assertEqual(c0._totalWeight, 4.0)        
         self.assertEqual(c1._totalWeight, 6.0)  
                 
-        
         # TODO 
 #         self.assertEqual(c0._weightsInsideCluster, 2.0)
 #         self.assertEqual(c1._weightsInsideCluster, 4.0)
@@ -322,7 +329,8 @@ class LouvainSimpleTest(unittest.TestCase):
         self.assertEqual(nodes[0]._weightsInClusterDict, {'c0': 2.0, 'c1': 1.0})
         self.assertEqual(nodes[1]._weightsInClusterDict, {'c0': 1.0})
         self.assertEqual(nodes[2]._weightsInClusterDict, {'c0': 1.0})
-        
+        self.assertEqual(nodes[3]._weightsInClusterDict, {'c1': 2.0, 'c0': 0.0})
+
         self.assertEqual(nodes[4]._weightsInClusterDict, {'c1': 1.0})     
         
         self.logger.info("END\n")            

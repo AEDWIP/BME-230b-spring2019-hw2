@@ -214,26 +214,14 @@ class Node(object):
         '''
         a node we are connected to was moved into a new cluster.
         '''
-#         decrement case
-#             our clusterId == from fromClusterI
-#             
-#         increment case
-#             our cluster id == to clusterId
-            
-#         needToDecriment = fromClusterId in self._weightsInClusterDict #fails looks like it always true
-#         needToIncrement = toClusterId in self._weightsInClusterDict
-        
         needToDecriment = self._clusterId == fromClusterId
-#         if not (needToDecriment or needToIncrement):
-#             eMsg = "self.nodeId{} in not connected to nodeId:{} fromClusterId:{} toClusterId:{}"\
-#                 .format(self._nodeId, nodeId, fromClusterId, toClusterId)
-#             self.logger.error(eMsg)
-#             raise ValueError(eMsg)
         
+        # TODO if weights goto zero remove cluster. It may help find bugs
         if needToDecriment:
             self._weightsInClusterDict[fromClusterId] -= weight
             
         else:
-            self._weightsInClusterDict[fromClusterId] += weight
+            self._weightsInClusterDict[toClusterId] += weight # was fromClusterId
+            self._weightsInClusterDict[fromClusterId] -= weight
             
         
