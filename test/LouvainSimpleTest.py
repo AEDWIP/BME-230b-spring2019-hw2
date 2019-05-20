@@ -320,21 +320,8 @@ class LouvainSimpleTest(unittest.TestCase):
             self.logger.info("node:{} \n_weightsInClusterDict:\n{}\n".format(n, n._weightsInClusterDict))
             
         self.assertEqual(nodes[0]._weightsInClusterDict, {'c0': 2.0, 'c1': 1.0})
-#         [INFO LouvainSimpleTest.py:320 - testMove()] node:clusterId:c1 nodeId:0 numEdges:3 adjEdgeWeights:3.0 
-# _weightsInClusterDict:
-# {'c0': 2.0, 'c1': 1.0}
-
         self.assertEqual(nodes[1]._weightsInClusterDict, {'c0': 1.0})
-
-# [INFO LouvainSimpleTest.py:320 - testMove()] node:clusterId:c0 nodeId:1 numEdges:2 adjEdgeWeights:2.0 
-# _weightsInClusterDict:
-# {'c0': 1.0}
-
         self.assertEqual(nodes[2]._weightsInClusterDict, {'c0': 1.0})
-
-# [INFO LouvainSimpleTest.py:320 - testMove()] node:clusterId:c0 nodeId:2 numEdges:2 adjEdgeWeights:2.0 
-# _weightsInClusterDict:
-# {'c0': 1.0}
 
         
         self.logger.info("END\n")            
