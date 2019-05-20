@@ -1,14 +1,21 @@
 from sklearn.metrics import pairwise_distances
+from sklearn.decomposition import PCA
+import pandas as pd
+import scanpy as sc
+import numpy as np
 
-def pca(matrix):
+def pca(adata):
     #calculate pca
     pca = PCA(n_components=50)
-    result_pca = pca.fit_transform(matrix)
+    result_pca = pca.fit_transform(adata.X)
     result_pca = np.array(result_pca, dtype = np.float32)
     adata.obsm['X_pca'] = result_pca
+    return result_pca
 
 
-def bbknn(batch_unique,neighbors_within_batch):
+def bbknn(adata, neighbors_within_batch):
+    result_pca = pca(adata)
+    batch_unique = list(set(adata.obs['batch']))  #['0','1']
     knn_distances = np.zeros((adata.shape[0],neighbors_within_batch*len(batch_unique)))
     knn_indices = np.copy(knn_distances).astype(int)
 
@@ -48,10 +55,10 @@ def bbknn(batch_unique,neighbors_within_batch):
 
     return knn_indices, knn_distances
 
-result_pca = pca(adata.X)
+
 batch_unique=['0','1']
 neighbors_within_batch=6
-knn_indices, knn_distances = bbknn(batch_unique,neighbors_within_batch)
+knn_indices, knn_distances = bbknn(adta, neighbors_within_batch)
 #calculating connectivities
 knn_connectivities = sc.neighbors.compute_connectivities_umap(knn_indices, knn_distances, n_obs=15476,n_neighbors=12)
 adata.uns['neighbors']['connectivities'] = knn_connectivities[1]
