@@ -115,6 +115,11 @@ class Cluster(object):
         in production use move()
 
         '''
+        if self._clusterId == targetClusterId:
+            self.logger.info("do not pass target id it confusing")
+        else:
+            self.logger.info("we need the target id")
+            
         self._totalWeight += node.getSumAdjWeights()
         kiin = node.getSumOfWeightsInsideCluster(targetClusterId, graphNodesLookup)
         self._weightsInsideCluster += kiin
@@ -126,7 +131,9 @@ class Cluster(object):
         '''
         TODO
         '''
-        self._removeNode(node, graphNodesLookup)
         targetClusterId = targetCluster._clusterId        
         targetCluster._addNode(node, targetClusterId, graphNodesLookup)
+        
+        self._removeNode(node, graphNodesLookup)
+
         node.moveToCluster(targetCluster._clusterId, graphNodesLookup)

@@ -306,7 +306,36 @@ class LouvainSimpleTest(unittest.TestCase):
         self.logger.info("after move:c0:{}".format(c0))
         self.logger.info("after move:c1:{}".format(c1))
         
-        # TODO check nodes
+        # check cluster
+        self.assertEqual(c0._totalWeight, 4.0)        
+        self.assertEqual(c1._totalWeight, 6.0)  
+                
+        
+        # TODO 
+#         self.assertEqual(c0._weightsInsideCluster, 2.0)
+#         self.assertEqual(c1._weightsInsideCluster, 4.0)
+        
+        # check nodes
+        for n in nodes:
+            self.logger.info("node:{} \n_weightsInClusterDict:\n{}\n".format(n, n._weightsInClusterDict))
+            
+        self.assertEqual(nodes[0]._weightsInClusterDict, {'c0': 2.0, 'c1': 1.0})
+#         [INFO LouvainSimpleTest.py:320 - testMove()] node:clusterId:c1 nodeId:0 numEdges:3 adjEdgeWeights:3.0 
+# _weightsInClusterDict:
+# {'c0': 2.0, 'c1': 1.0}
+
+        self.assertEqual(nodes[1]._weightsInClusterDict, {'c0': 1.0})
+
+# [INFO LouvainSimpleTest.py:320 - testMove()] node:clusterId:c0 nodeId:1 numEdges:2 adjEdgeWeights:2.0 
+# _weightsInClusterDict:
+# {'c0': 1.0}
+
+        self.assertEqual(nodes[2]._weightsInClusterDict, {'c0': 1.0})
+
+# [INFO LouvainSimpleTest.py:320 - testMove()] node:clusterId:c0 nodeId:2 numEdges:2 adjEdgeWeights:2.0 
+# _weightsInClusterDict:
+# {'c0': 1.0}
+
         
         self.logger.info("END\n")            
 
