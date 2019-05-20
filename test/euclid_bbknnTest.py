@@ -28,7 +28,7 @@ class Eculid_bbknnTest(unittest.TestCase):
         logging.shutdown()
 
     ######################################################################                
-    def testl_k_bbknn(self):
+    def test_l_k_bbknn(self):
         self.logger.info("BEGIN")
 
         # two batches

@@ -45,13 +45,32 @@ class euclid_knnTest(unittest.TestCase):
             np.sqrt( (1-5)**2 + (2-6)**2 ),
             np.sqrt( (3-5)**2 + (4-6)**2 )
             ])
+ 
+#         sqExpected = np.array(
+#             [[0.         ,2.82842712 ,5.65685425],
+#  [2.82842712 ,0.         ,2.82842712],
+#  [5.65685425 ,2.82842712 ,0.        ]]
+#             )
+        
         
         ret = pdist(X, metric='euclidean')
+        
+#         from scipy.spatial import distance
+#         ret = distance.cdist(X, X, 'euclidean')
+        
         self.logger.info("x:\n{}".format(X))
         self.logger.info("ret:\n{}".format(ret))
         self.logger.info("expected:\n{}".format(expected))
         
+#         from scipy.spatial.distance import squareform
+
+#         sq = squareform(ret)
+#         self.logger.info("sq.shape:{}".format(sq.shape))
+#         self.logger.info("sq:\n{}".format(sq))
+
+        
         self.assertTrue( (ret == expected).all() )
+#         self.assertTrue( (ret == sqExpected).all() )
         
         self.logger.info("END \n")
 
