@@ -235,7 +235,7 @@ class LouvainSimpleTest(unittest.TestCase):
         
         louvain1 = Louvain([cluster1, cluster2])
         
-        # calculate modularty of orginal graph
+        # calculate modularity of original graph
         self.logger.info("louvain1._Q:{}".format(louvain1._Q))
         self.assertEqual(louvain1._Q, 0.5599999999999999)
         
@@ -244,7 +244,7 @@ class LouvainSimpleTest(unittest.TestCase):
         cluster1 = Cluster(clusterId="1", nodeList=[n0, n1, n2, n3])
         cluster2 = Cluster(clusterId="2", nodeList=[n4, n5])
         
-        # calculate modularty
+        # calculate modularity
         louvain2 = Louvain([cluster1, cluster2])
         self.logger.info("louvain2._Q:{}".format(louvain2._Q))
         self.assertEqual(louvain2._Q, 0.5199999999999999)
@@ -259,6 +259,19 @@ class LouvainSimpleTest(unittest.TestCase):
         clusters = graph[1]
         nodes = graph[2]
         graphNodesLookup = graph[4]
+        
+        # you can not move a node to a cluster if the node is not
+        # connected to something in the cluster
+        # there would not gain in Q
+        # create and edge between a node in c0 and c2
+        na = nodes[0]
+        nb = nodes[3]
+        self.assertNotEqual(na._clusterId, nb._clusterId)
+        ea = Edge(weight=1.0, srcId=na._nodeId, targetId=nb._nodeId)
+        eb = Edge(weight=1.0, srcId=nb._nodeId, targetId=na._nodeId)
+        na._addEdge(ea)
+        nb._addEdge(eb)
+
         
         self.logger.info("")                    
         for n in nodes:
@@ -277,14 +290,21 @@ class LouvainSimpleTest(unittest.TestCase):
         # test if cluster is init correctly
         c0 = clusters[0]
         self.assertEqual(c0._weightsInsideCluster, 6.0)
-        self.assertEqual(c0._totalWeight, 6.0)
+        self.assertEqual(c0._totalWeight, 7.0)
         
         c1 = clusters[1]
         self.assertEqual(c1._weightsInsideCluster, 2.0)
-        self.assertEqual(c1._totalWeight, 2.0)        
+        self.assertEqual(c1._totalWeight, 3.0)        
         
-        self.logger.info("END\n")    
-
+        # test move
+        c0.moveNode(c1, nodes[0], graphNodesLookup)
+        
+        self.logger.info("after move:c0:{}".format(c0))
+        self.logger.info("after move:c1:{}".format(c1))
+        
+        # TODO check nodes
+        
+        self.logger.info("END\n")            
 
 
 if __name__ == "__main__":
