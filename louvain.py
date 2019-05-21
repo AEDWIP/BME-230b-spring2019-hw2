@@ -25,7 +25,7 @@ class Louvain(object):
         '''
         use this constructor to bootstrap from andata.
         
-        assigns each cell to its own cluster
+        assigns each cell to its own cluster and calculates modularity
         
         ref: knn_to_graphModule get_igraph_from_adjacency()
         
@@ -89,6 +89,9 @@ class Louvain(object):
                 edge2 = Edge(weight, srcId=node2Id, targetId=node1Id)
                 self._edges.append(edge2)
                 self._build(node2Id, targetEdge=edge2)
+                
+        for nodeId, node in self._nodeLookup.items():
+            node._initKiinCache(graphNodesLookup=self._nodeLookup)
 
         self._calculateQ()
 
@@ -107,11 +110,14 @@ class Louvain(object):
             self._clusters.append(cluster)
             self._nodeLookup[nodeId] = n
             
-        n.addEdge(targetEdge) # TODO todo we want to use addEdges
+        n._addEdge(targetEdge) 
 
     ############################################################
     def __init__(self, clusters=None):
         '''
+        TODO"
+        calculates modularity 
+        
         arguments:
             clusters: a list of cluster objects
             pass None for unit test
