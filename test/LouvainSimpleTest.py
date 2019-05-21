@@ -318,6 +318,14 @@ class LouvainSimpleTest(unittest.TestCase):
         na._addEdge(ea)
         nb._addEdge(eb)
         
+        # make sure the graph is set up the way we expect
+        self.logger.info("********* make sure graph is configured correctly")
+        for n in nodes:
+            print()
+            self.logger.info("nodeId:{} clusterId:{}".format(n._nodeId, n._clusterId))
+            for eid, edge in n._edgesDict.items():
+                self.logger.info(edge)
+        
         for n in nodes:
             # because we used _addEdge() instead of addEdges()
             # we need to make sure cache is set up

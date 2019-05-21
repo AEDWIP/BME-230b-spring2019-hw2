@@ -305,7 +305,8 @@ class Louvain(object):
         
         gain = ((sigmaIn + kiin)/(2*m)) - ((sigmaTot + ki)/(2*m))**2
 
-        self.logger.info("gain:{} loss:{}".format(gain, loss))
+        ret = gain - loss
+        self.logger.info("ret:{} gain:{} loss:{}".format(ret, gain, loss))
         self.logger.info("END\n")
-        return gain - loss
+        return ret
         

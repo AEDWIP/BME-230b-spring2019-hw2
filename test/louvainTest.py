@@ -209,8 +209,9 @@ class LouvainTest(unittest.TestCase):
         # test what change would be if we moved n2 from cluster 0 to cluster 1
         ret =louvain.modularityGainIfMove(fromCluster, targetCluster, n2, graphNodesLookup)
         
-        expectedChangeInQ = 0.04
+        expectedChangeInQ = -0.04
         self.logger.info("modularityGainIfMove:{} expected:{}".format(ret, expectedChangeInQ))
+        self.assertEqual(ret, expectedChangeInQ)
 
         self.logger.info("END\n")
 
