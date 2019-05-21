@@ -163,7 +163,6 @@ class Louvain(object):
                 
             self._edges += c._getEdges()
 
-        
         # TODO: do we need Q? useful for debugging
         self._calculateQ()
         
@@ -209,7 +208,7 @@ class Louvain(object):
         
         modularitySumTerm = 0
         for edge in self._edges:
-            self.logger.debug("\n{}".format(edge))
+            self.logger.info("\n{}".format(edge))
             
             nodeI = self._nodeLookup[edge._srcId]
             nodeJ = self._nodeLookup[edge._targetId]

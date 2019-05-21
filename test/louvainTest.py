@@ -118,7 +118,7 @@ class LouvainTest(unittest.TestCase):
         e5 = Edge(weight=1.0, srcId=3, targetId=0) 
         n3._addEdge(e5) 
         
-        cluster0 = Cluster(clusterId="c0", nodeList=[n0, n1, n2])
+        cluster0 = Cluster(clusterId="c0", nodeList=[n0, n1, n2, n3])
 
         # creat cluster 1
         n4 = Node(clusterId="c1", nodeId=4)
@@ -130,7 +130,7 @@ class LouvainTest(unittest.TestCase):
         e7 = Edge(weight=1.0, srcId=5, targetId=4)
         n5._addEdge(e7)
         
-        cluster1 = Cluster(clusterId="c1", nodeList=[n3, n4])
+        cluster1 = Cluster(clusterId="c1", nodeList=[n4, n5])
         self.assertEqual(1, cluster1._getM())
         clusters = [cluster0, cluster1]
         
@@ -143,7 +143,7 @@ class LouvainTest(unittest.TestCase):
         
         edgeList = [e0, e1, e2, e3, e4, e5, e6, e7, e8, e9]
         for e in edgeList:
-            self.logger.info(e)        
+            self.logger.debug(e)        
         
         nodeList = [n0, n1, n2, n3, n4, n5]
         graphNodesLookup = { n._nodeId:n for n in nodeList}

@@ -63,20 +63,20 @@ class Node(object):
         '''
         enable testing
         '''
-        self.logger.info("BEGIN")
+        self.logger.debug("BEGIN")
         for key, e in self._edgesDict.items():
             targetNode = graphNodesLookup[e._targetId]
             targetClusterId = targetNode._clusterId
-            self.logger.info("nodeId:{} e:{} targetNodeClusterId:{}"\
+            self.logger.debug("nodeId:{} e:{} targetNodeClusterId:{}"\
                              .format(self._nodeId, e, targetClusterId))
             if  targetClusterId in self._weightsInClusterDict:
                 self._weightsInClusterDict[targetClusterId] += e._weight
             else :
                 self._weightsInClusterDict[targetClusterId] = e._weight
                 
-            self.logger.info("_weightsInClusterDict[{}]:{}".format(targetClusterId, self._weightsInClusterDict[targetClusterId]))
+            self.logger.debug("_weightsInClusterDict[{}]:{}".format(targetClusterId, self._weightsInClusterDict[targetClusterId]))
                 
-        self.logger.info("END\n")
+        self.logger.debug("END\n")
                 
         
     ############################################################
@@ -157,7 +157,7 @@ class Node(object):
 #             self.logger.error(eMsg)
 #             raise ValueError(eMsg)
             
-        self.logger.info("ret:{} clusterId:{}".format(ret, clusterId))
+        self.logger.debug("ret:{} clusterId:{}".format(ret, clusterId))
         return ret       
     
 #      ############################################################
