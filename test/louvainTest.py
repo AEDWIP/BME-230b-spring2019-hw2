@@ -82,10 +82,21 @@ class LouvainTest(unittest.TestCase):
         listOfWeight = list(g.es['weight']) #[e['weights'] for e in g.es]
         self.logger.info("listOfWeight:\n{}".format(listOfWeight))
 
-        louvainLevel0 = Louvain(None)
-        louvainLevel0.bootStrapInit(listOfEdges, listOfWeight)
+#         louvainLevel0 = Louvain(None)
+#         louvainLevel0.bootStrapInit(listOfEdges, listOfWeight)
+        louvainLevel0 = Louvain.buildGraph(listOfEdges, listOfWeight)
         self.logger.info("Q:{}".format(louvainLevel0._Q))
         self.logger.info("END\n")
+        
+    ############################################################
+    def testChangeInModulartiy(self):
+        self.logger.info("BEGIN")
+        
+        listOfEdges = [(0,1), (0,2), (0,3), (2,4), (4,5) ]
+        listOfWeight = [1 for i in listOfEdges]
+        
+        self.logger.info("END\n")
+
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

@@ -86,12 +86,6 @@ class Node(object):
         '''
         for e in listOFEdges:
             self._addEdge(e)
-#             
-#             # initialize kiin cache
-#             if e._targetId in self._weightsInClusterDict:
-#                 self._weightsInClusterDict[e._targetId] += e._weight
-#             else :
-#                 self._weightsInClusterDict[e._targetId] = e._weight
 
         self._initKiinCache()
           

@@ -14,14 +14,18 @@ class Louvain(object):
     '''    
     public functions:
     
-        bootStrapInit(self, listOfEdges, listOfWeight)
-        getModularity()
+        @staticmethod
+        buildGraph(self, listOfEdges, listOfWeight)
+        
         __init__(self, clusters)
+
+        getModularity()
     '''
     logger = logging.getLogger(__name__)
 
     ############################################################
-    def bootStrapInit(self, listOfEdges, listOfWeight):
+    @staticmethod
+    def buildGraph(listOfEdges, listOfWeight):
         '''
         use this constructor to bootstrap from andata.
         
@@ -43,20 +47,21 @@ class Louvain(object):
                 
         returns a Louvain object
         '''
-        self._clusters = []
+        ret = Louvain(None)
+        ret._clusters = []
         
         # dictionary of all the the nodes in the graph
         # key is nodeId, value is node object
-        self._nodeLookup = {} 
+        ret._nodeLookup = {} 
         
         # list of all the edges in the graph
-        self._edges = []
+        ret._edges = []
         
-        self._Q = None
+        ret._Q = None
         
         # TODO: AEDWIP: assert number of nodes == number of cells
         
-        self._clusterId = 0
+        ret._clusterId = 0
         tmpDirectedEdgeLookup = set() # elements are (node1Id,node2Id)
         for i in range(len(listOfEdges)):
             # parse input
@@ -81,19 +86,20 @@ class Louvain(object):
             if not (node1Id, node2Id) in tmpDirectedEdgeLookup:
                 tmpDirectedEdgeLookup.add((node1Id, node2Id))
                 edge1 = Edge(weight, srcId=node1Id, targetId=node2Id)
-                self._edges.append(edge1)
-                self._build(node1Id, targetEdge=edge1)
+                ret._edges.append(edge1)
+                ret._build(node1Id, targetEdge=edge1)
 
             if not (node2Id, node1Id) in tmpDirectedEdgeLookup:
                 tmpDirectedEdgeLookup.add((node2Id, node1Id))  
                 edge2 = Edge(weight, srcId=node2Id, targetId=node1Id)
-                self._edges.append(edge2)
-                self._build(node2Id, targetEdge=edge2)
+                ret._edges.append(edge2)
+                ret._build(node2Id, targetEdge=edge2)
                 
-        for nodeId, node in self._nodeLookup.items():
-            node._initKiinCache(graphNodesLookup=self._nodeLookup)
+        for nodeId, node in ret._nodeLookup.items():
+            node._initKiinCache(graphNodesLookup=ret._nodeLookup)
 
-        self._calculateQ()
+        ret._calculateQ()
+        return ret
 
     ############################################################
     def _build(self, nodeId, targetEdge):
@@ -122,6 +128,11 @@ class Louvain(object):
             clusters: a list of cluster objects
             pass None for unit test
         '''
+        
+        if not clusters:
+            # called from either unit test or buildGraph()
+            return
+            
         self._clusters = clusters
         self._Q = None
         
