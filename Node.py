@@ -105,6 +105,8 @@ class Node(object):
     ############################################################
     def getM(self):   
         '''
+        TODO: remove this function 
+        
         The nodes contribution to m in 
         "Fast unfolding of communities in large networks"
         

@@ -6,11 +6,15 @@ Created on May 16, 2019
 import igraph as ig
 import logging
 from louvain import Louvain
+import LouvainSimpleTest
 import numpy as np
 # import scanpy.api as sc
 # from scipy.spatial.distance import pdist
 from setupLogging import setupLogging
 import unittest
+from Edge import Edge
+from Node import Node
+from Cluster import Cluster
 
 ############################################################
 class LouvainTest(unittest.TestCase):
@@ -88,14 +92,106 @@ class LouvainTest(unittest.TestCase):
         self.logger.info("Q:{}".format(louvainLevel0._Q))
         self.logger.info("END\n")
         
+    ############################################################    
+    def createChangeQGraph(self):
+        # create cluster 0
+        n0 = Node(clusterId="c0", nodeId=0)
+        n1 = Node(clusterId="c0", nodeId=1)
+        n2 = Node(clusterId="c0", nodeId=2)
+        n3 = Node(clusterId="c0", nodeId=3)
+
+        # 0 - 1
+        e0 = Edge(weight=1.0, srcId=0, targetId=1)
+        n0._addEdge(e0)
+        e1 = Edge(weight=1.0, srcId=1, targetId=0)
+        n1._addEdge(e1)
+               
+        # 0 - 2 
+        e2 = Edge(weight=1.0, srcId=0, targetId=2)
+        n0._addEdge(e2)   
+        e3 = Edge(weight=1.0, srcId=2, targetId=0) 
+        n2._addEdge(e3)    
+        
+        # 0 - 3
+        e4 = Edge(weight=1.0, srcId=0, targetId=3)
+        n0._addEdge(e4)
+        e5 = Edge(weight=1.0, srcId=3, targetId=0) 
+        n3._addEdge(e5) 
+        
+        cluster0 = Cluster(clusterId="c0", nodeList=[n0, n1, n2])
+
+        # creat cluster 1
+        n4 = Node(clusterId="c1", nodeId=4)
+        n5 = Node(clusterId="c1", nodeId=5)
+
+        # 4 - 5
+        e6 = Edge(weight=1.0, srcId=4, targetId=5)
+        n4._addEdge(e6)
+        e7 = Edge(weight=1.0, srcId=5, targetId=4)
+        n5._addEdge(e7)
+        
+        cluster1 = Cluster(clusterId="c1", nodeList=[n3, n4])
+        self.assertEqual(1, cluster1._getM())
+        clusters = [cluster0, cluster1]
+        
+        # create an edge between cluster
+        # 2 - 4
+        e8 = Edge(weight=1.0, srcId=2, targetId=4)
+        n2._addEdge(e8)
+        e9 = Edge(weight=1.0, srcId=4, targetId=2)
+        n4._addEdge(e9)
+        
+        edgeList = [e0, e1, e2, e3, e4, e5, e6, e7, e8, e9]
+        for e in edgeList:
+            self.logger.info(e)        
+        
+        nodeList = [n0, n1, n2, n3, n4, n5]
+        graphNodesLookup = { n._nodeId:n for n in nodeList}
+        
+        for n in nodeList:
+            # because we used _addEdge() instead of addEdges()
+            # we need to make sure cache is set up
+            n._initKiinCache(graphNodesLookup)        
+            
+        self.logger.info("")                    
+        for n in nodeList:
+            # for lazy evaluation to run
+            n.getSumAdjWeights()
+            n.getSumOfWeightsInsideCluster(n._clusterId, graphNodesLookup)
+            self.logger.info("node:{}".format(n))
+            
+        self.logger.info("")            
+        for c in clusters:
+            # run lazy eval
+            c.getSumOfWeights()
+            c.getSumOfWeightsInsideCluster(graphNodesLookup)
+            self.logger.info("cluster:{}".format(c))        
+            
+        level0 = Louvain([cluster0, cluster1] )  
+        ret = (level0, 
+               clusters, 
+               nodeList, 
+               edgeList, 
+               graphNodesLookup)
+        
+            
+        self.logger.info("END\n")        
+        return (ret)
+           
     ############################################################
     def testChangeInModulartiy(self):
         self.logger.info("BEGIN")
         
-        listOfEdges = [(0,1), (0,2), (0,3), (2,4), (4,5) ]
-        listOfWeight = [1 for i in listOfEdges]
-        louvainLevel0 = Louvain.buildGraph(listOfEdges, listOfWeight)
-        self.logger.info("louvainLevel0:{}".format(louvainLevel0))
+#         this odes not build graph the way we need ti
+#         listOfEdges = [(0,1), (0,2), (0,3), (2,4), (4,5) ]
+#         listOfWeight = [1 for i in listOfEdges]
+#         louvainLevel0 = Louvain.buildGraph(listOfEdges, listOfWeight)
+
+        graph = self.createChangeQGraph()
+        louvain = graph[0]
+        self.logger.info("louvainLevel0:{}".format(louvain))
+        
+        expectedChangeInQ = 0.04
         
         self.logger.info("END\n")
 

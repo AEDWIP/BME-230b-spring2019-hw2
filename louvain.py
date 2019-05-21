@@ -124,6 +124,8 @@ class Louvain(object):
         TODO"
         calculates modularity 
         
+        should only be used by unit test
+        
         arguments:
             clusters: a list of cluster objects
             pass None for unit test
@@ -135,6 +137,7 @@ class Louvain(object):
             
         self._clusters = clusters
         self._Q = None
+        self._m = None
         
         # dictionary of all the the nodes in the graph
         # key is nodeId, value is node object
@@ -174,11 +177,13 @@ class Louvain(object):
         returns 1/2 the sum of all edges in the graph
         '''
         
-        m = 0
-        for cluster in self._clusters:
-            m += cluster._getM()
+        if not self._m :
+            m = 0
+            for cluster in self._clusters:
+                m += cluster._getM()
+            self._m = m
     
-        return m 
+        return self._m
     
     ############################################################
     def _calculateQ(self):
@@ -260,3 +265,28 @@ class Louvain(object):
             
             
         return ret
+    
+
+    ############################################################  
+    def modularityGainIfMove(self, targetCluster, node, graphNodesLookup): 
+        '''
+        TODO
+        '''     
+        self.logger.info("BEGIN")
+        
+        # calculate change in Q cause by removing node
+        sigmaIn = targetCluster.getSumOfWeightsInsideCluster(self._nodeLookup)
+        kiin = node.getSumOfWeightsInsideCluster(targetCluster._clusterId, self._nodeLookup)
+        m = self._getM()
+        sigmaTot = targetCluster.getSumOfWeights()
+        ki = node.self.getSumAdjWeights()
+        
+        loss = ((sigmaIn - kiin)/(2*m)) + ((sigmaTot - ki)/(2*m))**2
+
+        
+        # calculate change Q caused by adding node
+        gain = ((sigmaIn + kiin)/(2*m)) - ((sigmaTot + ki)/(2*m))**2
+
+        self.logger.info("END\n")
+        return gain + loss
+        
