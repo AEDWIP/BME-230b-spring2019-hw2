@@ -146,27 +146,14 @@ class Node(object):
         ret = 0
         if clusterId in self._weightsInClusterDict:
             ret = self._weightsInClusterDict[clusterId]
-        else :
-            eMsg = "nodeId:{} clusterId:{} not found in _weightsInClusterDict:\n{}"\
-                .format(self._nodeId, clusterId, self._weightsInClusterDict)
-            self.logger.error(eMsg)
-            raise ValueError(eMsg)
-        
+            
+        # Louvain initialization step puts each node in a separate cluster
+        # E.G. there are not in edges only between edges 
 #         else :
-#             self._weightsInClusterDict  = 0
-#             ret = 0
-#             for e in self._edgesDict:
-#                 targetId = e._targetId
-#                 if targetId in graphNodesLookup:
-#                     n = graphNodesLookup[e._targetId]
-#                     if self._clusterId == n._clusterId:
-#                         ret += e._weight
-#                 else:
-#                     eMsg = "targetId:{} not found in graphNodesLookup".format(targetId)
-#                     self.logger.error(eMsg)
-#                     raise ValueError(eMsg)
-#                 
-#             self._weightsInClusterDict[clusterId] = ret
+#             eMsg = "nodeId:{} clusterId:{} not found in _weightsInClusterDict:\n{}"\
+#                 .format(self._nodeId, clusterId, self._weightsInClusterDict)
+#             self.logger.error(eMsg)
+#             raise ValueError(eMsg)
             
         self.logger.info("ret:{} clusterId:{}".format(ret, clusterId))
         return ret       

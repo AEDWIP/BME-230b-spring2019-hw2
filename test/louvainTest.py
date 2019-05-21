@@ -94,6 +94,8 @@ class LouvainTest(unittest.TestCase):
         
         listOfEdges = [(0,1), (0,2), (0,3), (2,4), (4,5) ]
         listOfWeight = [1 for i in listOfEdges]
+        louvainLevel0 = Louvain.buildGraph(listOfEdges, listOfWeight)
+        self.logger.info("louvainLevel0:{}".format(louvainLevel0))
         
         self.logger.info("END\n")
 

@@ -241,3 +241,22 @@ class Louvain(object):
     ############################################################
     def getModularity(self): 
         return self.Q   
+    
+    ############################################################    
+    def _forceAllLazyEval(self):
+        for c in self._clusters:
+            c.getSumOfWeights()
+            c.getSumOfWeightsInsideCluster(self._nodeLookup)   
+        
+    ############################################################                
+    def __repr__(self):
+        self._forceAllLazyEval()
+        ret = "\n\tQ:{}".format(self._Q)
+        ret += "\tnumber of Nodes:{}\n".format(len(self._nodeLookup.keys()))
+        ret += "\tnumber of edges:{}\n".format(len(self._edges))
+        ret += "\tnumber of clusters:{}\n".format(len(self._clusters))
+        for c in self._clusters:
+            ret += "\t{}\n".format(c)
+            
+            
+        return ret
