@@ -208,7 +208,7 @@ class Louvain(object):
         
         modularitySumTerm = 0
         for edge in self._edges:
-            self.logger.info("\n{}".format(edge))
+            self.logger.debug("\n{}".format(edge))
             
             nodeI = self._nodeLookup[edge._srcId]
             nodeJ = self._nodeLookup[edge._targetId]
@@ -278,7 +278,7 @@ class Louvain(object):
         kiin = node.getSumOfWeightsInsideCluster(targetCluster._clusterId, self._nodeLookup)
         m = self._getM()
         sigmaTot = targetCluster.getSumOfWeights()
-        ki = node.self.getSumAdjWeights()
+        ki = node.getSumAdjWeights()
         
         loss = ((sigmaIn - kiin)/(2*m)) + ((sigmaTot - ki)/(2*m))**2
 

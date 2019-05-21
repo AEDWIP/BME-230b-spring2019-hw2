@@ -153,14 +153,14 @@ class LouvainTest(unittest.TestCase):
             # we need to make sure cache is set up
             n._initKiinCache(graphNodesLookup)        
             
-        self.logger.info("")                    
+        self.logger.debug("")                    
         for n in nodeList:
             # for lazy evaluation to run
             n.getSumAdjWeights()
             n.getSumOfWeightsInsideCluster(n._clusterId, graphNodesLookup)
-            self.logger.info("node:{}".format(n))
+            self.logger.debug("node:{}".format(n))
             
-        self.logger.info("")            
+        self.logger.debug("")            
         for c in clusters:
             # run lazy eval
             c.getSumOfWeights()
@@ -189,10 +189,20 @@ class LouvainTest(unittest.TestCase):
 
         graph = self.createChangeQGraph()
         louvain = graph[0]
+        clusters = graph[1]
+        nodesList = graph[2]
+        graphNodesLookup = graph[4]
         self.logger.info("louvainLevel0:{}".format(louvain))
         
-        expectedChangeInQ = 0.04
+        n2 = nodesList[2]
+        targetCluster = clusters[1]
         
+        # test what change would be if we moved n2 from cluster 0 to cluster 1
+        ret =louvain.modularityGainIfMove(targetCluster, n2, graphNodesLookup)
+        
+        expectedChangeInQ = 0.04
+        self.logger.info("modularityGainIfMove:{} expected:{}".format(ret, expectedChangeInQ))
+
         self.logger.info("END\n")
 
 
