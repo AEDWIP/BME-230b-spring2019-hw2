@@ -25,7 +25,7 @@ class Louvain(object):
 
     ############################################################
     @staticmethod
-    def buildGraph(listOfEdges, listOfWeight):
+    def buildGraph(louvainId, listOfEdges, listOfWeight):
         '''
         use this constructor to bootstrap from andata.
         
@@ -47,7 +47,7 @@ class Louvain(object):
                 
         returns a Louvain object
         '''
-        ret = Louvain(None)
+        ret = Louvain(louvainId, None)
         ret._clusters = []
         
         # dictionary of all the the nodes in the graph
@@ -119,7 +119,7 @@ class Louvain(object):
         n._addEdge(targetEdge) 
 
     ############################################################
-    def __init__(self, clusters=None):
+    def __init__(self, louvainId, clusters=None):
         '''
         TODO"
         calculates modularity 
@@ -130,6 +130,7 @@ class Louvain(object):
             clusters: a list of cluster objects
             pass None for unit test
         '''
+        self._louvainId = louvainId
         
         if not clusters:
             # called from either unit test or buildGraph()
@@ -255,7 +256,8 @@ class Louvain(object):
     ############################################################                
     def __repr__(self):
         self._forceAllLazyEval()
-        ret = "\n\tQ:{}".format(self._Q)
+        ret = "\n\tid:{}".format(self._louvainId)
+        ret += "\tQ:{}".format(self._Q)
         ret += "\tnumber of Nodes:{}\n".format(len(self._nodeLookup.keys()))
         ret += "\tnumber of edges:{}\n".format(len(self._edges))
         ret += "\tnumber of clusters:{}\n".format(len(self._clusters))
@@ -267,25 +269,43 @@ class Louvain(object):
     
 
     ############################################################  
-    def modularityGainIfMove(self, targetCluster, node, graphNodesLookup): 
+    def modularityGainIfMove(self, fromCluster, targetCluster, node, graphNodesLookup): 
         '''
         TODO
         '''     
         self.logger.info("BEGIN")
         
         # calculate change in Q cause by removing node
+        sigmaIn = fromCluster.getSumOfWeightsInsideCluster(self._nodeLookup)
+        kiin = node.getSumOfWeightsInsideCluster(fromCluster._clusterId, self._nodeLookup)
+        m = self._getM()
+        sigmaTot = fromCluster.getSumOfWeights()
+        ki = node.getSumAdjWeights()
+        
+        self.logger.info("change calculate change in Q cause by removing node")
+        self.logger.info("louvainId:{} fromClusterId:{} nodeId:{}\n"\
+                         .format(self._louvainId, fromCluster._clusterId, node._nodeId))
+        self.logger.info("sigmaIn:{}, kiin:{} m:{} sigmaTot:{} ki:{}\n"\
+                         .format(sigmaIn, kiin, m, sigmaTot, ki))
+        
+        loss = ((sigmaIn - kiin)/(2*m)) + ((sigmaTot - ki)/(2*m))**2
+        
+        # calculate change Q caused by adding node
         sigmaIn = targetCluster.getSumOfWeightsInsideCluster(self._nodeLookup)
         kiin = node.getSumOfWeightsInsideCluster(targetCluster._clusterId, self._nodeLookup)
         m = self._getM()
         sigmaTot = targetCluster.getSumOfWeights()
         ki = node.getSumAdjWeights()
         
-        loss = ((sigmaIn - kiin)/(2*m)) + ((sigmaTot - ki)/(2*m))**2
-
+        self.logger.info("change calculate change in Q cause by adding node")
+        self.logger.info("louvainId:{} targetCluster:{} nodeId:{}"\
+                         .format(self._louvainId, targetCluster._clusterId, node._nodeId))
+        self.logger.info("sigmaIn:{}, kiin:{} m:{} sigmaTot:{} ki:{}"\
+                         .format(sigmaIn, kiin, m, sigmaTot, ki))
         
-        # calculate change Q caused by adding node
         gain = ((sigmaIn + kiin)/(2*m)) - ((sigmaTot + ki)/(2*m))**2
 
+        self.logger.info("gain:{} loss:{}".format(gain, loss))
         self.logger.info("END\n")
-        return gain + loss
+        return gain - loss
         

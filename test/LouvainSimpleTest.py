@@ -84,7 +84,7 @@ class LouvainSimpleTest(unittest.TestCase):
         self.assertEqual(1, cluster1._getM())
         clusters = [cluster0, cluster1]
 
-        level0 = Louvain([cluster0, cluster1] )  
+        level0 = Louvain("simple", [cluster0, cluster1] )  
               
         self.logger.info("END\n")
         
@@ -166,7 +166,7 @@ class LouvainSimpleTest(unittest.TestCase):
         self.assertEqual(1, cluster1._getM())
 
         # test modularity calculation
-        level0 = Louvain([cluster0, cluster1])
+        level0 = Louvain("testNode", [cluster0, cluster1])
         self.assertEqual(4, level0._getM())
         
         self.logger.info("level0._Q:{}".format(level0._Q))
@@ -184,7 +184,7 @@ class LouvainSimpleTest(unittest.TestCase):
         ret = self.createSimpleGraph()
         clusterList = ret[1]
         self.logger.info("clusterList:\n{}".format(clusterList))
-        level0 = Louvain(clusterList)
+        level0 = Louvain("testQ", clusterList)
         self.assertEqual(4, level0._getM())
         
         self.logger.info("level0._Q:{}".format(level0._Q))
@@ -192,7 +192,7 @@ class LouvainSimpleTest(unittest.TestCase):
         self.logger.info("END\n")
         
     ############################################################
-    def testChangeInQ(self):
+    def testChangeInQSlow(self):
         self.logger.info("BEGIN")
         
         n0 = Node(clusterId="c1", nodeId=0)
@@ -235,7 +235,7 @@ class LouvainSimpleTest(unittest.TestCase):
         
         cluster2 = Cluster(clusterId="2", nodeList=[n2, n4, n5])
         
-        louvain1 = Louvain([cluster1, cluster2])
+        louvain1 = Louvain("changeInQ1", [cluster1, cluster2])
         
         # calculate modularity of original graph
         self.logger.info("louvain1._Q:{}".format(louvain1._Q))
@@ -247,7 +247,7 @@ class LouvainSimpleTest(unittest.TestCase):
         cluster2 = Cluster(clusterId="2", nodeList=[n4, n5])
         
         # calculate modularity
-        louvain2 = Louvain([cluster1, cluster2])
+        louvain2 = Louvain("changeInQ2", [cluster1, cluster2])
         self.logger.info("louvain2._Q:{}".format(louvain2._Q))
         self.assertEqual(louvain2._Q, 0.5199999999999999)
 

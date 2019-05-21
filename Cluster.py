@@ -32,7 +32,7 @@ class Cluster(object):
         for n in self._nodeList:
             ret += n._getEdges()
             
-        self.logger.info("c:{} ret:\n{}".format(self._clusterId, ret))
+        self.logger.debug("c:{} ret:\n{}".format(self._clusterId, ret))
         return ret
     
     ############################################################
@@ -71,7 +71,7 @@ class Cluster(object):
         if not self._weightsInsideCluster:
             self._weightsInsideCluster  = 0
             for n in self._nodeList:
-                self.logger.info("clusterId:{} nodeId:{}".format(self._clusterId, n._nodeId))
+                self.logger.debug("clusterId:{} nodeId:{}".format(self._clusterId, n._nodeId))
                 kiin = n.getSumOfWeightsInsideCluster(self._clusterId, graphNodesLookup)
                 if not kiin: # TODO: AEDWIP
                     self.logger.info("kiin WTF?")

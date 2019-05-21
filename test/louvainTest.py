@@ -96,8 +96,8 @@ class LouvainTest(unittest.TestCase):
     def createChangeQGraph(self):
         # create cluster 0
         n0 = Node(clusterId="c0", nodeId=0)
+        n2 = Node(clusterId="c1", nodeId=2)
         n1 = Node(clusterId="c0", nodeId=1)
-        n2 = Node(clusterId="c0", nodeId=2)
         n3 = Node(clusterId="c0", nodeId=3)
 
         # 0 - 1
@@ -118,7 +118,7 @@ class LouvainTest(unittest.TestCase):
         e5 = Edge(weight=1.0, srcId=3, targetId=0) 
         n3._addEdge(e5) 
         
-        cluster0 = Cluster(clusterId="c0", nodeList=[n0, n1, n2, n3])
+        cluster0 = Cluster(clusterId="c0", nodeList=[n0, n1, n3])
 
         # creat cluster 1
         n4 = Node(clusterId="c1", nodeId=4)
@@ -130,8 +130,7 @@ class LouvainTest(unittest.TestCase):
         e7 = Edge(weight=1.0, srcId=5, targetId=4)
         n5._addEdge(e7)
         
-        cluster1 = Cluster(clusterId="c1", nodeList=[n4, n5])
-        self.assertEqual(1, cluster1._getM())
+        cluster1 = Cluster(clusterId="c1", nodeList=[n2, n4, n5])
         clusters = [cluster0, cluster1]
         
         # create an edge between cluster
@@ -142,8 +141,14 @@ class LouvainTest(unittest.TestCase):
         n4._addEdge(e9)
         
         edgeList = [e0, e1, e2, e3, e4, e5, e6, e7, e8, e9]
+        i = 1
         for e in edgeList:
-            self.logger.debug(e)        
+            if i % 2 :
+                print()
+                
+            i += 1
+            self.logger.info(e)  
+        print()      
         
         nodeList = [n0, n1, n2, n3, n4, n5]
         graphNodesLookup = { n._nodeId:n for n in nodeList}
@@ -167,7 +172,7 @@ class LouvainTest(unittest.TestCase):
             c.getSumOfWeightsInsideCluster(graphNodesLookup)
             self.logger.info("cluster:{}".format(c))        
             
-        level0 = Louvain([cluster0, cluster1] )  
+        level0 = Louvain("changeQGraph", [cluster0, cluster1] )  
         ret = (level0, 
                clusters, 
                nodeList, 
@@ -182,7 +187,7 @@ class LouvainTest(unittest.TestCase):
     def testChangeInModulartiy(self):
         self.logger.info("BEGIN")
         
-#         this odes not build graph the way we need ti
+#         this does not build graph the way we need for this test
 #         listOfEdges = [(0,1), (0,2), (0,3), (2,4), (4,5) ]
 #         listOfWeight = [1 for i in listOfEdges]
 #         louvainLevel0 = Louvain.buildGraph(listOfEdges, listOfWeight)
@@ -194,11 +199,15 @@ class LouvainTest(unittest.TestCase):
         graphNodesLookup = graph[4]
         self.logger.info("louvainLevel0:{}".format(louvain))
         
+        # check modularity before move
+        self.assertEqual(louvain._Q, 0.5599999999999999)
+        
         n2 = nodesList[2]
+        fromCluster = clusters[0]
         targetCluster = clusters[1]
         
         # test what change would be if we moved n2 from cluster 0 to cluster 1
-        ret =louvain.modularityGainIfMove(targetCluster, n2, graphNodesLookup)
+        ret =louvain.modularityGainIfMove(fromCluster, targetCluster, n2, graphNodesLookup)
         
         expectedChangeInQ = 0.04
         self.logger.info("modularityGainIfMove:{} expected:{}".format(ret, expectedChangeInQ))
