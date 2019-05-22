@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
+#
 # # BME-230B Spring 2019 HW 2 Question 
 # James Casaletto, Andrew Davidson, Yuanqing Xue, Jim Zheng
 # 
@@ -21,7 +19,6 @@
 
 # In[1]:
 
-
 from euclid_knn import KnnG
 import gseapy as gp
 import matplotlib.pyplot as plt
@@ -35,38 +32,6 @@ print("scanpy.__version__:{}".format(scanpy.__version__))
 
 import scipy.special
 import scipy.stats as stats
-
-
-# ## 2.b. [5 pts] 
-# Turn in a UMAP plot of the combined dataset as you did in question #1, but
-# this time, color the cells by their Louvain cluster assignments determined for each cell
-# within each batch as a different color in each plot.
-
-# In[ ]:
-
-
-get_ipython().run_cell_magic('time', '', 'anndata = sc.read("PBMC.merged.h5ad")\n\n# run our implementation of nearest neighboors and update anndata\nKnnG(anndata, n_neighbors=12, runPCA=True, nPC=50)')
-
-
-# In[ ]:
-
-
-get_ipython().run_cell_magic('time', '', "# running Scanpy's version of Louvian\n# TODO: replace with our implementation\nscanpy.tl.louvain(anndata,\n                  flavor='igraph', \n                  directed=False, \n                  use_weights=True)")
-
-
-# In[ ]:
-
-
-plt.figure(figsize=(10,10))
-scanpy.tl.umap(anndata)
-
-
-# In[ ]:
-
-
-scanpy.pl.umap(anndata, color=['Cell type'])
-scanpy.pl.umap(anndata, color=["louvain"])
-scanpy.pl.umap(anndata, color=["batch"])
 
 
 # ## <span style="color:red">AEDWIP TODO</span>
@@ -517,15 +482,6 @@ def rankPathWays(anndata, clusterSigs, topN=5):
         
     retDF = retDF.sort_values(by='cluster id')
     return retDF  
-
-
-# In[ ]:
-
-
-get_ipython().run_cell_magic('time', '', 'retDF = rankPathWays(anndata, clusterSigs, topN=5)')
-
-
-# In[ ]:
 
 
 # https://stackoverflow.com/a/35693013/4586180
