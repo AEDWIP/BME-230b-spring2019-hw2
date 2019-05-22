@@ -1,5 +1,4 @@
-#! /usr/bin/env python
-
+#
 # BME-230B Spring 2019 HW 2 Question 1
 # James Casaletto, Andrew Davidson, Yuanqing Xue, Jim Zheng
 # 
@@ -15,15 +14,16 @@
 # - [scanpy.pl.umap](https://icb-scanpy.readthedocs-hosted.com/en/stable/api/scanpy.pl.umap.html#scanpy.pl.umap)
 
 import logging
+import numpy as np
 from scanpy.neighbors import compute_connectivities_umap 
 from scipy.spatial.distance import pdist, squareform
 from sklearn.decomposition import PCA
-import numpy as np
+from sklearn.metrics import pairwise_distances
 
 ################################################################################
 class KnnG():
     '''
-    replaces scanpy pca and k nearest  neighbours  with our own
+    replaces scanpy pca and k nearest  neighbors  with our own
     
     updates:
         adata.obsm['X_pca'] 
@@ -32,14 +32,13 @@ class KnnG():
     
     usage:
         knn = KnnG(adata)
-        scanpy.tl.umap(anndata)
+        scanpy.tl.umap(adata)
         scanpy.pl.umap(adata)
         
     public functions
         __init__(self, adata = None, d_metric='euclidean', n_neighbors=15, method='umap',
                     runPCA=True, nPC=50)
     '''
-    
     logger = logging.getLogger(__name__)
 
     ######################################################################
@@ -77,7 +76,6 @@ class KnnG():
 
             self._update_adata()
         
-
     ######################################################################    
     def _calDistance(self):  
         '''
@@ -87,24 +85,26 @@ class KnnG():
         '''
         self.logger.info("BEGIN")
             
-        #
-        # https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.spatial.distance.pdist.html
-        # pdist() is strange
-        #  X is a m x n. where m = number of examples and n is the number of dimensions
-        # pdist() returns a condensed distance matrix of only the upper triangular values - the diagonal 
-        # upper and lower are sysmetric, diagonal is zero
-        #
-        # we are told our distance matrix should be n x n where n =15,476
-        # pdist() returns a shape shape: (119745550,)
-        # 15,476 * 15,476  = 239,506,576
-        # 119,745,550 * 2 + n = 239,506,576 # coefficient of 2 give us upper and lower traingle + n is the diagonal
-        #
-        condensedDistances = pdist(self._adata.obsm['X_pca'], metric=self._d_metric)
-            
-        # https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.spatial.distance.squareform.html#scipy.spatial.distance.squareform
-        # convert Converts a vector-form distance vector to a square-form distance matrix, and vice-versa
-        self._D = squareform(condensedDistances)
-        self.logger.info("self.distances.shape:{}".format(self._D.shape))
+#         #
+#         # https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.spatial.distance.pdist.html
+#         # pdist() is strange
+#         #  X is a m x n. where m = number of examples and n is the number of dimensions
+#         # pdist() returns a condensed distance matrix of only the upper triangular values - the diagonal 
+#         # upper and lower are sysmetric, diagonal is zero
+#         #
+#         # we are told our distance matrix should be n x n where n =15,476
+#         # pdist() returns a shape shape: (119745550,)
+#         # 15,476 * 15,476  = 239,506,576
+#         # 119,745,550 * 2 + n = 239,506,576 # coefficient of 2 give us upper and lower traingle + n is the diagonal
+#         #
+#         condensedDistances = pdist(self._adata.obsm['X_pca'], metric=self._d_metric)
+#             
+#         # https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.spatial.distance.squareform.html#scipy.spatial.distance.squareform
+#         # convert Converts a vector-form distance vector to a square-form distance matrix, and vice-versa
+#         self._D = squareform(condensedDistances)
+#         self.logger.info("self.distances.shape:{}".format(self._D.shape))
+
+        self._D = pairwise_distances(self._adata.obsm['X_pca'])
         
         self.logger.info("END\n")
     

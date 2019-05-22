@@ -6,6 +6,7 @@ Created on May 14, 2019
 import logging
 import numpy as np
 from setupLogging import setupLogging
+import scanpy as sc
 
 import unittest
 from euclid_bbknn import bbknn_graph
@@ -221,6 +222,20 @@ class Eculid_bbknnTest(unittest.TestCase):
         
         self.logger.info("END\n")
 
+   ######################################################################                 
+    def test_l_k_adata(self):
+        self.logger.info("BEGIN")
+        
+        anndata = sc.read("../PBMC.merged.h5ad")
+        bb6nn = bbknn_graph(anndata, neighbors_within_batch=6, runPCA=False, pcs=50)
+        bb6nn.l_k_bbknn(l=3)
+        
+        l_k_d  = anndata.uns['neighbors']['distances']
+        self.logger.info("type(l_k_d):{}".format(type(l_k_d)))
+        self.logger.info("l_k_d.shape:{}".format(l_k_d.shape))
+        self.logger.info("l_k_d:{}\n".format(l_k_d))
+
+        self.logger.info("END\n")
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

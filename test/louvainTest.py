@@ -28,7 +28,7 @@ class LouvainTest(unittest.TestCase):
     ############################################################
     def tearDown(self):
         # make sure all the logs are flushed
-        # if assert we will not see partial test log entries
+        # else if assert we will not see partial test log entries
         logging.shutdown()
         
     ############################################################
@@ -64,7 +64,7 @@ class LouvainTest(unittest.TestCase):
         self.logger.info("END\n")
 
     ############################################################
-    def testBootStrapModularity(self):
+    def testIGraphModularity(self):
         self.logger.info("BEGIN")
         #g.community_multilevel()
         
@@ -207,6 +207,7 @@ class LouvainTest(unittest.TestCase):
         
         # check modularity before move
         beforeMoveQ = louvain._Q
+        self.logger.info("beforeMoveQ:{}".format(beforeMoveQ))
         self.assertAlmostEqual(beforeMoveQ, 0.44)
         
         n0 = nodesList[0]

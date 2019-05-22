@@ -8,10 +8,10 @@ from Edge import Edge
 import logging
 from louvain import Louvain
 from Node import Node
-import numpy as np
+#import numpy as np
 from setupLogging import setupLogging
 import unittest
-from scanpy.tools._louvain import louvain
+#from scanpy.tools._louvain import louvain
 
 
 ############################################################
@@ -26,7 +26,7 @@ class LouvainSimpleTest(unittest.TestCase):
     ############################################################
     def tearDown(self):
         # make sure all the logs are flushed
-        # if assert we will not see partial test log entries
+        # else if assert we will not see partial test log entries
         logging.shutdown()
         
     ############################################################
@@ -69,8 +69,6 @@ class LouvainSimpleTest(unittest.TestCase):
         e5 = Edge(weight=1.0, srcId=2, targetId=1) 
         n2._addEdge(e5) 
         
-        # create  cluster0
-        cluster0 = Cluster(clusterId="c0", nodeList=[n0, n1, n2])
 
         # create second cluster graph
         n3 = Node(clusterId="c1", nodeId=3)
@@ -81,8 +79,11 @@ class LouvainSimpleTest(unittest.TestCase):
         e6 = Edge(weight=1.0, srcId=4, targetId=3)
         n4._addEdge(e6)
         
+        # create clusters
+        cluster0 = Cluster(clusterId="c0", nodeList=[n0, n1, n2])
         cluster1 = Cluster(clusterId="c1", nodeList=[n3, n4])
         self.assertEqual(1, cluster1._getM())
+        
         clusters = [cluster0, cluster1]
         
         # you can not move a node to a cluster if the node is not
@@ -304,7 +305,7 @@ class LouvainSimpleTest(unittest.TestCase):
                 expectedData = expectedNodeData[nid]
                 self.assertEqual(len(n._edgesDict.keys()), expectedData["numEdges"], eMsg)
                 self.assertEqual(n._clusterId, expectedData["clusterId"], eMsg)
-                self.assertEqual(n._adjcentEdgeWeights, expectedData["adjEdgeWeights"], eMsg)
+                self.assertEqual(n._adjacentEdgeWeights, expectedData["adjEdgeWeights"], eMsg)
 
         self.logger.info("END\n")    
     

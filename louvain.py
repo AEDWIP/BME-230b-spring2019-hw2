@@ -48,7 +48,7 @@ class Louvain(object):
         returns a Louvain object
         '''
         ret = Louvain(louvainId, None)
-        ret._clusters = []
+        ret._clusters = dict()  # key is clusterId, value is cluster object
         
         # dictionary of all the the nodes in the graph
         # key is nodeId, value is node object
@@ -113,9 +113,10 @@ class Louvain(object):
             self._nodeLookup[nodeId] = n
             cluster = Cluster(self._clusterId, [n])
             self._clusterId += 1            
-            self._clusters.append(cluster)
+            self._clusters[cluster._clusterId] = cluster
             self._nodeLookup[nodeId] = n
-            
+           
+        # TODO: AEDWIP: this looks buggy, should we be used addEdges ?? 
         n._addEdge(targetEdge) 
 
     ############################################################
@@ -183,14 +184,27 @@ class Louvain(object):
         self.logger.debug("END\n")
         
     ############################################################  
-    def changeInModularityIfNodeAdded(self, node, targetCluster):
+    def changeInModularityIfNodeAdded(self, node, targetCluster):#, isLouvainInit=False
         '''
         calculate change in Q if we add a node to a cluster
         
         formula publish in louvain paper does not work
         '''
         self.logger.debug("BEGIN") 
-        nodeSet = node._nodesInClusterDict[targetCluster._clusterId]
+        
+        nodeSet = set()
+        if targetCluster._clusterId in node._nodesInClusterDict:
+            nodeSet = node._nodesInClusterDict[targetCluster._clusterId]
+        else:
+#             if isLouvainInit:
+#                 # each node is in a separate cluster there are no between edges
+#                 return 0
+#             else:
+            fmt = "target clusterId:{} missing from nodeId:{} _nodesInClusterDict."
+            fmt += " should not try  move to clusters node is not connected to "
+            self.logger.warn(fmt.format(targetCluster._clusterId, node._nodeId)) 
+            return 0
+            
         m = self._getM()
         
         ret = 0
@@ -252,7 +266,7 @@ class Louvain(object):
         
     ############################################################    
     def _forceAllLazyEval(self):
-        for c in self._clusters:
+        for clusterId,c in self._clusters.items():
             c.getSumOfWeights()
             c.getSumOfWeightsInsideCluster(self._nodeLookup)           
     
@@ -266,7 +280,7 @@ class Louvain(object):
         '''
         if not self._m :
             m = 0
-            for cluster in self._clusters:
+            for clusterId, cluster in self._clusters.items():
                 m += cluster._getM()
             self._m = m
     
@@ -290,7 +304,7 @@ class Louvain(object):
         '''
         self._louvainId = louvainId
         
-        self._clusters = clusters
+        self._clusters = dict()
         self._Q = None
         self._m = None
         
@@ -305,11 +319,15 @@ class Louvain(object):
             # called from either unit test or buildGraph()
             return   
              
-        if not self._clusters:
-            self.logger.warn("self is not initialized. this is okay if you are running a unit test")
-            return
+#         if not self._clusters:
+#             self.logger.warn("self is not initialized. this is okay if you are running a unit test")
+#             return
         
-        for c in self._clusters:
+        for c in clusters:
+            # TODO: AEDWIP clean up
+            self._clusters[c._clusterId] = c        
+        
+        for clusterId, c in self._clusters.items():
             nodes = c._getNodes()
             for n in nodes:
                 if n._nodeId not in self._nodeLookup:
@@ -326,7 +344,7 @@ class Louvain(object):
         self._calculateQ()
                 
     ############################################################  
-    def modularityGainIfMove(self, fromCluster, targetCluster, node): 
+    def modularityGainIfMove(self, fromCluster, targetCluster, node): # , isLouvainInit=False
         '''
         TODO
         '''     
@@ -336,10 +354,55 @@ class Louvain(object):
         changeIfAddNode = self.changeInModularityIfNodeAdded(node, targetCluster)
 
         ret = changeIfAddNode - changeIfRemoveNode
-        self.logger.info("ret:{} changeIfAddNode:{} loss:{}".format(ret, changeIfAddNode, changeIfRemoveNode))
+        self.logger.info("ret:{} changeIfAddNode:{} loss:{}".format(ret, changeIfAddNode, changeIfRemoveNode, isLouvainInit=False))
         self.logger.info("END\n")
         return ret
         
+    ############################################################ 
+    def _phaseI(self, isLouvainInit=False):      
+        '''
+        TODO
+        '''
+        self.logger.info("BEGIN")   
+          
+        self.logger.info("Q:{}".format(self._Q))
+        
+        K_CHANGE_IN_Q = 0
+        bestMove = (-1, -1, -1, -1) # (changeInQ, node, fromCluster, toCluster
+        isImproving = True
+        while isImproving:
+            isImproving = False
+            for nodeId, node in self._nodeLookup.items():
+                # Q will only improve if we are moving into a cluster that has a node 
+                # we are connected to
+                fromCluster = self._clusters[node._clusterId]
+                for candidateClusterId, candidateNodeSet in node._nodesInClusterDict.items():
+                    if node._clusterId == candidateClusterId:
+                        continue
+                    
+                    #targetCluster = self._clusters[candidateClusterId]
+                    for candidateNodeId in candidateNodeSet:
+                        candidateNode = self._nodeLookup[candidateNodeId]
+                        targetCluster = self._clusters[candidateNode._clusterId]
+                        predictedChange = self.modularityGainIfMove(fromCluster, targetCluster, node)
+                        if predictedChange > bestMove[K_CHANGE_IN_Q] and predictedChange > 0:
+                            bestMove = (predictedChange, node, fromCluster, targetCluster)
+                        
+                if bestMove[0] > 0:
+                    isImproving = True
+                    change, node, fromC, toC = bestMove
+                    self._Q += change
+                    print()
+                    self.logger.info("Q:{}, change:{} nodeId:{} fromClusterId:{} toClusterId:{}"\
+                                     .format(self._Q, change, node._nodeId, fromC._clusterId, toC._clusterId))
+                    fromCluster.moveNode(targetCluster, node, self._nodeLookup, isLouvainInit)
+                    for cid,c in self._clusters.items():
+                        self.info(c)
+        
+        self.logger.info("Q:{}".format(self._Q))        
+        self.logger.info("END")     
+        
+            
     ############################################################                
     def __repr__(self):
         self._forceAllLazyEval()
@@ -347,7 +410,7 @@ class Louvain(object):
         ret += "\tQ:{}".format(self._Q)
         ret += "\tnumber of Nodes:{}\n".format(len(self._nodeLookup.keys()))
         ret += "\tnumber of edges:{}\n".format(len(self._edges))
-        ret += "\tnumber of clusters:{}\n".format(len(self._clusters))
+        ret += "\tnumber of clusters:{}\n".format(len(self._clusters.keys()))
         for c in self._clusters:
             ret += "\t{}\n".format(c)
                         

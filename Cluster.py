@@ -18,8 +18,9 @@ class Cluster(object):
     def __init__(self, clusterId, nodeList):
         self._clusterId = clusterId
         self._nodeList = nodeList
-        self._weightsInsideCluster = None # 'sigma in'
-        self._totalWeight = None # 'sigma tot'
+        self._weightsInsideCluster = None # 0 # 'sigma in'
+        self._totalWeight = None # 0 # 'sigma tot'
+        self.getSumOfWeights()
         
     ############################################################                
     def __repr__(self):
@@ -132,6 +133,13 @@ class Cluster(object):
         in production use move()
 
         '''
+        self.logger.info("node._adjacentEdgeWeights:{}".format(node._adjacentEdgeWeights))
+        if not node:
+            self.loggger.warn("AEDWIP DEBUG node is none!!")
+            
+        if self._totalWeight == None:
+            self.loggger.warn("AEDWIP DEBUG _totalWeight is none!!")
+            
         self._totalWeight += node.getSumAdjWeights()
         kiin = node.getSumOfWeightsInsideCluster(targetClusterId, graphNodesLookup)
         self.logger.info("clusterId:{} nodeId:{} targetClusterId:{} _weightsInsideCluster:{} kiin:{}"\
@@ -140,6 +148,7 @@ class Cluster(object):
         # we gain twice. there is an edge between the node being moved
         # and a node in the target cluster. There is also a node from the cluster with and 
         # edge back to the node being moved
+        
         self._weightsInsideCluster += 2 * kiin
         
         self._nodeList.append(node)

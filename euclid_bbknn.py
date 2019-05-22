@@ -219,6 +219,8 @@ class bbknn_graph():
             self._l_knn_indices
             self._l_knn_distances
         '''
+        self.logger.info("BEGIN")
+        
         if l >= self._neighbors_within_batch:
             raise ValueError('l cannot be equal or larger than k')
             
@@ -261,6 +263,9 @@ class bbknn_graph():
             self.logger.debug("tmpIdx:{}".format(tmpIndices))
             self.logger.debug("tmpIdx:{}\n".format(tmpDistances))
             
+        self.logger.info("END\n")
+
+            
     ###################################################################### 
     def l_k_bbknn(self, l=2):
         '''
@@ -273,11 +278,13 @@ class bbknn_graph():
             adata.uns['neighbors']['connectivities']
             adata.uns['neighbors']['distances']        
         '''
+        self.logger.info("BEGIN")
         self._l_k_bbknnImplementation(l)
         
         #d = sparse.csr_matrix(self._l_knn_distances)
         self._get_connectivities(self._l_knn_indices, self._l_knn_distances)
         self._update_adata(l)
+        self.logger.info("END\n")
 
     ######################################################################    
     def _update_adata(self, l=None):
@@ -295,13 +302,8 @@ class bbknn_graph():
         
         n = self._neighbors_within_batch
         if l:
-            # TODO: AEDWIP: when we call numpy split we an got back three tuples instead of 2
-            # the last tuple would split out an empty matrix. it just a weird numpy thing
-            # we remove the bad extra split while processing 
-            # see _bbknn line 109
-            # did not want to fix this in the middle of the night afraid it would break something else
-            n = self._numBatches * (l - 1)
-            print('n:{} l - 1:{}, self._numBatches: {}'.format(n, l -1, self._numBatches))
+            n = self._numBatches * l #(l - 1) aedwip do not subtrack -1
+            self.logger.info('n:{} l :{}, self._numBatches: {}'.format(n, l, self._numBatches))
             
             
         self._adata.uns['neighbors']['params']['n_neighbors']=n

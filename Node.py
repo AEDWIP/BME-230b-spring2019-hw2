@@ -22,7 +22,7 @@ class Node(object):
         self._clusterId = clusterId
         self._nodeId = nodeId
         self._edgesDict = {} # key is the edge's target id, value is the edge obj
-        self._adjcentEdgeWeights = 0 # edges in and out of cluster
+        self._adjacentEdgeWeights = 0 #None #0 # edges in and out of cluster
         
         # dynamic programming/caching speed up
         # we are going to need kiin for just about every cluster
@@ -39,7 +39,7 @@ class Node(object):
     def __repr__(self):
         return "clusterId:{} nodeId:{} numEdges:{} adjEdgeWeights:{}".format(self._clusterId, 
                                                            self._nodeId, len(self._edgesDict.keys()),
-                                                           self._adjcentEdgeWeights)
+                                                           self._adjacentEdgeWeights)
     
     ############################################################
     def _addEdge(self, edge):
@@ -55,7 +55,7 @@ class Node(object):
         
         if not edge._targetId in self._edgesDict:
             self._edgesDict[edge._targetId] = edge
-            self._adjcentEdgeWeights += edge._weight
+            self._adjacentEdgeWeights += edge._weight
         else:
             eMsg = "clusterId:{} nodeId:{} edge.targetId:{} was already added".format(self._clusterId, self._nodeId, edge._targetId)
             self.logger.error("ValueError:{}".format(eMsg))
@@ -107,7 +107,10 @@ class Node(object):
         "Fast unfolding of communities in large networks"
         '''
         # this only changes if an edge is added
-        return self._adjcentEdgeWeights 
+        if self._adjacentEdgeWeights == None:
+            self.logger.warn("AEDWIP debug _adjacentEdgeWeight is none!")
+            
+        return self._adjacentEdgeWeights 
     
     ############################################################
     def getM(self):   
