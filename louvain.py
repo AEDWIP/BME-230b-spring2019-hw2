@@ -119,72 +119,6 @@ class Louvain(object):
         n._addEdge(targetEdge) 
 
     ############################################################
-    def __init__(self, louvainId, clusters=None):
-        '''
-        TODO"
-        calculates modularity 
-        
-        should only be used by unit test
-        
-        arguments:
-            clusters: a list of cluster objects
-            pass None for unit test
-        '''
-        self._louvainId = louvainId
-        
-        self._clusters = clusters
-        self._Q = None
-        self._m = None
-        
-        # dictionary of all the the nodes in the graph
-        # key is nodeId, value is node object
-        self._nodeLookup = {} 
-        
-        # list of all the edges in the graph
-        self._edges = []
-        
-        if not clusters:
-            # called from either unit test or buildGraph()
-            return   
-             
-        if not self._clusters:
-            self.logger.warn("self is not initialized. this is okay if you are running a unit test")
-            return
-        
-        for c in self._clusters:
-            nodes = c._getNodes()
-            for n in nodes:
-                if n._nodeId not in self._nodeLookup:
-                    self._nodeLookup[n._nodeId] = n
-                    self.logger.debug("adding node:{}".format(n._nodeId))
-                else:
-                    eMsg = "processing cluster:{} node:{} was already in  _nodeLookup".format(c._clusterId, n._nodeId)
-                    self.logger.error(eMsg)
-                    raise ValueError(eMsg)
-                
-            self._edges += c._getEdges()
-
-        # TODO: do we need Q? useful for debugging
-        self._calculateQ()
-        
-    
-    ############################################################
-    def _getM(self):
-        '''
-        the m term in the Louvain paper
-        "Fast unfolding of communities in large networks"
-        
-        returns 1/2 the sum of all edges in the graph
-        '''
-        if not self._m :
-            m = 0
-            for cluster in self._clusters:
-                m += cluster._getM()
-            self._m = m
-    
-        return self._m
-    
-    ############################################################
     def _calculateQ(self):
         '''
         calculates modularity for graph
@@ -247,29 +181,35 @@ class Louvain(object):
             raise ValueError(eMsg)
         
         self.logger.debug("END\n")
-    
-    ############################################################
-    def getModularity(self): 
-        return self.Q   
-    
-    ############################################################    
-    def _forceAllLazyEval(self):
-        for c in self._clusters:
-            c.getSumOfWeights()
-            c.getSumOfWeightsInsideCluster(self._nodeLookup)   
         
-    ############################################################                
-    def __repr__(self):
-        self._forceAllLazyEval()
-        ret = "\n\tid:{}".format(self._louvainId)
-        ret += "\tQ:{}".format(self._Q)
-        ret += "\tnumber of Nodes:{}\n".format(len(self._nodeLookup.keys()))
-        ret += "\tnumber of edges:{}\n".format(len(self._edges))
-        ret += "\tnumber of clusters:{}\n".format(len(self._clusters))
-        for c in self._clusters:
-            ret += "\t{}\n".format(c)
-                        
-        return ret
+    ############################################################  
+    def changeInModularityIfNodeAdded(self, node, targetCluster):
+        '''
+        calculate change in Q if we add a node to a cluster
+        
+        formula publish in louvain paper does not work
+        '''
+        self.logger.debug("BEGIN") 
+        nodeSet = node._nodesInClusterDict[targetCluster._clusterId]
+        m = self._getM()
+        
+        ret = 0
+        ki = node.getSumAdjWeights()
+        for targetNodeId in nodeSet:
+            # edges have source and targets
+            targetNode = self._nodeLookup[targetNodeId]
+            # these edges would no longer in the cluster but between cluster
+            kj = targetNode.getSumAdjWeights()
+            Aij = node._edgesDict[targetNodeId]._weight
+            # multiply by 2 because links are modeled as directed edges
+            term = (2 * (Aij - (ki*kj/(2*m))))
+            ret += term
+            self.logger.info("ni:{} ti:{} Aij:{} ki:{} kj:{} m:{}"\
+                             .format(node._nodeId, targetNodeId, Aij, ki, kj, m))
+            
+        ret = ret * (1/(2*m))        
+        self.logger.debug("END\n") 
+        return ret    
     
     ############################################################  
     def changeInModularityIfNodeRemoved(self, node, fromCluster):
@@ -309,36 +249,82 @@ class Louvain(object):
                 
         self.logger.debug("END\n")  
         return ret
+        
+    ############################################################    
+    def _forceAllLazyEval(self):
+        for c in self._clusters:
+            c.getSumOfWeights()
+            c.getSumOfWeightsInsideCluster(self._nodeLookup)           
+    
+    ############################################################
+    def _getM(self):
+        '''
+        the m term in the Louvain paper
+        "Fast unfolding of communities in large networks"
+        
+        returns 1/2 the sum of all edges in the graph
+        '''
+        if not self._m :
+            m = 0
+            for cluster in self._clusters:
+                m += cluster._getM()
+            self._m = m
+    
+        return self._m
+    
+    ############################################################
+    def getModularity(self): 
+        return self.Q   
+        
+    ############################################################
+    def __init__(self, louvainId, clusters=None):
+        '''
+        TODO"
+        calculates modularity 
+        
+        should only be used by unit test
+        
+        arguments:
+            clusters: a list of cluster objects
+            pass None for unit test
+        '''
+        self._louvainId = louvainId
+        
+        self._clusters = clusters
+        self._Q = None
+        self._m = None
+        
+        # dictionary of all the the nodes in the graph
+        # key is nodeId, value is node object
+        self._nodeLookup = {} 
+        
+        # list of all the edges in the graph
+        self._edges = []
+        
+        if not clusters:
+            # called from either unit test or buildGraph()
+            return   
+             
+        if not self._clusters:
+            self.logger.warn("self is not initialized. this is okay if you are running a unit test")
+            return
+        
+        for c in self._clusters:
+            nodes = c._getNodes()
+            for n in nodes:
+                if n._nodeId not in self._nodeLookup:
+                    self._nodeLookup[n._nodeId] = n
+                    self.logger.debug("adding node:{}".format(n._nodeId))
+                else:
+                    eMsg = "processing cluster:{} node:{} was already in  _nodeLookup".format(c._clusterId, n._nodeId)
+                    self.logger.error(eMsg)
+                    raise ValueError(eMsg)
+                
+            self._edges += c._getEdges()
 
-    ############################################################  
-    def changeInModularityIfNodeAdded(self, node, targetCluster):
-        '''
-        calculate change in Q if we add a node to a cluster
-        
-        formula publish in louvain paper does not work
-        '''
-        self.logger.debug("BEGIN") 
-        nodeSet = node._nodesInClusterDict[targetCluster._clusterId]
-        m = self._getM()
-        
-        ret = 0
-        ki = node.getSumAdjWeights()
-        for targetNodeId in nodeSet:
-            # edges have source and targets
-            targetNode = self._nodeLookup[targetNodeId]
-            # these edges would no longer in the cluster but between cluster
-            kj = targetNode.getSumAdjWeights()
-            Aij = node._edgesDict[targetNodeId]._weight
-            # multiply by 2 because links are modeled as directed edges
-            term = (2 * (Aij - (ki*kj/(2*m))))
-            ret += term
-            self.logger.info("ni:{} ti:{} Aij:{} ki:{} kj:{} m:{}"\
-                             .format(node._nodeId, targetNodeId, Aij, ki, kj, m))
-            
-        ret = ret * (1/(2*m))        
-        self.logger.debug("END\n") 
-        return ret
-        
+        # TODO: do we need Q? useful for debugging
+        self._calculateQ()
+                
     ############################################################  
     def modularityGainIfMove(self, fromCluster, targetCluster, node): 
         '''
@@ -354,3 +340,15 @@ class Louvain(object):
         self.logger.info("END\n")
         return ret
         
+    ############################################################                
+    def __repr__(self):
+        self._forceAllLazyEval()
+        ret = "\n\tid:{}".format(self._louvainId)
+        ret += "\tQ:{}".format(self._Q)
+        ret += "\tnumber of Nodes:{}\n".format(len(self._nodeLookup.keys()))
+        ret += "\tnumber of edges:{}\n".format(len(self._edges))
+        ret += "\tnumber of clusters:{}\n".format(len(self._clusters))
+        for c in self._clusters:
+            ret += "\t{}\n".format(c)
+                        
+        return ret        
