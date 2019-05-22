@@ -212,7 +212,7 @@ class Node(object):
             nodeId is the id of the node being moved
         '''
         if (self._nodeId != nodeId) and (self._clusterId == toClusterId):
-            # node was moved the same cluster we are in
+            # node was moved to the same cluster we are in
             if fromClusterId in self._weightsInClusterDict:
                 self._weightsInClusterDict[fromClusterId] -= weight
                 self._nodesInClusterDict[fromClusterId].remove(nodeId)
@@ -243,7 +243,7 @@ class Node(object):
                 raise ValueError(eMsg)
             else:
                 self._weightsInClusterDict[fromClusterId] -= weight 
-                self._nodesInClusterDict[fromClusterId].add(nodeId) 
+                self._nodesInClusterDict[fromClusterId].remove(nodeId) 
                 
         elif (self._nodeId == nodeId) and (self._clusterId != toClusterId):
             # we are moving to a new cluster
@@ -251,8 +251,9 @@ class Node(object):
                 self._weightsInClusterDict[toClusterId] = 0
                 self._nodesInClusterDict[toClusterId] = set()
 
-            self._weightsInClusterDict[toClusterId] += weight
-            self._nodesInClusterDict[toClusterId].add(nodeId)
+            # do not add our selves to our selves. no self loops allowed
+            #self._weightsInClusterDict[toClusterId] += weight
+            #self._nodesInClusterDict[toClusterId].add(nodeId)
             
         else:
             eMsg = ""

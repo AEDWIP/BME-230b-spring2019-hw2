@@ -202,10 +202,12 @@ class LouvainTest(unittest.TestCase):
             print()
             self.logger.info("nodeId:{}".format(n._nodeId))
             for clusterId in n._nodesInClusterDict.keys():
-                self.logger.info("\t clusterId: {} set:{}".format(clusterId, n._nodesInClusterDict[clusterId]))
+                self.logger.info("\t clusterId: {} _weightsInClusterDict:{}".format(clusterId, n._weightsInClusterDict[clusterId]))                
+                self.logger.info("\t clusterId: {} set:{}".format(clusterId, n._nodesInClusterDict[clusterId]))                
         
         # check modularity before move
-        self.assertAlmostEqual(louvain._Q, 0.44)
+        beforeMoveQ = louvain._Q
+        self.assertAlmostEqual(beforeMoveQ, 0.44)
         
         n0 = nodesList[0]
         fromCluster = clusters[0]
@@ -221,12 +223,57 @@ class LouvainTest(unittest.TestCase):
         self.assertAlmostEqual(addChange, 0.08)
         
         # test what change would be if we moved n2 from cluster 0 to cluster 1
-        ret =louvain.modularityGainIfMove(fromCluster, targetCluster, n0)
+        predictedChange =louvain.modularityGainIfMove(fromCluster, targetCluster, n0)
         
         expectedChangeInQ = -0.08
-        self.logger.info("modularityGainIfMove:{} expected:{}".format(ret, expectedChangeInQ))
-        self.assertAlmostEqual(ret, expectedChangeInQ)
+        self.logger.info("modularityGainIfMove:{} expected:{}".format(predictedChange, expectedChangeInQ))
+        self.assertAlmostEqual(predictedChange, expectedChangeInQ)
+        
+        # move
+        fromCluster.moveNode(targetCluster, n0, louvain._nodeLookup, isLouvainInit=False)
+        
+        # calculate Q
+        louvain._calculateQ()
+        afterMoveQ = louvain._Q
+        self.assertAlmostEqual(afterMoveQ, beforeMoveQ + predictedChange)
 
+        # check node set after move
+        self.logger.info("after move check _nodesInClusterDict")
+        for n in nodesList:
+            print()
+            self.logger.info("nodeId:{}".format(n._nodeId))
+            for clusterId in n._nodesInClusterDict.keys():
+                self.logger.info("\t clusterId: {} _weightsInClusterDict:{}".format(clusterId, n._weightsInClusterDict[clusterId]))                
+                self.logger.info("\t clusterId: {} set:{}".format(clusterId, n._nodesInClusterDict[clusterId]))
+
+        # this is the expected output. TODO: FIXME: create asserts
+# [INFO louvainTest.py:244 - testChangeInModulartiy()] nodeId:0
+# [INFO louvainTest.py:246 - testChangeInModulartiy()]      clusterId: c0 _weightsInClusterDict:2.0
+# [INFO louvainTest.py:247 - testChangeInModulartiy()]      clusterId: c0 set:{1, 2}
+# [INFO louvainTest.py:246 - testChangeInModulartiy()]      clusterId: c1 _weightsInClusterDict:1.0
+# [INFO louvainTest.py:247 - testChangeInModulartiy()]      clusterId: c1 set:{3}
+# 
+# [INFO louvainTest.py:244 - testChangeInModulartiy()] nodeId:1
+# [INFO louvainTest.py:246 - testChangeInModulartiy()]      clusterId: c0 _weightsInClusterDict:1.0
+# [INFO louvainTest.py:247 - testChangeInModulartiy()]      clusterId: c0 set:{2}
+# [INFO louvainTest.py:246 - testChangeInModulartiy()]      clusterId: c1 _weightsInClusterDict:1.0
+# [INFO louvainTest.py:247 - testChangeInModulartiy()]      clusterId: c1 set:{0}
+# 
+# [INFO louvainTest.py:244 - testChangeInModulartiy()] nodeId:2
+# [INFO louvainTest.py:246 - testChangeInModulartiy()]      clusterId: c0 _weightsInClusterDict:1.0
+# [INFO louvainTest.py:247 - testChangeInModulartiy()]      clusterId: c0 set:{1}
+# [INFO louvainTest.py:246 - testChangeInModulartiy()]      clusterId: c1 _weightsInClusterDict:1.0
+# [INFO louvainTest.py:247 - testChangeInModulartiy()]      clusterId: c1 set:{0}
+# 
+# [INFO louvainTest.py:244 - testChangeInModulartiy()] nodeId:3
+# [INFO louvainTest.py:246 - testChangeInModulartiy()]      clusterId: c0 _weightsInClusterDict:0.0
+# [INFO louvainTest.py:247 - testChangeInModulartiy()]      clusterId: c0 set:set()
+# [INFO louvainTest.py:246 - testChangeInModulartiy()]      clusterId: c1 _weightsInClusterDict:2.0
+# [INFO louvainTest.py:247 - testChangeInModulartiy()]      clusterId: c1 set:{0, 4}
+# 
+# [INFO louvainTest.py:244 - testChangeInModulartiy()] nodeId:4
+# [INFO louvainTest.py:246 - testChangeInModulartiy()]      clusterId: c1 _weightsInClusterDict:1.0
+# [INFO louvainTest.py:247 - testChangeInModulartiy()]      clusterId: c1 set:{3}
         self.logger.info("END\n")
         
     ############################################################
