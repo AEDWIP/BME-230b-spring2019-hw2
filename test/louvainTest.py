@@ -214,6 +214,53 @@ class LouvainTest(unittest.TestCase):
         self.assertEqual(ret, expectedChangeInQ)
 
         self.logger.info("END\n")
+        
+    ############################################################
+    def testChangeInModulartiyTrivalGraph(self):
+        self.logger.info("BEGIN")
+        
+        # create a trival graph.
+        listOfEdges = [(0,1), (1,2)]
+        listOfWeight = [1 for i in listOfEdges]
+        louvainLevel0 = Louvain.buildGraph("trival graph", listOfEdges, listOfWeight)
+
+        self.logger.info("louvainLevel0:{}".format(louvainLevel0))
+        
+        # make sure graph is set u as expected
+        for nid,node in louvainLevel0._nodeLookup.items():
+            print()
+            for eid, edge in node._edgesDict.items():
+                self.logger.info(edge)
+        print()
+        
+        # check modularity before move
+        beforeMoveQ = louvainLevel0._Q
+        self.assertEqual(beforeMoveQ, 0.0) 
+
+        n1 = louvainLevel0._nodeLookup[1]
+        fromCluster = louvainLevel0._clusters[1]
+        targetCluster = louvainLevel0._clusters[2]
+         
+        predictedChangeInQ =louvainLevel0.modularityGainIfMove(fromCluster, targetCluster, n1)
+        self.logger.info("predicted changeInQ:{}".format(predictedChangeInQ))
+        
+        # move
+        fromCluster.moveNode(targetCluster, n1, louvainLevel0._nodeLookup, isLouvainInit=True)
+        
+        # calculate Q
+        louvainLevel0._calculateQ()
+        afterMoveQ = louvainLevel0._Q
+        expectedChangeInQ = afterMoveQ - beforeMoveQ
+        self.logger.info("expectedChangeInQ:{} afterMoveQ:{} before:{}"\
+                         .format(expectedChangeInQ, afterMoveQ, beforeMoveQ))
+        self.logger.info("predicted changeInQ:{}".format(predictedChangeInQ))
+
+#         
+#         expectedChangeInQ = -0.04
+#         self.logger.info("modularityGainIfMove:{} expected:{}".format(ret, expectedChangeInQ))
+#         self.assertEqual(ret, expectedChangeInQ)
+
+        self.logger.info("END\n")        
 
 
 if __name__ == "__main__":

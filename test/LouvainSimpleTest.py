@@ -11,6 +11,7 @@ from Node import Node
 import numpy as np
 from setupLogging import setupLogging
 import unittest
+from scanpy.tools._louvain import louvain
 
 
 ############################################################
@@ -302,6 +303,7 @@ class LouvainSimpleTest(unittest.TestCase):
         self.logger.info("BEGIN")    
                
         graph = self.createSimpleGraph()
+        louvainLevel = graph[0]
         clusters = graph[1]
         nodes = graph[2]
         graphNodesLookup = graph[4]
@@ -357,6 +359,9 @@ class LouvainSimpleTest(unittest.TestCase):
             "c1": {"k0in":1, "k1in":0, "k2in":0, "k3in":1, "k4in":1}            
             }
         self.checkKiinStats("********** before move", clusters, beforeExpectedKiinData)
+        
+        beforeMoveQ = louvainLevel._Q
+        self.logger.info("beforeMoveQ:{}".format(beforeMoveQ))
            
         # test move
         c0 = clusters[0]
@@ -393,6 +398,18 @@ class LouvainSimpleTest(unittest.TestCase):
             }  
         self.checkClusterStats("********** after move", clusters, afterExpectedClusterData)
  
+        # what is Q after move?
+        louvainLevel._calculateQ()
+        afterMoveQ = louvainLevel._Q
+        changeInQ = afterMoveQ - beforeMoveQ
+        self.logger.info("changeInQ:{} afterMoveQ:{} before:{}".format(changeInQ, afterMoveQ, beforeMoveQ))
+        
+        # expectedChangeInQ assumes our implementation of _calculateQ() and moveNode()
+        # are correct. I did not verify this value by hand
+        expectedChangeInQ = -0.28125  
+        
+        self.logger.warn("TODO: AEDWIP: try and calculate what he change is by fast formula")
+        
         self.logger.info("END\n")            
 
 

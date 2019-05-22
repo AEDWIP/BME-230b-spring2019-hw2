@@ -5,6 +5,7 @@ import logging
 import numpy as np
 #import scipy
 from scanpy.neighbors import compute_connectivities_umap
+#from scipy import sparse
 
 ################################################################################
 class bbknn_graph():
@@ -60,8 +61,8 @@ class bbknn_graph():
             # run KnnG it will run pca and calculate nei
             D = self._calcPairWiseDistanceMatrix()
             
-            self._knn_indices, self._knn_dist = self._bbknn(D, batchCounts)
-            self._get_connectivities(self._knn_indices, self._knn_dist)
+            self._knn_indices, self._knn_distances = self._bbknn(D, batchCounts)
+            self._get_connectivities(self._knn_indices, self._knn_distances)
             self._update_adata()
         else:
             # unit test 
@@ -276,6 +277,7 @@ class bbknn_graph():
         '''
         self._l_k_bbknnImplementation(l)
         
+        #d = sparse.csr_matrix(self._l_knn_distances)
         self._get_connectivities(self._l_knn_indices, self._l_knn_distances)
         self._update_adata(l)
 
@@ -295,7 +297,14 @@ class bbknn_graph():
         
         n = self._neighbors_within_batch
         if l:
-            n = self._numBatches * l
+            # TODO: AEDWIP: when we call numpy split we an got back three tuples instead of 2
+            # the last tuple would split out an empty matrix. it just a weird numpy thing
+            # we remove the bad extra split while processing 
+            # see _bbknn line 109
+            # did not want to fix this in the middle of the night afraid it would break something else
+            n = self._numBatches * (l - 1)
+            print('n:{} l - 1:{}, self._numBatches: {}'.format(n, l -1, self._numBatches))
+            
             
         self._adata.uns['neighbors']['params']['n_neighbors']=n
         self._adata.uns['neighbors']['params']['method'] = self._method

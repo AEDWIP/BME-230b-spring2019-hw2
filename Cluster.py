@@ -96,9 +96,17 @@ class Cluster(object):
         return self._totalWeight
         
     ############################################################
-    def _removeNode(self, node, graphNodesLookup):
+    def _removeNode(self, node, graphNodesLookup, isLouvainInit=False):
         '''
         in production use move()
+        
+        arguments:
+            isLouvainInit: 
+                the initialization step puts each node in a separate cluster. by definition
+                node._weightsInClusterDict[self._clusterId] is un defined.
+                if not the initialization step, this should be an error 
+                
+                default value is False
         '''
         
         self._totalWeight -= node.getSumAdjWeights()   
@@ -106,11 +114,13 @@ class Cluster(object):
         self.logger.info("clusterId:{} nodeId:{}  _weightsInsideCluster:{} kiin:{}"\
                 .format(self._clusterId, node._nodeId, self._weightsInsideCluster, kiin))  
                       
-        # account for edges that get transformed from inside our cluster to
-        # between our cluster. remember we model links between nodes a pair
-        # of directed edges
-        w = 2 * node._weightsInClusterDict[self._clusterId]
-        self._weightsInsideCluster -= 4
+
+        if not isLouvainInit:
+            # account for edges that get transformed from inside our cluster to
+            # between our cluster. remember we model links between nodes a pair
+            # of directed edges
+            w = 2 * node._weightsInClusterDict[self._clusterId]
+            self._weightsInsideCluster -= 4
         
         self._nodeList.remove(node)  
           
@@ -135,15 +145,23 @@ class Cluster(object):
         self._nodeList.append(node)
         
     ############################################################
-    def moveNode(self, targetCluster, node, graphNodesLookup):
+    def moveNode(self, targetCluster, node, graphNodesLookup, isLouvainInit=False):
         '''
         TODO
+        
+        arguments:
+            isLouvainInit: 
+                the initialization step puts each node in a separate cluster. by definition
+                node._weightsInClusterDict[self._clusterId] is undefined.
+                if not the initialization step, this should be an error 
+                
+                default value is False        
         '''
         self.logger.info("clusterId:{} nodeId:{} targetClusterId:{}"\
                          .format(self._clusterId, node._nodeId, targetCluster._clusterId))
         
         targetClusterId = targetCluster._clusterId        
         targetCluster._addNode(node, targetClusterId, graphNodesLookup)
-        self._removeNode(node, graphNodesLookup)    
-        node.moveToCluster(targetCluster._clusterId, graphNodesLookup)
+        self._removeNode(node, graphNodesLookup, isLouvainInit)    
+        node.moveToCluster(targetCluster._clusterId, graphNodesLookup )
             

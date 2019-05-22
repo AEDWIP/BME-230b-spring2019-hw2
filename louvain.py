@@ -132,10 +132,6 @@ class Louvain(object):
         '''
         self._louvainId = louvainId
         
-        if not clusters:
-            # called from either unit test or buildGraph()
-            return
-            
         self._clusters = clusters
         self._Q = None
         self._m = None
@@ -147,6 +143,10 @@ class Louvain(object):
         # list of all the edges in the graph
         self._edges = []
         
+        if not clusters:
+            # called from either unit test or buildGraph()
+            return   
+             
         if not self._clusters:
             self.logger.warn("self is not initialized. this is okay if you are running a unit test")
             return
@@ -200,7 +200,7 @@ class Louvain(object):
         Ci and cj are the types of the two vertices (i and j). 
         delta(x,y) is one iff x=y, 0 otherwise.
         '''
-        self.logger.debug("BEGIN")
+        self.logger.info("BEGIN")
         # note implemenation already multiplied by 1/2
         # TODO should we move the mulply out? it should technically be faster
         # does not effect Big O
@@ -217,9 +217,14 @@ class Louvain(object):
             self.logger.debug("nodeJ:{}".format(nodeJ))
             
             # calculate the sigma term
-            if not (nodeI._clusterId == nodeJ._clusterId):
-                self.logger.debug("not in same cluster")
+            if  not nodeI._clusterId == nodeJ._clusterId:
+                self.logger.info("ni:{} cid:{} nj:{} cid:{} not in same cluster"\
+                                 .format(nodeI._nodeId, nodeI._clusterId, nodeJ._nodeId, nodeJ._clusterId))
                 continue
+            else:
+                self.logger.info("ni:{} cid:{} nj:{} cid:{} adding to Q"\
+                                 .format(nodeI._nodeId, nodeI._clusterId, nodeJ._nodeId, nodeJ._clusterId))
+                
             
             Aij = nodeI.getWeightForEdge(edge._targetId)
             ki = nodeI.getSumAdjWeights()
@@ -241,7 +246,7 @@ class Louvain(object):
             self.logger.error(eMsg)
             raise ValueError(eMsg)
         
-        self.logger.debug("END\n")
+        self.logger.info("END\n")
     
     ############################################################
     def getModularity(self): 
@@ -269,7 +274,7 @@ class Louvain(object):
     
 
     ############################################################  
-    def modularityGainIfMove(self, fromCluster, targetCluster, node, graphNodesLookup): 
+    def modularityGainIfMove(self, fromCluster, targetCluster, node): 
         '''
         TODO
         '''     
