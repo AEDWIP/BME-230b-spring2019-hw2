@@ -225,7 +225,7 @@ class Node(object):
                 self._weightsInClusterDict[toClusterId] = 0
                 self._nodesInClusterDict[toClusterId] = set()
             self._weightsInClusterDict[toClusterId] += weight
-            self._nodesInClusterDict[fromClusterId].add(nodeId)
+            self._nodesInClusterDict[toClusterId].add(nodeId)
             
         elif (self._nodeId != nodeId) and (self._clusterId != toClusterId):
             # node was moved out of our cluster
@@ -249,44 +249,13 @@ class Node(object):
             # we are moving to a new cluster
             if not toClusterId:
                 self._weightsInClusterDict[toClusterId] = 0
-                self._nodesInClusterDict[fromClusterId] = set()
+                self._nodesInClusterDict[toClusterId] = set()
 
             self._weightsInClusterDict[toClusterId] += weight
-            self._nodesInClusterDict[fromClusterId].add(nodeId)
+            self._nodesInClusterDict[toClusterId].add(nodeId)
             
         else:
             eMsg = ""
             self.logger.error(eMsg)
             raise ValueError(eMsg)
-            
-#         if (self nodid != nodeId) and (our clusterId == toClusterId):
-#             node was moved into our cluster
-#             we should have Dictionar for from cluster
-#                 decrement by weight
-#             if we do not have a dict for toCluster create one
-#             increment the weight
-                
-#         elif (self nodid != nodeId) and (our clusterId != toClusterId):
-#             node was moved out
-#             if we do not have dict for toClusterId create on
-#             increment toClusterId dict
-#             
-#             we should have dict for our cluster 
-#             decrement dict for our cluster id
-#             
-#         elif (self nodid == nodeId) and (our clusterId != toClusterId)
-#             we should have dic for toClusterId
-#             increment_index
-#         else:
-#             WTF
-#         needToDecriment = self._clusterId == fromClusterId
-#         
-#         # TODO if weights goto zero remove cluster. It may help find bugs
-#         if needToDecriment:
-#             self._weightsInClusterDict[fromClusterId] -= weight
-#             
-#         else:
-#             self._weightsInClusterDict[toClusterId] += weight # was fromClusterId
-#             self._weightsInClusterDict[fromClusterId] -= weight
-            
-        
+

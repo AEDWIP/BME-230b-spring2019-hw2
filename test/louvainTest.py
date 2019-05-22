@@ -242,7 +242,6 @@ class LouvainTest(unittest.TestCase):
         
         # make sure graph is set u as expected
         for nid,node in louvainLevel0._nodeLookup.items():
-            print()
             for eid, edge in node._edgesDict.items():
                 self.logger.info(edge)
         print()
@@ -257,6 +256,7 @@ class LouvainTest(unittest.TestCase):
          
         predictedChangeInQ =louvainLevel0.modularityGainIfMove(fromCluster, targetCluster, n1)
         self.logger.info("predicted changeInQ:{}".format(predictedChangeInQ))
+        self.assertAlmostEqual(predictedChangeInQ, 0.25)
         
         # move
         fromCluster.moveNode(targetCluster, n1, louvainLevel0._nodeLookup, isLouvainInit=True)
@@ -264,15 +264,16 @@ class LouvainTest(unittest.TestCase):
         # calculate Q
         louvainLevel0._calculateQ()
         afterMoveQ = louvainLevel0._Q
+        self.assertAlmostEqual(afterMoveQ, 0.25)
         expectedChangeInQ = afterMoveQ - beforeMoveQ
         self.logger.info("expectedChangeInQ:{} afterMoveQ:{} before:{}"\
                          .format(expectedChangeInQ, afterMoveQ, beforeMoveQ))
         self.logger.info("predicted changeInQ:{}".format(predictedChangeInQ))
 
-#         
-#         expectedChangeInQ = -0.04
-#         self.logger.info("modularityGainIfMove:{} expected:{}".format(ret, expectedChangeInQ))
-#         self.assertEqual(ret, expectedChangeInQ)
+         
+        self.logger.info("modularityGainIfMove:{} expected:{}"\
+                         .format(predictedChangeInQ, expectedChangeInQ))
+        self.assertEqual(predictedChangeInQ, expectedChangeInQ)
 
         self.logger.info("END\n")        
 
