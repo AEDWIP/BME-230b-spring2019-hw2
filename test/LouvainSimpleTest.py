@@ -72,7 +72,7 @@ class LouvainSimpleTest(unittest.TestCase):
         # create  cluster0
         cluster0 = Cluster(clusterId="c0", nodeList=[n0, n1, n2])
 
-        # create disjoint graph
+        # create second cluster graph
         n3 = Node(clusterId="c1", nodeId=3)
         e6 = Edge(weight=1.0, srcId=3, targetId=4)
         n3._addEdge(e6)
@@ -84,6 +84,16 @@ class LouvainSimpleTest(unittest.TestCase):
         cluster1 = Cluster(clusterId="c1", nodeList=[n3, n4])
         self.assertEqual(1, cluster1._getM())
         clusters = [cluster0, cluster1]
+        
+        # you can not move a node to a cluster if the node is not
+        # connected to something in the cluster
+        # there would not gain in Q
+        # create and edge between a node in c0 and c2
+
+        ea = Edge(weight=1.0, srcId=n0._nodeId, targetId=n3._nodeId)
+        eb = Edge(weight=1.0, srcId=n3._nodeId, targetId=n0._nodeId)
+        n0._addEdge(ea)
+        n3._addEdge(eb)        
 
         level0 = Louvain("simple", [cluster0, cluster1] )  
               
@@ -308,17 +318,17 @@ class LouvainSimpleTest(unittest.TestCase):
         nodes = graph[2]
         graphNodesLookup = graph[4]
         
-        # you can not move a node to a cluster if the node is not
-        # connected to something in the cluster
-        # there would not gain in Q
-        # create and edge between a node in c0 and c2
-        na = nodes[0]
-        nb = nodes[3]
-        self.assertNotEqual(na._clusterId, nb._clusterId)
-        ea = Edge(weight=1.0, srcId=na._nodeId, targetId=nb._nodeId)
-        eb = Edge(weight=1.0, srcId=nb._nodeId, targetId=na._nodeId)
-        na._addEdge(ea)
-        nb._addEdge(eb)
+#         # you can not move a node to a cluster if the node is not
+#         # connected to something in the cluster
+#         # there would not gain in Q
+#         # create and edge between a node in c0 and c2
+#         na = nodes[0]
+#         nb = nodes[3]
+#         self.assertNotEqual(na._clusterId, nb._clusterId)
+#         ea = Edge(weight=1.0, srcId=na._nodeId, targetId=nb._nodeId)
+#         eb = Edge(weight=1.0, srcId=nb._nodeId, targetId=na._nodeId)
+#         na._addEdge(ea)
+#         nb._addEdge(eb)
         
         # make sure the graph is set up the way we expect
         self.logger.info("********* make sure graph is configured correctly")
@@ -366,7 +376,8 @@ class LouvainSimpleTest(unittest.TestCase):
         # test move
         c0 = clusters[0]
         c1 = clusters[1]
-        c0.moveNode(c1, na, graphNodesLookup)
+        n0 = nodes[0]
+        c0.moveNode(c1, n0, graphNodesLookup)
         
         # check nodes
         self.logger.info("")
@@ -403,12 +414,18 @@ class LouvainSimpleTest(unittest.TestCase):
         afterMoveQ = louvainLevel._Q
         changeInQ = afterMoveQ - beforeMoveQ
         self.logger.info("changeInQ:{} afterMoveQ:{} before:{}".format(changeInQ, afterMoveQ, beforeMoveQ))
+        expectedBeforeMoveQ = 0.44
+        expecedAfterMoveQ = 0.36
+        self.assertAlmostEqual(afterMoveQ, expecedAfterMoveQ)
+        self.assertAlmostEqual(beforeMoveQ, expectedBeforeMoveQ)
+
         
         # expectedChangeInQ assumes our implementation of _calculateQ() and moveNode()
         # are correct. I did not verify this value by hand
-        expectedChangeInQ = -0.28125  
+        expectedChangeInQ = -0.08  #-0.28125  
+        self.assertAlmostEqual(changeInQ, expectedChangeInQ)
         
-        self.logger.warn("TODO: AEDWIP: try and calculate what he change is by fast formula")
+        self.logger.warn("TODO: AEDWIP: try and calculate what the change is by fast formula")
         
         self.logger.info("END\n")            
 

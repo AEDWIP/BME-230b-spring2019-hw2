@@ -261,8 +261,6 @@ class bbknn_graph():
             self.logger.debug("tmpIdx:{}".format(tmpIndices))
             self.logger.debug("tmpIdx:{}\n".format(tmpDistances))
             
-
-       
     ###################################################################### 
     def l_k_bbknn(self, l=2):
         '''

@@ -177,6 +177,8 @@ class Louvain(object):
         returns 1/2 the sum of all edges in the graph
         '''
         
+        # AEDWIP: TODO: unit test bug fix latter
+        # looks like some of the edges are not set up yet
         if not self._m :
             m = 0
             for cluster in self._clusters:
@@ -205,7 +207,7 @@ class Louvain(object):
         # TODO should we move the mulply out? it should technically be faster
         # does not effect Big O
         m = self._getM()
-        self.logger.debug("m:{}".format(m))
+        self.logger.info("m:{}".format(m))
         
         modularitySumTerm = 0
         for edge in self._edges:
@@ -231,10 +233,11 @@ class Louvain(object):
             kj = nodeJ.getSumAdjWeights()
             i = edge._srcId
             j = edge._targetId
-            self.logger.debug("i:{} j:{} A{}{}:{} k{}:{} k{}:{} 2*m:{}".format(i,j, i, j, Aij, i, ki, j, kj, 2*m))
-            self.logger.debug(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
+            print() # AEDWIP:
+            self.logger.info("i:{} j:{} A{}{}:{} k{}:{} k{}:{} 2*m:{}".format(i,j, i, j, Aij, i, ki, j, kj, 2*m))
+            self.logger.info(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
             term = Aij - (ki*kj) / (2*m) 
-            self.logger.debug("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
+            self.logger.info("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
             modularitySumTerm += term 
         
 
