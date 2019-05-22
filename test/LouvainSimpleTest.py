@@ -196,10 +196,10 @@ class LouvainSimpleTest(unittest.TestCase):
         clusterList = ret[1]
         self.logger.info("clusterList:\n{}".format(clusterList))
         level0 = Louvain("testQ", clusterList)
-        self.assertEqual(4, level0._getM())
+        self.assertEqual(5, level0._getM())
         
         self.logger.info("level0._Q:{}".format(level0._Q))
-        self.assertEqual(level0._Q, 0.59375)        
+        self.assertAlmostEqual(level0._Q, 0.44)        
         self.logger.info("END\n")
         
     ############################################################

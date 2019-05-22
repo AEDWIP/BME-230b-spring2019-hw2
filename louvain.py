@@ -176,9 +176,6 @@ class Louvain(object):
         
         returns 1/2 the sum of all edges in the graph
         '''
-        
-        # AEDWIP: TODO: unit test bug fix latter
-        # looks like some of the edges are not set up yet
         if not self._m :
             m = 0
             for cluster in self._clusters:
