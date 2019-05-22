@@ -66,11 +66,11 @@ class Node(object):
         '''
         enable testing
         '''
-        self.logger.info("BEGIN")
+        self.logger.debug("BEGIN")
         for key, e in self._edgesDict.items():
             targetNode = graphNodesLookup[e._targetId]
             targetClusterId = targetNode._clusterId
-            self.logger.info("nodeId:{} e:{} targetNodeClusterId:{}"\
+            self.logger.debug("nodeId:{} e:{} targetNodeClusterId:{}"\
                              .format(self._nodeId, e, targetClusterId))
             if  targetClusterId in self._weightsInClusterDict:
                 self._weightsInClusterDict[targetClusterId] += e._weight
@@ -80,10 +80,10 @@ class Node(object):
                 self._nodesInClusterDict[targetClusterId] = set()
                 self._nodesInClusterDict[targetClusterId].add(e._targetId)
 
-            self.logger.info("_weightsInClusterDict:{}".format(self._weightsInClusterDict[targetClusterId]))
-            self.logger.info("_nodesInClusterDict:{}".format(self._nodesInClusterDict[targetClusterId]))
+            self.logger.debug("_weightsInClusterDict:{}".format(self._weightsInClusterDict[targetClusterId]))
+            self.logger.debug("_nodesInClusterDict:{}".format(self._nodesInClusterDict[targetClusterId]))
                 
-        self.logger.info("END\n")
+        self.logger.debug("END\n")
                 
         
     ############################################################

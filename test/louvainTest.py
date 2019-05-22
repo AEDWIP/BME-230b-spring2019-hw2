@@ -205,19 +205,19 @@ class LouvainTest(unittest.TestCase):
                 self.logger.info("\t clusterId: {} set:{}".format(clusterId, n._nodesInClusterDict[clusterId]))
         
         # check modularity before move
-        self.assertEqual(louvain._Q, 0.5599999999999999)
+        self.assertAlmostEqual(louvain._Q, 0.44)
         
-        n2 = nodesList[2]
+        n0 = nodesList[0]
         fromCluster = clusters[0]
         targetCluster = clusters[1]
         
         # test change if node was removed from cluster
-        removeChange = louvain.changeInModularityIfNodeRemoved(n2, fromCluster)
+        removeChange = louvain.changeInModularityIfNodeRemoved(n0, fromCluster)
         self.logger.info("removeChange:{}".format(removeChange))
-        self.assertEqual(removeChange, 0.16)
+        self.assertAlmostEqual(removeChange, 0.16)
         
         # test what change would be if we moved n2 from cluster 0 to cluster 1
-        ret =louvain.modularityGainIfMove(fromCluster, targetCluster, n2)
+        ret =louvain.modularityGainIfMove(fromCluster, targetCluster, n0)
         
         expectedChangeInQ = -0.08
         self.logger.info("modularityGainIfMove:{} expected:{}".format(ret, expectedChangeInQ))
