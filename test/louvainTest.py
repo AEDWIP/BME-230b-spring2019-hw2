@@ -216,12 +216,16 @@ class LouvainTest(unittest.TestCase):
         self.logger.info("removeChange:{}".format(removeChange))
         self.assertAlmostEqual(removeChange, 0.16)
         
+        # test change if node is added to cluster
+        addChange = louvain.changeInModularityIfNodeAdded(n0, targetCluster)
+        self.assertAlmostEqual(addChange, 0.08)
+        
         # test what change would be if we moved n2 from cluster 0 to cluster 1
         ret =louvain.modularityGainIfMove(fromCluster, targetCluster, n0)
         
         expectedChangeInQ = -0.08
         self.logger.info("modularityGainIfMove:{} expected:{}".format(ret, expectedChangeInQ))
-        self.assertEqual(ret, expectedChangeInQ)
+        self.assertAlmostEqual(ret, expectedChangeInQ)
 
         self.logger.info("END\n")
         

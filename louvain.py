@@ -275,6 +275,8 @@ class Louvain(object):
     def changeInModularityIfNodeRemoved(self, node, fromCluster):
         '''
         calculate change in Q if we removed a node from a cluster
+        
+        formula publish in louvain paper does not work
         '''
         self.logger.info("BEGIN")  
         
@@ -299,21 +301,39 @@ class Louvain(object):
                              .format(node._nodeId, targetNodeId, Aij, ki, kj, m))
             
         ret = ret * (1/(2*m))
-            
-        #sigmaTot = fromCluster.getSumOfWeights()
-#         ki = node.getSumAdjWeights()
-#         
-#         self.logger.info("change calculate change in Q cause by removing node")
-#         self.logger.info("louvainId:{} fromClusterId:{} nodeId:{}\n"\
-#                          .format(self._louvainId, fromCluster._clusterId, node._nodeId))
-#         self.logger.info("sigmaIn:{}, kiin:{} m:{} sigmaTot:{} ki:{}\n"\
-#                          .format(sigmaIn, kiin, m, sigmaTot, ki))
-#         
-#         loss = ((sigmaIn - kiin)/(2*m)) + ((sigmaTot - ki)/(2*m))**2
                 
         self.logger.info("END\n")  
         return ret
 
+    ############################################################  
+    def changeInModularityIfNodeAdded(self, node, targetCluster):
+        '''
+        calculate change in Q if we add a node to a cluster
+        
+        formula publish in louvain paper does not work
+        '''
+        self.logger.info("BEGIN") 
+        nodeSet = node._nodesInClusterDict[targetCluster._clusterId]
+        m = self._getM()
+        
+        ret = 0
+        ki = node.getSumAdjWeights()
+        for targetNodeId in nodeSet:
+            # edges have source and targets
+            targetNode = self._nodeLookup[targetNodeId]
+            # these edges would no longer in the cluster but between cluster
+            kj = targetNode.getSumAdjWeights()
+            Aij = node._edgesDict[targetNodeId]._weight
+            # multiply by 2 because links are modeled as directed edges
+            term = (2 * (Aij - (ki*kj/(2*m))))
+            ret += term
+            self.logger.info("ni:{} ti:{} Aij:{} ki:{} kj:{} m:{}"\
+                             .format(node._nodeId, targetNodeId, Aij, ki, kj, m))
+            
+        ret = ret * (1/(2*m))        
+        self.logger.info("END\n") 
+        return ret
+        
     ############################################################  
     def modularityGainIfMove(self, fromCluster, targetCluster, node): 
         '''
@@ -336,25 +356,26 @@ class Louvain(object):
 #         
 #         loss = ((sigmaIn - kiin)/(2*m)) + ((sigmaTot - ki)/(2*m))**2
         
-        changeFromRemovingNode = self.changeInModularityIfNodeRemoved(node, fromCluster)
+        changeIfRemoveNode = self.changeInModularityIfNodeRemoved(node, fromCluster)
+        changeIfAddNode = self.changeInModularityIfNodeAdded(node, targetCluster)
         
         # calculate change Q caused by adding node
-        sigmaIn = targetCluster.getSumOfWeightsInsideCluster(self._nodeLookup)
-        kiin = node.getSumOfWeightsInsideCluster(targetCluster._clusterId, self._nodeLookup)
-        m = self._getM()
-        sigmaTot = targetCluster.getSumOfWeights()
-        ki = node.getSumAdjWeights()
-        
-        self.logger.info("change calculate change in Q cause by adding node")
-        self.logger.info("louvainId:{} targetCluster:{} nodeId:{}"\
-                         .format(self._louvainId, targetCluster._clusterId, node._nodeId))
-        self.logger.info("sigmaIn:{}, kiin:{} m:{} sigmaTot:{} ki:{}"\
-                         .format(sigmaIn, kiin, m, sigmaTot, ki))
-        
-        gain = ((sigmaIn + kiin)/(2*m)) - ((sigmaTot + ki)/(2*m))**2
+#         sigmaIn = targetCluster.getSumOfWeightsInsideCluster(self._nodeLookup)
+#         kiin = node.getSumOfWeightsInsideCluster(targetCluster._clusterId, self._nodeLookup)
+#         m = self._getM()
+#         sigmaTot = targetCluster.getSumOfWeights()
+#         ki = node.getSumAdjWeights()
+#         
+#         self.logger.info("change calculate change in Q cause by adding node")
+#         self.logger.info("louvainId:{} targetCluster:{} nodeId:{}"\
+#                          .format(self._louvainId, targetCluster._clusterId, node._nodeId))
+#         self.logger.info("sigmaIn:{}, kiin:{} m:{} sigmaTot:{} ki:{}"\
+#                          .format(sigmaIn, kiin, m, sigmaTot, ki))
+#         
+#         gain = ((sigmaIn + kiin)/(2*m)) - ((sigmaTot + ki)/(2*m))**2
 
-        ret = gain - changeFromRemovingNode
-        self.logger.info("ret:{} gain:{} loss:{}".format(ret, gain, loss))
+        ret = changeIfAddNode - changeIfRemoveNode
+        self.logger.info("ret:{} changeIfAddNode:{} loss:{}".format(ret, changeIfAddNode, changeIfRemoveNode))
         self.logger.info("END\n")
         return ret
         
