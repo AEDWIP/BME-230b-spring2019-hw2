@@ -156,7 +156,7 @@ class Louvain(object):
             for n in nodes:
                 if n._nodeId not in self._nodeLookup:
                     self._nodeLookup[n._nodeId] = n
-                    self.logger.info("adding node:{}".format(n._nodeId))
+                    self.logger.debug("adding node:{}".format(n._nodeId))
                 else:
                     eMsg = "processing cluster:{} node:{} was already in  _nodeLookup".format(c._clusterId, n._nodeId)
                     self.logger.error(eMsg)
@@ -199,12 +199,12 @@ class Louvain(object):
         Ci and cj are the types of the two vertices (i and j). 
         delta(x,y) is one iff x=y, 0 otherwise.
         '''
-        self.logger.info("BEGIN")
+        self.logger.debug("BEGIN")
         # note implemenation already multiplied by 1/2
         # TODO should we move the mulply out? it should technically be faster
         # does not effect Big O
         m = self._getM()
-        self.logger.info("m:{}".format(m))
+        self.logger.debug("m:{}".format(m))
         
         modularitySumTerm = 0
         for edge in self._edges:
@@ -217,11 +217,11 @@ class Louvain(object):
             
             # calculate the sigma term
             if  not nodeI._clusterId == nodeJ._clusterId:
-                self.logger.info("ni:{} cid:{} nj:{} cid:{} not in same cluster"\
+                self.logger.debug("ni:{} cid:{} nj:{} cid:{} not in same cluster"\
                                  .format(nodeI._nodeId, nodeI._clusterId, nodeJ._nodeId, nodeJ._clusterId))
                 continue
             else:
-                self.logger.info("ni:{} cid:{} nj:{} cid:{} adding to Q"\
+                self.logger.debug("ni:{} cid:{} nj:{} cid:{} adding to Q"\
                                  .format(nodeI._nodeId, nodeI._clusterId, nodeJ._nodeId, nodeJ._clusterId))
                 
             
@@ -231,10 +231,10 @@ class Louvain(object):
             i = edge._srcId
             j = edge._targetId
             print() # AEDWIP:
-            self.logger.info("i:{} j:{} A{}{}:{} k{}:{} k{}:{} 2*m:{}".format(i,j, i, j, Aij, i, ki, j, kj, 2*m))
-            self.logger.info(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
+            self.logger.debug("i:{} j:{} A{}{}:{} k{}:{} k{}:{} 2*m:{}".format(i,j, i, j, Aij, i, ki, j, kj, 2*m))
+            self.logger.debug(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
             term = Aij - (ki*kj) / (2*m) 
-            self.logger.info("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
+            self.logger.debug("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
             modularitySumTerm += term 
         
 
@@ -246,7 +246,7 @@ class Louvain(object):
             self.logger.error(eMsg)
             raise ValueError(eMsg)
         
-        self.logger.info("END\n")
+        self.logger.debug("END\n")
     
     ############################################################
     def getModularity(self): 
@@ -268,10 +268,51 @@ class Louvain(object):
         ret += "\tnumber of clusters:{}\n".format(len(self._clusters))
         for c in self._clusters:
             ret += "\t{}\n".format(c)
-            
-            
+                        
         return ret
     
+    ############################################################  
+    def changeInModularityIfNodeRemoved(self, node, fromCluster):
+        '''
+        calculate change in Q if we removed a node from a cluster
+        '''
+        self.logger.info("BEGIN")  
+        
+        # 
+        #sigmaIn = fromCluster.getSumOfWeightsInsideCluster(self._nodeLookup)
+        #kiin = node.getSumOfWeightsInsideCluster(fromCluster._clusterId, self._nodeLookup)
+        nodeSet = node._nodesInClusterDict[fromCluster._clusterId]
+        m = self._getM()
+        
+        ret = 0
+        ki = node.getSumAdjWeights()
+        for targetNodeId in nodeSet:
+            # edges have source and targets
+            targetNode = self._nodeLookup[targetNodeId]
+            # these edges would no longer in the cluster but between cluster
+            kj = targetNode.getSumAdjWeights()
+            Aij = node._edgesDict[targetNodeId]._weight
+            # multiply by 2 because links are modeled as directed edges
+            term = (2 * (Aij - (ki*kj/(2*m))))
+            ret += term
+            self.logger.info("ni:{} ti:{} Aij:{} ki:{} kj:{} m:{}"\
+                             .format(node._nodeId, targetNodeId, Aij, ki, kj, m))
+            
+        ret = ret * (1/(2*m))
+            
+        #sigmaTot = fromCluster.getSumOfWeights()
+#         ki = node.getSumAdjWeights()
+#         
+#         self.logger.info("change calculate change in Q cause by removing node")
+#         self.logger.info("louvainId:{} fromClusterId:{} nodeId:{}\n"\
+#                          .format(self._louvainId, fromCluster._clusterId, node._nodeId))
+#         self.logger.info("sigmaIn:{}, kiin:{} m:{} sigmaTot:{} ki:{}\n"\
+#                          .format(sigmaIn, kiin, m, sigmaTot, ki))
+#         
+#         loss = ((sigmaIn - kiin)/(2*m)) + ((sigmaTot - ki)/(2*m))**2
+                
+        self.logger.info("END\n")  
+        return ret
 
     ############################################################  
     def modularityGainIfMove(self, fromCluster, targetCluster, node): 
@@ -280,20 +321,22 @@ class Louvain(object):
         '''     
         self.logger.info("BEGIN")
         
-        # calculate change in Q cause by removing node
-        sigmaIn = fromCluster.getSumOfWeightsInsideCluster(self._nodeLookup)
-        kiin = node.getSumOfWeightsInsideCluster(fromCluster._clusterId, self._nodeLookup)
-        m = self._getM()
-        sigmaTot = fromCluster.getSumOfWeights()
-        ki = node.getSumAdjWeights()
+#         # calculate change in Q cause by removing node
+#         sigmaIn = fromCluster.getSumOfWeightsInsideCluster(self._nodeLookup)
+#         kiin = node.getSumOfWeightsInsideCluster(fromCluster._clusterId, self._nodeLookup)
+#         m = self._getM()
+#         sigmaTot = fromCluster.getSumOfWeights()
+#         ki = node.getSumAdjWeights()
+#         
+#         self.logger.info("change calculate change in Q cause by removing node")
+#         self.logger.info("louvainId:{} fromClusterId:{} nodeId:{}\n"\
+#                          .format(self._louvainId, fromCluster._clusterId, node._nodeId))
+#         self.logger.info("sigmaIn:{}, kiin:{} m:{} sigmaTot:{} ki:{}\n"\
+#                          .format(sigmaIn, kiin, m, sigmaTot, ki))
+#         
+#         loss = ((sigmaIn - kiin)/(2*m)) + ((sigmaTot - ki)/(2*m))**2
         
-        self.logger.info("change calculate change in Q cause by removing node")
-        self.logger.info("louvainId:{} fromClusterId:{} nodeId:{}\n"\
-                         .format(self._louvainId, fromCluster._clusterId, node._nodeId))
-        self.logger.info("sigmaIn:{}, kiin:{} m:{} sigmaTot:{} ki:{}\n"\
-                         .format(sigmaIn, kiin, m, sigmaTot, ki))
-        
-        loss = ((sigmaIn - kiin)/(2*m)) + ((sigmaTot - ki)/(2*m))**2
+        changeFromRemovingNode = self.changeInModularityIfNodeRemoved(node, fromCluster)
         
         # calculate change Q caused by adding node
         sigmaIn = targetCluster.getSumOfWeightsInsideCluster(self._nodeLookup)
@@ -310,7 +353,7 @@ class Louvain(object):
         
         gain = ((sigmaIn + kiin)/(2*m)) - ((sigmaTot + ki)/(2*m))**2
 
-        ret = gain - loss
+        ret = gain - changeFromRemovingNode
         self.logger.info("ret:{} gain:{} loss:{}".format(ret, gain, loss))
         self.logger.info("END\n")
         return ret

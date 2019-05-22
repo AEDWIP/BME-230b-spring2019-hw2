@@ -29,8 +29,11 @@ class Node(object):
         # the value only change when a node is moved to another cluster
         # this does not change Big O, how ever in practice should dramatically improve
         # performance
-        self._weightsInClusterDict = {} # key = clusterId, value = sum of weights in 
-
+        self._weightsInClusterDict = {}  # key = clusterId, value = sum of weights in 
+        
+        # keep a list of all the nodes we are connected to in a given cluster
+        # we use this in phase I so we do not test moves that can not improve Q
+        self._nodesInClusterDict = {} # key = clusterId, value is a set of nodeIds
         
     ############################################################                
     def __repr__(self):
@@ -63,20 +66,24 @@ class Node(object):
         '''
         enable testing
         '''
-        self.logger.debug("BEGIN")
+        self.logger.info("BEGIN")
         for key, e in self._edgesDict.items():
             targetNode = graphNodesLookup[e._targetId]
             targetClusterId = targetNode._clusterId
-            self.logger.debug("nodeId:{} e:{} targetNodeClusterId:{}"\
+            self.logger.info("nodeId:{} e:{} targetNodeClusterId:{}"\
                              .format(self._nodeId, e, targetClusterId))
             if  targetClusterId in self._weightsInClusterDict:
                 self._weightsInClusterDict[targetClusterId] += e._weight
+                self._nodesInClusterDict[targetClusterId].add(e._targetId)
             else :
                 self._weightsInClusterDict[targetClusterId] = e._weight
+                self._nodesInClusterDict[targetClusterId] = set()
+                self._nodesInClusterDict[targetClusterId].add(e._targetId)
+
+            self.logger.info("_weightsInClusterDict:{}".format(self._weightsInClusterDict[targetClusterId]))
+            self.logger.info("_nodesInClusterDict:{}".format(self._nodesInClusterDict[targetClusterId]))
                 
-            self.logger.debug("_weightsInClusterDict[{}]:{}".format(targetClusterId, self._weightsInClusterDict[targetClusterId]))
-                
-        self.logger.debug("END\n")
+        self.logger.info("END\n")
                 
         
     ############################################################
@@ -208,6 +215,7 @@ class Node(object):
             # node was moved the same cluster we are in
             if fromClusterId in self._weightsInClusterDict:
                 self._weightsInClusterDict[fromClusterId] -= weight
+                self._nodesInClusterDict[fromClusterId].remove(nodeId)
             else:
                 eMsg = "node moved into our cluster self._nodeId:{}  weightsInClusterDic[{}] is missing".format(self._nodeId, fromClusterId)
                 self.logger.error(eMsg)
@@ -215,13 +223,19 @@ class Node(object):
             
             if not toClusterId in self._weightsInClusterDict:
                 self._weightsInClusterDict[toClusterId] = 0
+                self._nodesInClusterDict[toClusterId] = set()
             self._weightsInClusterDict[toClusterId] += weight
+            self._nodesInClusterDict[fromClusterId].add(nodeId)
             
         elif (self._nodeId != nodeId) and (self._clusterId != toClusterId):
-            # node was moved out of or cluster
+            # node was moved out of our cluster
             if not toClusterId in self._weightsInClusterDict:
-                self._weightsInClusterDict[toClusterId] = 0
+                self._weightsInClusterDict[toClusterId] = 0 # TODO: AEDWIP: FIXME: why are we creating and empty entry
+                self._nodesInClusterDict[toClusterId] = set()
+
+            # AEDWIP: TODO: FIXME: this looks funny
             self._weightsInClusterDict[toClusterId] += weight  
+            self._nodesInClusterDict[toClusterId].add(nodeId)
             
             if not fromClusterId in self._weightsInClusterDict:
                 eMsg = "node moved into our cluster self._nodeId:{}  weightsInClusterDic[{}] is missing".format(self._nodeId, fromClusterId)
@@ -229,13 +243,17 @@ class Node(object):
                 raise ValueError(eMsg)
             else:
                 self._weightsInClusterDict[fromClusterId] -= weight 
+                self._nodesInClusterDict[fromClusterId].add(nodeId) 
                 
         elif (self._nodeId == nodeId) and (self._clusterId != toClusterId):
             # we are moving to a new cluster
             if not toClusterId:
                 self._weightsInClusterDict[toClusterId] = 0
+                self._nodesInClusterDict[fromClusterId] = set()
+
             self._weightsInClusterDict[toClusterId] += weight
-                
+            self._nodesInClusterDict[fromClusterId].add(nodeId)
+            
         else:
             eMsg = ""
             self.logger.error(eMsg)

@@ -88,7 +88,7 @@ class LouvainTest(unittest.TestCase):
 
 #         louvainLevel0 = Louvain(None)
 #         louvainLevel0.bootStrapInit(listOfEdges, listOfWeight)
-        louvainLevel0 = Louvain.buildGraph(listOfEdges, listOfWeight)
+        louvainLevel0 = Louvain.buildGraph("testBootStrapModularity", listOfEdges, listOfWeight)
         self.logger.info("Q:{}".format(louvainLevel0._Q))
         self.logger.info("END\n")
         
@@ -96,9 +96,10 @@ class LouvainTest(unittest.TestCase):
     def createChangeQGraph(self):
         # create cluster 0
         n0 = Node(clusterId="c0", nodeId=0)
-        n2 = Node(clusterId="c1", nodeId=2)
         n1 = Node(clusterId="c0", nodeId=1)
-        n3 = Node(clusterId="c0", nodeId=3)
+        n2 = Node(clusterId="c0", nodeId=2)        
+        n3 = Node(clusterId="c1", nodeId=3)
+        n4 = Node(clusterId="c1", nodeId=4)
 
         # 0 - 1
         e0 = Edge(weight=1.0, srcId=0, targetId=1)
@@ -113,32 +114,30 @@ class LouvainTest(unittest.TestCase):
         n2._addEdge(e3)    
         
         # 0 - 3
+        # edge between clusters
         e4 = Edge(weight=1.0, srcId=0, targetId=3)
         n0._addEdge(e4)
         e5 = Edge(weight=1.0, srcId=3, targetId=0) 
         n3._addEdge(e5) 
         
-        cluster0 = Cluster(clusterId="c0", nodeList=[n0, n1, n3])
+        cluster0 = Cluster(clusterId="c0", nodeList=[n0, n1, n2])
 
         # creat cluster 1
-        n4 = Node(clusterId="c1", nodeId=4)
-        n5 = Node(clusterId="c1", nodeId=5)
+        #n5 = Node(clusterId="c1", nodeId=5)
 
-        # 4 - 5
-        e6 = Edge(weight=1.0, srcId=4, targetId=5)
+        # 4 - 3
+        e6 = Edge(weight=1.0, srcId=4, targetId=3)
         n4._addEdge(e6)
-        e7 = Edge(weight=1.0, srcId=5, targetId=4)
-        n5._addEdge(e7)
+        e7 = Edge(weight=1.0, srcId=3, targetId=4)
+        n3._addEdge(e7)
         
-        cluster1 = Cluster(clusterId="c1", nodeList=[n2, n4, n5])
+        cluster1 = Cluster(clusterId="c1", nodeList=[n3, n4])
         clusters = [cluster0, cluster1]
         
-        # create an edge between cluster
-        # 2 - 4
-        e8 = Edge(weight=1.0, srcId=2, targetId=4)
+        e8 = Edge(weight=1.0, srcId=2, targetId=1)
         n2._addEdge(e8)
-        e9 = Edge(weight=1.0, srcId=4, targetId=2)
-        n4._addEdge(e9)
+        e9 = Edge(weight=1.0, srcId=1, targetId=2)
+        n1._addEdge(e9)
         
         edgeList = [e0, e1, e2, e3, e4, e5, e6, e7, e8, e9]
         i = 1
@@ -150,7 +149,7 @@ class LouvainTest(unittest.TestCase):
             self.logger.info(e)  
         print()      
         
-        nodeList = [n0, n1, n2, n3, n4, n5]
+        nodeList = [n0, n1, n2, n3, n4]
         graphNodesLookup = { n._nodeId:n for n in nodeList}
         
         for n in nodeList:
@@ -179,7 +178,6 @@ class LouvainTest(unittest.TestCase):
                edgeList, 
                graphNodesLookup)
         
-            
         self.logger.info("END\n")        
         return (ret)
            
@@ -199,6 +197,13 @@ class LouvainTest(unittest.TestCase):
         graphNodesLookup = graph[4]
         self.logger.info("louvainLevel0:{}".format(louvain))
         
+        # check if nodeSets are correct
+        for n in nodesList:
+            print()
+            self.logger.info("nodeId:{}".format(n._nodeId))
+            for clusterId in n._nodesInClusterDict.keys():
+                self.logger.info("\t clusterId: {} set:{}".format(clusterId, n._nodesInClusterDict[clusterId]))
+        
         # check modularity before move
         self.assertEqual(louvain._Q, 0.5599999999999999)
         
@@ -206,10 +211,15 @@ class LouvainTest(unittest.TestCase):
         fromCluster = clusters[0]
         targetCluster = clusters[1]
         
-        # test what change would be if we moved n2 from cluster 0 to cluster 1
-        ret =louvain.modularityGainIfMove(fromCluster, targetCluster, n2, graphNodesLookup)
+        # test change if node was removed from cluster
+        removeChange = louvain.changeInModularityIfNodeRemoved(n2, fromCluster)
+        self.logger.info("removeChange:{}".format(removeChange))
+        self.assertEqual(removeChange, 0.16)
         
-        expectedChangeInQ = -0.04
+        # test what change would be if we moved n2 from cluster 0 to cluster 1
+        ret =louvain.modularityGainIfMove(fromCluster, targetCluster, n2)
+        
+        expectedChangeInQ = -0.08
         self.logger.info("modularityGainIfMove:{} expected:{}".format(ret, expectedChangeInQ))
         self.assertEqual(ret, expectedChangeInQ)
 
