@@ -20,7 +20,7 @@ class Cluster(object):
         self._nodeList = nodeList
         self._weightsInsideCluster = None # 0 # 'sigma in'
         self._totalWeight = None # 0 # 'sigma tot'
-        self.getSumOfWeights()
+        self.getSumOfWeights() 
         
     ############################################################                
     def __repr__(self):

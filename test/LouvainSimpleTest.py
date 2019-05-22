@@ -29,6 +29,36 @@ class LouvainSimpleTest(unittest.TestCase):
         # else if assert we will not see partial test log entries
         logging.shutdown()
         
+#     ############################################################        
+#     def createSimpleGraphStage2Init(self, nodes, clusters, graphNodesLookup):
+#         # make sure the graph is set up the way we expect
+#         self.logger.info("********* make sure graph is configured correctly")
+#         for n in nodes:
+#             print()
+#             self.logger.info("nodeId:{} clusterId:{}".format(n._nodeId, n._clusterId))
+#             for eid, edge in n._edgesDict.items():
+#                 self.logger.info(edge)
+#         
+#         for n in nodes:
+#             # because we used _addEdge() instead of addEdges()
+#             # we need to make sure cache is set up
+#             n._initKiinCache(graphNodesLookup)        
+#             
+#         self.logger.info("")                    
+#         for n in nodes:
+#             # for lazy evaluation to run
+#             n.getSumAdjWeights()
+#             n.getSumOfWeightsInsideCluster(n._clusterId, graphNodesLookup)
+#             self.logger.info("node:{}".format(n))
+#             
+#         self.logger.info("")            
+#         for c in clusters:
+#             # run lazy eval
+#             c.getSumOfWeights()
+#             c.getSumOfWeightsInsideCluster(graphNodesLookup)
+#             self.logger.info("cluster:{}".format(c))   
+            
+                 
     ############################################################
     def createSimpleGraph(self):
         '''
@@ -69,22 +99,13 @@ class LouvainSimpleTest(unittest.TestCase):
         e5 = Edge(weight=1.0, srcId=2, targetId=1) 
         n2._addEdge(e5) 
         
-
         # create second cluster graph
         n3 = Node(clusterId="c1", nodeId=3)
         e6 = Edge(weight=1.0, srcId=3, targetId=4)
         n3._addEdge(e6)
-
         n4 = Node(clusterId="c1", nodeId=4)
         e6 = Edge(weight=1.0, srcId=4, targetId=3)
         n4._addEdge(e6)
-        
-        # create clusters
-        cluster0 = Cluster(clusterId="c0", nodeList=[n0, n1, n2])
-        cluster1 = Cluster(clusterId="c1", nodeList=[n3, n4])
-        self.assertEqual(1, cluster1._getM())
-        
-        clusters = [cluster0, cluster1]
         
         # you can not move a node to a cluster if the node is not
         # connected to something in the cluster
@@ -95,13 +116,20 @@ class LouvainSimpleTest(unittest.TestCase):
         eb = Edge(weight=1.0, srcId=n3._nodeId, targetId=n0._nodeId)
         n0._addEdge(ea)
         n3._addEdge(eb)        
+        
+        nodeList = [n0, n1, n2, n3, n4]
+        graphNodesLookup = { n._nodeId:n for n in nodeList}        
+        
+        # create clusters
+        cluster0 = Cluster(clusterId="c0", nodeList=[n0, n1, n2])
+        cluster1 = Cluster(clusterId="c1", nodeList=[n3, n4])
+        
+        clusters = [cluster0, cluster1]        
 
+#         self.createSimpleGraphStage2Init(nodeList, clusters, graphNodesLookup)
         level0 = Louvain("simple", [cluster0, cluster1] )  
               
         self.logger.info("END\n")
-        
-        nodeList = [n0, n1, n2, n3, n4]
-        graphNodesLookup = { n._nodeId:n for n in nodeList}
         
 #         for n in nodeList:
 #             # because we used _addEdge() instead of addEdges()
@@ -221,7 +249,6 @@ class LouvainSimpleTest(unittest.TestCase):
         e4 = Edge(weight=1.0, srcId=1, targetId=0) 
         n1._addEdge(e4)
         
-
         e5 = Edge(weight=1.0, srcId=3, targetId=0) 
         n3._addEdge(e5)
         
@@ -231,7 +258,6 @@ class LouvainSimpleTest(unittest.TestCase):
         e6 = Edge(weight=1.0, srcId=2, targetId=0) 
         n2._addEdge(e6)
 
-        
         n4 = Node(clusterId="c2", nodeId=4)
         n5 = Node(clusterId="c2", nodeId=5)
         e7 = Edge(weight=1.0, srcId=4, targetId=5) 
@@ -319,18 +345,17 @@ class LouvainSimpleTest(unittest.TestCase):
         nodes = graph[2]
         graphNodesLookup = graph[4]
         
-#         # you can not move a node to a cluster if the node is not
-#         # connected to something in the cluster
-#         # there would not gain in Q
-#         # create and edge between a node in c0 and c2
+        # you can not move a node to a cluster if the node is not
+        # connected to something in the cluster
+        # there would not gain in Q
+        # create and edge between a node in c0 and c2
 #         na = nodes[0]
 #         nb = nodes[3]
 #         self.assertNotEqual(na._clusterId, nb._clusterId)
 #         ea = Edge(weight=1.0, srcId=na._nodeId, targetId=nb._nodeId)
 #         eb = Edge(weight=1.0, srcId=nb._nodeId, targetId=na._nodeId)
 #         na._addEdge(ea)
-#         nb._addEdge(eb)
-        
+#         nb._addEdge(eb)            
         # make sure the graph is set up the way we expect
         self.logger.info("********* make sure graph is configured correctly")
         for n in nodes:
@@ -344,13 +369,13 @@ class LouvainSimpleTest(unittest.TestCase):
             # we need to make sure cache is set up
             n._initKiinCache(graphNodesLookup)        
             
-        self.logger.info("")                    
+        print("")                    
         for n in nodes:
             # for lazy evaluation to run
             n.getSumAdjWeights()
             n.getSumOfWeightsInsideCluster(n._clusterId, graphNodesLookup)
             self.logger.info("node:{}".format(n))
-            
+             
         self.logger.info("")            
         for c in clusters:
             # run lazy eval
