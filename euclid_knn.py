@@ -84,28 +84,7 @@ class KnnG():
         input:
         '''
         self.logger.info("BEGIN")
-            
-#         #
-#         # https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.spatial.distance.pdist.html
-#         # pdist() is strange
-#         #  X is a m x n. where m = number of examples and n is the number of dimensions
-#         # pdist() returns a condensed distance matrix of only the upper triangular values - the diagonal 
-#         # upper and lower are sysmetric, diagonal is zero
-#         #
-#         # we are told our distance matrix should be n x n where n =15,476
-#         # pdist() returns a shape shape: (119745550,)
-#         # 15,476 * 15,476  = 239,506,576
-#         # 119,745,550 * 2 + n = 239,506,576 # coefficient of 2 give us upper and lower traingle + n is the diagonal
-#         #
-#         condensedDistances = pdist(self._adata.obsm['X_pca'], metric=self._d_metric)
-#             
-#         # https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.spatial.distance.squareform.html#scipy.spatial.distance.squareform
-#         # convert Converts a vector-form distance vector to a square-form distance matrix, and vice-versa
-#         self._D = squareform(condensedDistances)
-#         self.logger.info("self.distances.shape:{}".format(self._D.shape))
-
-        self._D = pairwise_distances(self._adata.obsm['X_pca'])
-        
+        self._D = pairwise_distances(self._adata.obsm['X_pca'])        
         self.logger.info("END\n")
     
     ######################################################################    
