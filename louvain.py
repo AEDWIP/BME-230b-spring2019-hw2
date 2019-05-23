@@ -429,15 +429,15 @@ class Louvain(object):
                     self.logger.info("Q:{}, change:{} nodeId:{} fromClusterId:{} toClusterId:{}"\
                                      .format(self._Q, change, node._nodeId, fromC._clusterId, toC._clusterId))
                     fromCluster.moveNode(targetCluster, node, self._nodeLookup, isLouvainInit)
-                    for cid,c in self._clusters.items():
-                        self.logger.info(c)
-                        print('')
+                    
+#                     for cid,c in self._clusters.items():
+#                         self.logger.info(c)
+#                         print('')
                     
         print('')
         self.logger.info("END of epoch")
         for cid,c in self._clusters.items():
             self.logger.info(c)
-            print('')
             
         self.logger.info("Q:{}".format(self._Q))        
         self.logger.info("END")     
