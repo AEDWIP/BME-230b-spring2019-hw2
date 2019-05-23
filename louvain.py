@@ -474,6 +474,9 @@ class Louvain(object):
 #                     for cid,c in self._clusters.items():
 #                         self.logger.info(c)
 #                         print('')
+
+
+            # TODO: purne empty clusters
                     
             print('')
             for cid,c in self._clusters.items():
@@ -494,39 +497,47 @@ class Louvain(object):
         
         # create a list of edges in the graph
         nodeEdgesDict = dict() # key is new nodeId == leaf clusterId: list of edges          
-        for leafClusterId, leafCluster in self._louvain._clusters.items():
+        for leafClusterId, leafCluster in self._leafLouvain._clusters.items():
 #             newNodesList = []
 #             newWeightsInsideCluster = leafCluster._weightsInsideCluster
 #             newTotalWeight = leafCluster._totalWeight
 #             edgesInside = []
 #             edgesBetween = []
-            for leafNodeClusterId, leafNodeIdSet in leafCluster._nodesInClusterDict.items():
-                if leafClusterId == leafNodeClusterId:
-                    # we do not care about inside value they do not 
-                    # contribute to modularity or
-                    # the weight of between edges
-                    pass
-                else :
+            for leafNode in leafCluster._nodeList:
+                leafNodeClusterId = leafNode._clusterId
+#                 if leafClusterId == leafNodeClusterId:
+#                     # we do not care about inside value they do not 
+#                     # contribute to modularity or
+#                     # the weight of between edges
+#                     pass
+#                 else :
                     # create edges between 
-                    if not leafNodeClusterId in nodeEdgesDict:
-                        nodeEdgesDict[leafNodeClusterId] = []
-                        
-                    for leafNodeId in leafNodeIdSet:
-                        leafNode = self._leafLouvain._nodeLookup[leafNodeId]
-                        leafNodeClusterId = leafNode._clusterId
-                        # w should be a constant inside this for loop
-                        # its easier to fetch this way. not a big deal it runs in
-                        # Big O of 1
-                        w = leafNode._weightsInClusterDict[leafNodeClusterId]                                                
-                        e = Edge(weight=w , srcId=leafNodeClusterId, targetId=leafNodeClusterId)
-                        nodeEdgesDict[leafNodeClusterId].append(e)
+                if not leafNodeClusterId in nodeEdgesDict:
+                    nodeEdgesDict[leafNodeClusterId] = []
+                    
+                # over all the clusters the node is connected to
+                for lnClusterId, lnNodeSet in leafNode._nodesInClusterDict.items():
+                    if lnClusterId == leafClusterId:
+                        # we do not care about inside value they do not 
+                        # contribute to modularity or
+                        # the weight of between edges
+                        continue    
+                                        
+                    #leafNodeId = leafNode._nodeId
+                    ln = self._leafLouvain._nodeLookup[leafNodeId]
+                    # w should be a constant inside this for loop
+                    # its easier to fetch this way. not a big deal it runs in
+                    # Big O of 1
+                    w = leafNode._weightsInClusterDict[leafNodeClusterId]                                                
+                    e = Edge(weight=w , srcId=leafNodeClusterId, targetId=leafNodeClusterId)
+                    nodeEdgesDict[leafNodeClusterId].append(e)
                         
         # create new nodes and cluster
         # each node should be in a separate cluster
         for nodeId, edgeList in nodeEdgesDict.items():
             n = Node(clusterId=nodeId, nodeId=nodeId)
             n.addEdges(edgeList)
-            self.nodeLookup[nodeId] = n
+            self._nodeLookup[nodeId] = n
             c = Cluster(clusterId=nodeId, nodeList=[n])
             self._clusters[nodeId] = c
             
