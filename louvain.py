@@ -377,6 +377,7 @@ class Louvain(object):
         bestMove = (-1, -1, -1, -1) # (changeInQ, node, fromCluster, toCluster
         isImproving = True
         while isImproving:
+            self.logger.info("BEGIN EPOCH")
             isImproving = False
             
             # links in graph are modeled as a pair of directed edges
@@ -434,10 +435,11 @@ class Louvain(object):
 #                         self.logger.info(c)
 #                         print('')
                     
-        print('')
-        self.logger.info("END of epoch")
-        for cid,c in self._clusters.items():
-            self.logger.info(c)
+            print('')
+            for cid,c in self._clusters.items():
+                self.logger.info(c)
+            self.logger.info("END of epoch\n")
+                
             
         self.logger.info("Q:{}".format(self._Q))        
         self.logger.info("END")     
