@@ -554,13 +554,18 @@ class Louvain(object):
         does not calculate weights use betweenEdgeWeightsDict to adjust weights
         
         returns (nodeEdgesDict, betweenEdgeWeightsDict)
-            nodeEdgesDict # key is new nodeId, value list of edges
+            nodeEdgesDict 
+                key is new nodeId, value set of edges
             
-            betweenEdgeWeightsDict # key is (srcId:targetId) value is list of weight of leaf edges
+            betweenEdgeWeightsDict 
+                key is (srcId:targetId) value is list of weight of leaf edges
+                be careful not to double weight. keys will be double entry (a,b) and (b,a)
         '''
         self.logger.info("BEGIN")   
         
-        nodeEdgesDict = dict() # key is new nodeId == leaf clusterId: list of edges
+        # key is new nodeId == leaf clusterId: set of edges
+        # use set to prevent duplicate edges
+        nodeEdgesDict = dict() 
         UNKNONWN_WEIGHT = None # place holder. we need to calculate weights later
         
         # key is tuple (srcId:targetId) value is list of weight of leaf edges
@@ -587,13 +592,13 @@ class Louvain(object):
                     # weird python syntax to test if list, set, dict is empty or not
                     
                     if not newNodeId in nodeEdgesDict:
-                        nodeEdgesDict[newNodeId] = []
+                        nodeEdgesDict[newNodeId] = set()
                         
                     for adjNodeId in adjLeafNodeSet:
                         adjNode = self._leafLouvain._nodeLookup[adjNodeId]
                         newTargetNodeId = adjNode._clusterId
                         e = Edge(weight=UNKNONWN_WEIGHT, srcId=newNodeId, targetId=newTargetNodeId)
-                        nodeEdgesDict[newNodeId].append(e)
+                        nodeEdgesDict[newNodeId].add(e) 
                         
                         if not leafNodeClusterId in betweenEdgeWeightsDict:
                             betweenEdgeWeightsDict[newNodeId] = []
@@ -613,7 +618,7 @@ class Louvain(object):
         TODO creates graph from leafLouvain
         '''
         self.logger.info("BEGIN") 
-        nodeEdgesDict, betweenEdgeWeightsDict = self._phaseIICreateNewEdges()
+        nodeEdgesDict, betweenEdgeWeightsDict = self._phaseIICreateNewEdges()    
         
         # calculate edge weights
         for nodeId in nodeEdgesDict.keys():
@@ -623,12 +628,26 @@ class Louvain(object):
                 listOfWeights = betweenEdgeWeightsDict[key]
                 e._weight = sum(listOfWeights)
                 
-        # create nodes and clusters
-        for newNodeId, edgeList in nodeEdgesDict.items():
+        print()
+        for k,v in nodeEdgesDict.items():
+            self.logger.info("nodeEdgesDict nodeId:{} edges:{}".format(k,v))
+            
+        print()
+        for k,v in betweenEdgeWeightsDict.items():
+            self.logger.info("betweenEdgeWeightsDict key:{} listOfWeights:{}".format(k,v))        
+                            
+        # create nodes 
+        for newNodeId in nodeEdgesDict.keys():
             newClusterId = newNodeId
-            newNode = Node(newClusterId, newNodeId)
+            newNode = Node(newClusterId, newNodeId) 
             self._nodeLookup[newNodeId] = newNode
             
+            
+        # add edges to nodes       
+        for newNodeId in nodeEdgesDict.keys():
+            edgeList = nodeEdgesDict[newNodeId]
+            newNode.addEdges(edgeList,  self._nodeLookup) 
+            newClusterId = newNodeId
             newCluster = Cluster(newClusterId, [newNode])
             self._clusters[newClusterId] = newCluster
         

@@ -41,6 +41,24 @@ class Node(object):
                                                            self._nodeId, len(self._edgesDict.keys()),
                                                            self._adjacentEdgeWeights)
     
+    ############################################################                    
+    def __hash__(self):
+        '''
+        enable Node objects to be used in sets and dictionary
+        '''
+        # we assume nodeId is unquie, use this cluster to catch bugs
+        return hash((self._clusterId, self._nodeId))
+
+    ############################################################                    
+    def __eq__(self, other):
+        '''
+        enable Node objects to be used in sets and dictionary
+        '''        
+        if not isinstance(other, type(self)): return NotImplemented
+        # out design expects nodeId's to be unique, use cluster to catch bugs
+        # checking nodes first is faster
+        return self._nodeId == other._nodeId and self._clusterId == other._clusterId
+    
     ############################################################
     def _addEdge(self, edge):
         '''
@@ -87,14 +105,14 @@ class Node(object):
                 
         
     ############################################################
-    def addEdges(self, listOFEdges):
+    def addEdges(self, listOFEdges,graphNodesLookup):
         '''
         can raise ValueError
         '''
         for e in listOFEdges:
             self._addEdge(e)
 
-        self._initKiinCache()
+        self._initKiinCache(graphNodesLookup)
           
     ############################################################
     def _getEdges(self):
