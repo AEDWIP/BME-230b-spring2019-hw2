@@ -7,6 +7,8 @@ import logging
 from Edge import Edge
 from Node import Node
 from Cluster import Cluster
+from idlelib.idle_test.test_colorizer import source
+from scanpy.tools._louvain import louvain
 
 
 ############################################################
@@ -27,7 +29,7 @@ class Louvain(object):
     @staticmethod
     def buildGraph(louvainId, listOfEdges, listOfWeight):
         '''
-        use this constructor to bootstrap from andata.
+        use this factory method to bootstrap from anadata.
         
         assigns each cell to its own cluster and calculates modularity
         
@@ -47,7 +49,10 @@ class Louvain(object):
                 
         returns a Louvain object
         '''
+        Louvain.logger.info("BEGIN louvainID:{}".format(louvainId))        
+
         ret = Louvain(louvainId, None)
+        ret._leafLouvain = None                
         ret._clusters = dict()  # key is clusterId, value is cluster object
         
         # dictionary of all the the nodes in the graph
@@ -99,8 +104,43 @@ class Louvain(object):
             node._initKiinCache(graphNodesLookup=ret._nodeLookup)
 
         ret._calculateQ()
+        
+        # TODO: AEDWIP run phase I
+        
+        Louvain.logger.info("END\n")                
         return ret
 
+   ############################################################
+    @staticmethod
+    def buildLouvain(louvainId, leafLouvain):
+        '''
+        use this factory method to buil a new louvain object from the results of a previous run of lovain
+        
+        implementation starts by constructing a new graph whose nodes are are the clusters
+        found in the louvain object argument
+        
+        returns a louvain object
+        '''
+        Louvain.logger.info("BEGIN louvainID:{}".format(louvainId))        
+        ret = Louvain(louvainId, None)
+        ret._leafLouvain = leafLouvain        
+        ret._clusters = dict()  # key is clusterId, value is cluster object
+        
+        # dictionary of all the the nodes in the graph
+        # key is nodeId, value is node object
+        ret._nodeLookup = {} 
+        
+        # list of all the edges in the graph
+        ret._edges = []
+        
+        ret._Q = None
+        
+        ret._phaseII(louvain)
+        
+        Louvain.logger.info("END\n")        
+        return ret
+        
+        
     ############################################################
     def _build(self, nodeId, targetEdge):
         '''
@@ -116,7 +156,7 @@ class Louvain(object):
             self._clusters[cluster._clusterId] = cluster
             self._nodeLookup[nodeId] = n
            
-        # TODO: AEDWIP: this looks buggy, should we be used addEdges ?? 
+        # TODO: AEDWIP: should we be used addEdges ?? 
         n._addEdge(targetEdge) 
 
     ############################################################
@@ -303,7 +343,7 @@ class Louvain(object):
             pass None for unit test
         '''
         self._louvainId = louvainId
-        
+        self._leafLouvain = None                        
         self._clusters = dict()
         self._Q = None
         self._m = None
@@ -342,7 +382,7 @@ class Louvain(object):
 
         # TODO: do we need Q? useful for debugging
         self._calculateQ()
-                
+                        
     ############################################################  
     def modularityGainIfMove(self, fromCluster, targetCluster, node): # , isLouvainInit=False
         '''
@@ -442,9 +482,57 @@ class Louvain(object):
                 
             
         self.logger.info("Q:{}".format(self._Q))        
-        self.logger.info("END")     
+        self.logger.info("END\n")     
         
+    ############################################################ 
+    def _phaseII(self, isLouvainInit=False):      
+        '''
+        TODO
+        '''
+        self.logger.info("BEGIN") 
+        
+        
+        # create a list of edges in the graph
+        nodeEdgesDict = dict() # key is new nodeId == leaf clusterId: list of edges          
+        for leafClusterId, leafCluster in self._louvain._clusters.items():
+#             newNodesList = []
+#             newWeightsInsideCluster = leafCluster._weightsInsideCluster
+#             newTotalWeight = leafCluster._totalWeight
+#             edgesInside = []
+#             edgesBetween = []
+            for leafNodeClusterId, leafNodeIdSet in leafCluster._nodesInClusterDict.items():
+                if leafClusterId == leafNodeClusterId:
+                    # we do not care about inside value they do not 
+                    # contribute to modularity or
+                    # the weight of between edges
+                    pass
+                else :
+                    # create edges between 
+                    if not leafNodeClusterId in nodeEdgesDict:
+                        nodeEdgesDict[leafNodeClusterId] = []
+                        
+                    for leafNodeId in leafNodeIdSet:
+                        leafNode = self._leafLouvain._nodeLookup[leafNodeId]
+                        leafNodeClusterId = leafNode._clusterId
+                        # w should be a constant inside this for loop
+                        # its easier to fetch this way. not a big deal it runs in
+                        # Big O of 1
+                        w = leafNode._weightsInClusterDict[leafNodeClusterId]                                                
+                        e = Edge(weight=w , srcId=leafNodeClusterId, targetId=leafNodeClusterId)
+                        nodeEdgesDict[leafNodeClusterId].append(e)
+                        
+        # create new nodes and cluster
+        # each node should be in a separate cluster
+        for nodeId, edgeList in nodeEdgesDict.items():
+            n = Node(clusterId=nodeId, nodeId=nodeId)
+            n.addEdges(edgeList)
+            self.nodeLookup[nodeId] = n
+            c = Cluster(clusterId=nodeId, nodeList=[n])
+            self._clusters[nodeId] = c
             
+        self.logger.info("END\n")   
+        
+                    
     ############################################################                
     def __repr__(self):
         self._forceAllLazyEval()

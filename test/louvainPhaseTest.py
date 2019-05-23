@@ -114,6 +114,45 @@ class LouvianPhaseTest(unittest.TestCase):
             self.assertEqual(sorted(nodeIds), sorted(expectedNodesInCluster[clusterId]))
         
         self.logger.info("END\n")        
+        
+    ############################################################
+    def testPhaseII(self):
+        self.logger.info("BEGIN")
+        
+        listOfEdges = [(0,1), (1,0), (0,2), (2,0), (0,3), (1,2), (2,1), (0,6),
+                       (3,0), (3,4), (4,3), (3,5), (5,3),
+                       (6,0), (6,7),(7,6), (6,8), (8,6), (8,9), (9,8), (9,7), (7,9), (9,10), (10,9)
+                       ]
+        listOfWeight = [1 for i in listOfEdges]
+        louvainLevel0 = Louvain.buildGraph("testPhaseII graph", listOfEdges, listOfWeight)
+        
+        louvainLevel0._phaseI(isLouvainInit=True)    
+        
+#         self.logger.info("************ check phase I results")
+#         for clusterId, cluster in louvainLevel0._clusters.items():
+#             print('')
+#             self.logger.info("cluserId:{}".format(clusterId))
+#             self.logger.info(cluster)     
+
+
+        expected = {
+            0:{'custerId':0,  'numNodes':0 ,'weightsInsideCluster':0, 'totalWeight':0},
+            1:{'cluserId':1,  'numNodes':0 ,'weightsInsideCluster':0, 'totalWeight':0},
+            2:{'cluserId':2,  'numNodes':0 ,'weightsInsideCluster':0, 'totalWeight':0},
+            3:{'cluserId':3,  'numNodes':0 ,'weightsInsideCluster':0, 'totalWeight':0},
+            4:{'cluserId':4,  'numNodes':6 ,'weightsInsideCluster':14, 'totalWeight':13},
+            5:{'cluserId':5,  'numNodes':0 ,'weightsInsideCluster':0, 'totalWeight':0},
+            6:{'cluserId':6,  'numNodes':0 ,'weightsInsideCluster':0, 'totalWeight':0},
+            7:{'cluserId':7,  'numNodes':0 ,'weightsInsideCluster':0, 'totalWeight':0},
+            8:{'cluserId':8,  'numNodes':5 ,'weightsInsideCluster':10, 'totalWeight':11},
+            9:{'cluserId':9,  'numNodes':0 ,'weightsInsideCluster':0, 'totalWeight':0},
+            10:{'cluserId':10, 'numNodes':0 ,'weightsInsideCluster':2, 'totalWeight':0}
+            }
+        
+        self.checkClusters(expected, louvainLevel0._clusters)
+        
+        
+        self.logger.info("END\n")
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
