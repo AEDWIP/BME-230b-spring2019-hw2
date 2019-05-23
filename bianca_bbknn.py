@@ -7,14 +7,11 @@ import numpy as np
 def pca(adata):
     #calculate pca
     pca = PCA(n_components=50)
-    result_pca = pca.fit_transform(adata.X)
-    result_pca = np.array(result_pca, dtype = np.float32)
-    adata.obsm['X_pca'] = result_pca
-    return result_pca
+    adata.obsm['X_pca'] = pca.fit_transform(adata.X)
 
 
 def bbknn(adata, neighbors_within_batch):
-    result_pca = pca(adata)
+    pca(adata) #run pca
     batch_unique = list(set(adata.obs['batch']))  #['0','1']
     knn_distances = np.zeros((adata.shape[0],neighbors_within_batch*len(batch_unique)))
     knn_indices = np.copy(knn_distances).astype(int)
@@ -23,14 +20,14 @@ def bbknn(adata, neighbors_within_batch):
         #reference batch
         batch_id = batch_unique[i]   #get batch id for ref_batch
         bool_idx = adata.obs['batch'] == batch_id  #get booleen index for reference batch
-        ref_batch_pca = result_pca[bool_idx]  #using booleen index to get pca data for reference batch
+        ref_batch_pca = adata.obsm['X_pca'][bool_idx]  #using booleen index to get pca data for reference batch
         ref_batch_idx = np.arange(adata.shape[0])[bool_idx] #create a booleen index for ref_batch to map back to pca matrix
 
         for j in range(len(batch_unique)):
             #querry batch
             batch_id = batch_unique[j] #get batch id for query_batch
             bool_idx = adata.obs['batch'] == batch_id  #get booleen index for query batch
-            query_batch_pca = result_pca[bool_idx]  #using booleen index to get pca data for query batch
+            query_batch_pca = adata.obsm['X_pca'][bool_idx]  #using booleen index to get pca data for query batch
             query_batch_idx = np.arange(adata.shape[0])[bool_idx]  #create a booleen index for query_batch to map back to pca matrix
 
             D = pairwise_distances(X= query_batch_pca, Y=ref_batch_pca)  #calculate pairwise_distances between query batch and ref_batch
@@ -51,6 +48,8 @@ def bbknn(adata, neighbors_within_batch):
     return knn_indices, knn_distances
 
 
+adata = sc.read('path_to_raw_data',
+                delimiter='\t',cache=True)
 #batch_unique=['0','1']
 neighbors_within_batch=6
 knn_indices, knn_distances = bbknn(adata, neighbors_within_batch)
