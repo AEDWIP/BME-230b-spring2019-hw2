@@ -160,6 +160,14 @@ class LouvianPhaseTest(unittest.TestCase):
         self.logger.info("************ check phase II")
         for clusterId, cluster in louvainLevel2._clusters.items():
             self.logger.info("clusterId:{} cluster:{}".format(clusterId,cluster))
+            
+        expectedAfterPhaseII = {
+            5 : {'cluster':5, 'numNodes':1, 'weightsInsideCluster':None, 'totalWeight':2},
+            9 : {'cluster':9, 'numNodes':1, 'weightsInsideCluster':None, 'totalWeight':4},
+            }
+        self.logger.warn("AEDWIP !!!!!! weightsInsideCluster is None does this cause problems")
+        self.checkClusters(expectedAfterPhaseII, louvainLevel2._clusters)
+        
         
         self.logger.info("END\n")
 
