@@ -6,7 +6,6 @@ Created on May 16, 2019
 import igraph as ig
 import logging
 from louvain import Louvain
-import LouvainSimpleTest
 import numpy as np
 # import scanpy.api as sc
 # from scipy.spatial.distance import pdist
