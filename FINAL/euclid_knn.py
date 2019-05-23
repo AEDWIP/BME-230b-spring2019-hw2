@@ -258,7 +258,7 @@ def main():
     adata = sc.read(sys.argv[1])
 
     # build bblknn graph
-    myGraph = KnnG(data=adata, d_metric='euclidean', n_neighbors=15, method='umap', runPCA=True, nPC=50)
+    myGraph = KnnG(adata=adata, d_metric='euclidean', n_neighbors=15, method='umap', runPCA=True, nPC=50)
 
     # run louvain to cluster data
     sc.tl.louvain(myGraph._adata)
