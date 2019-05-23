@@ -165,7 +165,7 @@ class Louvain(object):
             kj = nodeJ.getSumAdjWeights()
             i = edge._srcId
             j = edge._targetId
-            print() # AEDWIP:
+            print('') # AEDWIP:
             self.logger.debug("i:{} j:{} A{}{}:{} k{}:{} k{}:{} 2*m:{}".format(i,j, i, j, Aij, i, ki, j, kj, 2*m))
             self.logger.debug(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
             term = Aij - (ki*kj) / (2*m) 
@@ -367,12 +367,28 @@ class Louvain(object):
           
         self.logger.info("Q:{}".format(self._Q))
         
+        # rework initialization
+        # make sure cluster is init correctly
+        for cId, c in self._clusters.items():
+            c.getSumOfWeightsInsideCluster(self._nodeLookup)
+            c.getSumOfWeights()
+        
         K_CHANGE_IN_Q = 0
         bestMove = (-1, -1, -1, -1) # (changeInQ, node, fromCluster, toCluster
         isImproving = True
         while isImproving:
             isImproving = False
+            
+            # links in graph are modeled as a pair of directed edges
+            # keep track of moves so we do not cycle
+            # i.e. move na from cluster 1 to cluster 2, then back again
+            # use a set of tuples. each element is of form (srcNodeId, targetNodeId)
+            trackMoves = set()
+                            
             for nodeId, node in self._nodeLookup.items():
+                # keep track of which clusters we have tested
+                testedClusters = set()
+                
                 # Q will only improve if we are moving into a cluster that has a node 
                 # we are connected to
                 fromCluster = self._clusters[node._clusterId]
@@ -383,7 +399,22 @@ class Louvain(object):
                     #targetCluster = self._clusters[candidateClusterId]
                     for candidateNodeId in candidateNodeSet:
                         candidateNode = self._nodeLookup[candidateNodeId]
-                        targetCluster = self._clusters[candidateNode._clusterId]
+                        
+                        targetClusterId = candidateNode._clusterId
+                        if fromCluster._clusterId == targetClusterId:
+                            continue
+                        
+                        targetCluster = self._clusters[targetClusterId]
+                        if targetCluster in testedClusters :
+                            continue
+                        testedClusters.add(targetCluster)
+                        
+                        # track moves to prevent cycles
+                        possibleMove = (nodeId, targetClusterId)
+                        if possibleMove in trackMoves :
+                            continue
+                        trackMoves.add(possibleMove)              
+                        
                         predictedChange = self.modularityGainIfMove(fromCluster, targetCluster, node)
                         if predictedChange > bestMove[K_CHANGE_IN_Q] and predictedChange > 0:
                             bestMove = (predictedChange, node, fromCluster, targetCluster)
@@ -391,14 +422,23 @@ class Louvain(object):
                 if bestMove[0] > 0:
                     isImproving = True
                     change, node, fromC, toC = bestMove
+                    bestMove = (-1, -1, -1, -1) # (changeInQ, node, fromCluster, toCluster
+
                     self._Q += change
-                    print()
+                    print('')
                     self.logger.info("Q:{}, change:{} nodeId:{} fromClusterId:{} toClusterId:{}"\
                                      .format(self._Q, change, node._nodeId, fromC._clusterId, toC._clusterId))
                     fromCluster.moveNode(targetCluster, node, self._nodeLookup, isLouvainInit)
                     for cid,c in self._clusters.items():
-                        self.info(c)
-        
+                        self.logger.info(c)
+                        print('')
+                    
+        print('')
+        self.logger.info("END of epoch")
+        for cid,c in self._clusters.items():
+            self.logger.info(c)
+            print('')
+            
         self.logger.info("Q:{}".format(self._Q))        
         self.logger.info("END")     
         

@@ -43,6 +43,18 @@ class LouvianPhaseITest(unittest.TestCase):
             print()
             self.logger.info("cluserId:{}".format(clusterId))
             self.logger.info(cluster)
+            
+        expected = {
+                    0 : {'clusterId':0, 'numNodes':0, 'weightsInsideCluster':0, 'totalWeight':0},
+                    1 : {'clusterId':1, 'numNodes':3, 'weightsInsideCluster':4, 'totalWeight':4},
+                    2 : {'clusterId':2, 'numNodes':0, 'weightsInsideCluster':0, 'totalWeight':0}
+                    }
+        for clusterId, cluster in louvainLevel0._clusters.items():
+            self.assertEqual(len(cluster._nodeList), expected[clusterId]['numNodes'])
+            self.assertEqual(cluster._weightsInsideCluster, expected[clusterId]['weightsInsideCluster'])
+            self.assertEqual(cluster._totalWeight, expected[clusterId]['totalWeight'])
+            
+        self.assertEqual(louvainLevel0._Q, 0.5)
         
         self.logger.info("END\n")
 

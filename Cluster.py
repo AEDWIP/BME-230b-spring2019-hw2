@@ -74,10 +74,10 @@ class Cluster(object):
             for n in self._nodeList:
                 self.logger.debug("clusterId:{} nodeId:{}".format(self._clusterId, n._nodeId))
                 kiin = n.getSumOfWeightsInsideCluster(self._clusterId, graphNodesLookup)
-                if not kiin: # TODO: AEDWIP
-                    self.logger.info("kiin WTF?")
-#                 elif not self._weightsInsideCluster: value of zero drops us into this block
-#                     self.logger.info("_weightsInsideCluster WTF? if value is zero okay:{}".format(self._weightsInsideCluster))
+#                 if not kiin: # TODO: AEDWIP
+#                     self.logger.info("kiin WTF?")
+# #                 elif not self._weightsInsideCluster: value of zero drops us into this block
+# #                     self.logger.info("_weightsInsideCluster WTF? if value is zero okay:{}".format(self._weightsInsideCluster))
 
                 self._weightsInsideCluster += kiin
             

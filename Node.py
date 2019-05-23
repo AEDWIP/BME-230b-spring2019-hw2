@@ -198,12 +198,15 @@ class Node(object):
                          toClusterId=clusterId, 
                          weight=e._weight)
         
-        # we need to adjust our kiin 
-        self._adjustKiin(nodeId=self._nodeId,  
-                         fromClusterId=self._clusterId,
-                         toClusterId=clusterId, 
-                         weight=e._weight)
+        if self._clusterId != clusterId:
+            # we need to adjust our kiin 
+            self._adjustKiin(nodeId=self._nodeId,  
+                             fromClusterId=self._clusterId,
+                             toClusterId=clusterId, 
+                             weight=e._weight)
         
+        self.logger.info("nodeId:{} currentClusterId:{} toClusterId:{}"\
+            .format(self._nodeId, self._clusterId, clusterId))
         self._clusterId = clusterId
         
     ############################################################
@@ -259,7 +262,8 @@ class Node(object):
             #self._nodesInClusterDict[toClusterId].add(nodeId)
             
         else:
-            eMsg = ""
+            eMsg = "self.nodeId:{} nodeId:{} fromClusterId:{} toClusterId:{} weight:{}"\
+            .format(self._nodeId, nodeId, fromClusterId, toClusterId, weight)
             self.logger.error(eMsg)
             raise ValueError(eMsg)
 
