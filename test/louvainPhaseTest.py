@@ -14,7 +14,7 @@ from setupLogging import setupLogging
 import unittest
 
 ############################################################
-class LouvianPhaseITest(unittest.TestCase):
+class LouvianPhaseTest(unittest.TestCase):
     setupLogging( default_path='logging.test.ini.json')
     logger = logging.getLogger(__name__)
 
