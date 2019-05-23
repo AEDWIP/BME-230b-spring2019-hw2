@@ -179,7 +179,7 @@ class Louvain(object):
         # TODO should we move the mulply out? it should technically be faster
         # does not effect Big O
         m = self._getM()
-        self.logger.debug("m:{}".format(m))
+        self.logger.info("m:{}".format(m))
         
         modularitySumTerm = 0
         for edge in self._edges:
@@ -206,10 +206,10 @@ class Louvain(object):
             i = edge._srcId
             j = edge._targetId
             print('') # AEDWIP:
-            self.logger.debug("i:{} j:{} A{}{}:{} k{}:{} k{}:{} 2*m:{}".format(i,j, i, j, Aij, i, ki, j, kj, 2*m))
-            self.logger.debug(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
+            self.logger.info("i:{} j:{} A{}{}:{} k{}:{} k{}:{} 2*m:{}".format(i,j, i, j, Aij, i, ki, j, kj, 2*m))
+            self.logger.info(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
             term = Aij - (ki*kj) / (2*m) 
-            self.logger.debug("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
+            self.logger.info("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
             modularitySumTerm += term 
         
 
@@ -612,14 +612,17 @@ class Louvain(object):
         self.logger.info("END\n") 
         return nodeEdgesDict, betweenEdgeWeightsDict, 
         
-    ############################################################ 
-    def _phaseII(self, isLouvainInit=False):      
+
+    ############################################################     
+    def _fixThisBugUseTrueOOEncapsliations(self, nodeEdgesDict, betweenEdgeWeightsDict):
         '''
-        TODO creates graph from leafLouvain
-        '''
-        self.logger.info("BEGIN") 
-        nodeEdgesDict, betweenEdgeWeightsDict = self._phaseIICreateNewEdges()    
+        coded in hast. assume oh all the code is same package
+        no need to implement accessor fuctions. This lead to 
+        lots of issue.
         
+        we need to construct the full object graph before calculating
+        any of the values
+        '''
         # calculate edge weights
         for nodeId in nodeEdgesDict.keys():
             edges = nodeEdgesDict[nodeId]
@@ -636,22 +639,90 @@ class Louvain(object):
         for k,v in betweenEdgeWeightsDict.items():
             self.logger.info("betweenEdgeWeightsDict key:{} listOfWeights:{}".format(k,v))        
                             
-        # create nodes 
+        # create nodes and clusters
         for newNodeId in nodeEdgesDict.keys():
+            # create new node
             newClusterId = newNodeId
             newNode = Node(newClusterId, newNodeId) 
             self._nodeLookup[newNodeId] = newNode
-            
+            # create new cluster
+            newCluster = Cluster(newClusterId, [newNode])
+            self._clusters[newClusterId] = newCluster            
             
         # add edges to nodes       
-        for newNodeId in nodeEdgesDict.keys():
-            edgeList = nodeEdgesDict[newNodeId]
-            newNode.addEdges(edgeList,  self._nodeLookup) 
-            newClusterId = newNodeId
-            newCluster = Cluster(newClusterId, [newNode])
-            self._clusters[newClusterId] = newCluster
+        for newNodeId, edgeSet in nodeEdgesDict.items():
+            #edgeList = nodeEdgesDict[newNodeId]
+            #newNode.addEdges(edgeList,  self._nodeLookup) 
+            newNode = self._nodeLookup[newNodeId]
+            for e in edgeSet: 
+                newNode._addEdge(e)
+                
+
         
-        self.logger.info("END\n") 
+        # init node caches
+        for nId in self._nodeLookup.keys():
+            node = self._nodeLookup[nId]
+            # because we used _addEdge() instead of addEdges()
+            # we need to make sure cache is set up
+            node._initKiinCache(self._nodeLookup)      
+            
+        # force nodes to calc cached values
+        for nodeId in self._nodeLookup.keys():
+            node = self._nodeLookup[nodeId]
+            node.getSumAdjWeights()
+            node.getSumOfWeightsInsideCluster(nodeId, self._nodeLookup)
+            
+        # force clusters to calc cached values
+        for clusterId in self._clusters.keys():
+            # run lazy eval
+            cluster = self._clusters[clusterId]
+            cluster.getSumOfWeights()
+            cluster.getSumOfWeightsInsideCluster(self._nodeLookup) 
+                               
+        self.logger.info("END\n")     
+    
+    def _phaseII(self, isLouvainInit=False):      
+        '''
+        TODO creates graph from leafLouvain
+        '''
+        self.logger.info("BEGIN") 
+        nodeEdgesDict, betweenEdgeWeightsDict = self._phaseIICreateNewEdges()    
+        self._fixThisBugUseTrueOOEncapsliations(nodeEdgesDict, betweenEdgeWeightsDict) 
+        
+#         # calculate edge weights
+#         for nodeId in nodeEdgesDict.keys():
+#             edges = nodeEdgesDict[nodeId]
+#             for e in edges:
+#                 key = (nodeId,e._targetId)
+#                 listOfWeights = betweenEdgeWeightsDict[key]
+#                 e._weight = sum(listOfWeights)
+#                 
+#         print()
+#         for k,v in nodeEdgesDict.items():
+#             self.logger.info("nodeEdgesDict nodeId:{} edges:{}".format(k,v))
+#             
+#         print()
+#         for k,v in betweenEdgeWeightsDict.items():
+#             self.logger.info("betweenEdgeWeightsDict key:{} listOfWeights:{}".format(k,v))        
+#                             
+#         # create nodes 
+#         for newNodeId in nodeEdgesDict.keys():
+#             newClusterId = newNodeId
+#             newNode = Node(newClusterId, newNodeId) 
+#             self._nodeLookup[newNodeId] = newNode
+#             
+#             
+#         # add edges to nodes       
+#         for newNodeId in nodeEdgesDict.keys():
+#             edgeList = nodeEdgesDict[newNodeId]
+#             newNode.addEdges(edgeList,  self._nodeLookup) 
+#             newClusterId = newNodeId
+#             newCluster = Cluster(newClusterId, [newNode])
+#             self._clusters[newClusterId] = newCluster
+#         
+#         self._fixThisBugUseTrueOOEncapsliations(nodeEdgesDict, betweenEdgeWeightsDict) 
+#         
+#         self.logger.info("END\n") 
         
         
     ############################################################                

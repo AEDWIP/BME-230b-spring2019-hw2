@@ -107,6 +107,8 @@ class Node(object):
     ############################################################
     def addEdges(self, listOFEdges,graphNodesLookup):
         '''
+        DEPRECATED !!!! you need to construct all the nodes and add all 
+        the edges for the entire graph before _initKiinCache
         can raise ValueError
         '''
         for e in listOFEdges:

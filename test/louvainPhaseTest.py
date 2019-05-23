@@ -132,7 +132,7 @@ class LouvianPhaseTest(unittest.TestCase):
         
         louvainLevel0._phaseI(isLouvainInit=True)    
         
-        expectedAfterPhaseI = {
+        expectedAfterPhaseL0_I = {
             0:{'custerId': 0,  'numNodes':0 , 'weightsInsideCluster': 0, 'totalWeight': 0},
             1:{'cluserId': 1,  'numNodes':0 , 'weightsInsideCluster': 0, 'totalWeight': 0},
             2:{'cluserId': 2,  'numNodes':0 , 'weightsInsideCluster': 0, 'totalWeight': 0},
@@ -147,27 +147,35 @@ class LouvianPhaseTest(unittest.TestCase):
         
         self.logger.info("TODO: empty clusters should be pruned, notice")
         
-        self.checkClusters(expectedAfterPhaseI, louvainLevel0._clusters)
+        self.checkClusters(expectedAfterPhaseL0_I, louvainLevel0._clusters)
         
         for cId in [5, 9]:
             nodeIdList = sorted([n._nodeId for n in louvainLevel0._clusters[cId]._nodeList])
             self.logger.info("clusterId:{} nodeList[{}]".format(cId, nodeIdList))
         
         # check phase II
-        louvainLevel2 = Louvain.buildLouvain("testPhaseII graph level0", louvainLevel0)
+        louvainLevel1 = Louvain.buildLouvain("testPhaseII graph level1", louvainLevel0)
         
         print('')
-        self.logger.info("************ check phase II")
-        for clusterId, cluster in louvainLevel2._clusters.items():
+        self.logger.info("************ check L1 phase II")
+        for clusterId, cluster in louvainLevel1._clusters.items():
             self.logger.info("clusterId:{} cluster:{}".format(clusterId,cluster))
             
-        expectedAfterPhaseII = {
-            5 : {'cluster':5, 'numNodes':1, 'weightsInsideCluster':None, 'totalWeight':2},
-            9 : {'cluster':9, 'numNodes':1, 'weightsInsideCluster':None, 'totalWeight':4},
+        expectedAfterPhaseL1_II = {
+            5 : {'cluster':5, 'numNodes':1, 'weightsInsideCluster':0, 'totalWeight':2},
+            9 : {'cluster':9, 'numNodes':1, 'weightsInsideCluster':0, 'totalWeight':2},
             }
-        self.logger.warn("AEDWIP !!!!!! weightsInsideCluster is None does this cause problems")
-        self.checkClusters(expectedAfterPhaseII, louvainLevel2._clusters)
+        self.checkClusters(expectedAfterPhaseL1_II, louvainLevel1._clusters)
         
+        # test Louvain algo would run Phase I on louvainLevel2
+        # we have to calculate Q before phaseI
+        louvainLevel1._calculateQ()
+        louvainLevel1._phaseI()
+        
+        print('')
+        self.logger.info("************ check L1 phase I")
+        for clusterId, cluster in louvainLevel1._clusters.items():
+            self.logger.info("clusterId:{} cluster:{}".format(clusterId,cluster))        
         
         self.logger.info("END\n")
 
