@@ -4,13 +4,12 @@ import pandas as pd
 import scanpy as sc
 import numpy as np
 
+
 def pca(adata):
     #calculate pca
     pca = PCA(n_components=50)
-    result_pca = pca.fit_transform(adata.X)
-    result_pca = np.array(result_pca, dtype = np.float32)
-    adata.obsm['X_pca'] = result_pca
-    return result_pca
+    adata.obsm['X_pca'] = pca.fit_transform(adata.X)
+
 
 def get_distances(matrix):
     D = pairwise_distances(X=matrix, Y=matrix)
@@ -28,8 +27,10 @@ def get_umap_connectivities(knn_i, knn_d, k):
     return connectivities, distances
 
 def knn(adata, k):
-    result_pca = pca(adata)
-    D = get_distances(result_pca)
+    adata.uns['neighbors']['connectivities'] = None
+    adata.uns['neighbors']['distances'] = None
+    pca(adata)
+    D = get_distances(adata.obsm['X_pca'])
     knn_indices, knn_distances = get_neighbors(D,k)
     connectivities, distances = get_umap_connectivities(knn_indices, knn_distances, k)
     #pass connectivities, distances to scanpy
@@ -38,8 +39,8 @@ def knn(adata, k):
     sc.tl.umap(adata)
     sc.pl.umap(adata,  color=['Cell type', 'batch'])
 
-adata = sc.read(path_for_adata,
+adata = sc.read('/Users/biancaxue/Documents/class/BME230B/HW2/PBMC.merged.h5ad',
                 delimiter='\t',cache=True)
-adata.var_names_make_unique()
+#adata.var_names_make_unique()
 k=15
 knn(adata, k)
