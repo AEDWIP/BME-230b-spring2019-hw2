@@ -3,6 +3,7 @@ import scanpy as sc
 from euclid_knn import KnnG
 from euclid_bbknn import bbknn_graph
 from bblknn import bblknn_graph
+import sys
 
 
 class FStatistic():
@@ -88,12 +89,20 @@ class FStatistic():
 
 
 def main():
+    '''
+    this is an optional driver for the class
+    '''
+    if(len(sys.argv) != 2):
+        sys.stderr.write("usage: " + __file__ + " <adata-file-path>\n")
+        sys.exit(1)
+
+    # read in adata object from file system
+    adata = sc.read(sys.argv[1])
+
     # define number of neighbors k
     k = 12
 
     # calculate F statistic for batch-balanced
-    # read in AnnData object
-    adata = sc.read('/Users/jcasaletto/PycharmProjects/BME230B/HW2/BME-230b-spring2019-hw2/PBMC.merged.h5ad')
 
     # instantiate bblknn graph
     knnGraph = bblknn_graph(adata, k_per_batch=6, l=3, n_components=50)
@@ -111,7 +120,7 @@ def main():
 
     # calculate F statistic for non-batch-balanced
     # read in AnnData object
-    pbmc = sc.read('/Users/jcasaletto/PycharmProjects/BME230B/HW2/BME-230b-spring2019-hw2/PBMC.merged.h5ad')
+    pbmc = sc.read(sys.argv[1])
 
     # instantiate knn graph
     myKNNG = KnnG(pbmc, n_neighbors=12)

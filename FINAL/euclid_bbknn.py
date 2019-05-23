@@ -5,6 +5,8 @@ import logging
 import numpy as np
 # import scipy
 from scanpy.neighbors import compute_connectivities_umap
+import sys
+import scanpy as sc
 
 
 # from scipy import sparse
@@ -233,3 +235,29 @@ class bbknn_graph():
 
         self._adata.uns['neighbors']['connectivities'] = self._connectivities
         self._adata.uns['neighbors']['distances'] = self._distances
+
+def main():
+    '''
+    this is an optional driver for the class
+    '''
+    if(len(sys.argv) != 2):
+        sys.stderr.write("usage: " + __file__ + " <adata-file-path>\n")
+        sys.exit(1)
+
+    # read in adata object from file system
+    adata = sc.read(sys.argv[1])
+
+    # build bblknn graph
+    myGraph = bbknn_graph(data=adata, batchLabel=None, neighbors_within_batch=6, runPCA=True, pcs=50, method='umap')
+
+    # run louvain to cluster data
+    sc.tl.louvain(myGraph._adata)
+
+    # run umap to project in 2-space
+    sc.tl.umap(myGraph._adata)
+
+    # plot the bbknn graph
+    sc.pl.umap(myGraph._adata,  color=['Cell type', 'batch', 'louvain'])
+
+if __name__ == "__main__":
+    main()

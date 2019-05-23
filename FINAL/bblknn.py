@@ -5,6 +5,7 @@ import scanpy as sc
 import numpy as np
 from euclid_bbknn import bbknn_graph
 import logging
+import sys
 
 
 ################################################################################
@@ -149,9 +150,12 @@ def main():
     '''
     this is an optional driver for the class
     '''
+    if(len(sys.argv) != 2):
+        sys.stderr.write("usage: " + __file__ + " <adata-file-path>\n")
+        sys.exit(1)
 
     # read in adata object from file system
-    adata = sc.read('/Users/jcasaletto/PycharmProjects/BME230B/HW2/BME-230b-spring2019-hw2/PBMC.merged.h5ad')
+    adata = sc.read(sys.argv[1])
 
     # build bblknn graph
     myGraph = bblknn_graph(adata, k_per_batch=6, l=3, n_components=50)

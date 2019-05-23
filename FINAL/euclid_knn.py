@@ -19,6 +19,8 @@ from scanpy.neighbors import compute_connectivities_umap
 from scipy.spatial.distance import pdist, squareform
 from sklearn.decomposition import PCA
 from sklearn.metrics import pairwise_distances
+import sys
+import scanpy as sc
 
 
 ################################################################################
@@ -242,3 +244,30 @@ class KnnG():
         self._adata.uns['neighbors']['distances'] = self._distances
 
         self.logger.info('END\n')
+
+
+def main():
+    '''
+    this is an optional driver for the class
+    '''
+    if(len(sys.argv) != 2):
+        sys.stderr.write("usage: " + __file__ + " <adata-file-path>\n")
+        sys.exit(1)
+
+    # read in adata object from file system
+    adata = sc.read(sys.argv[1])
+
+    # build bblknn graph
+    myGraph = KnnG(data=adata, d_metric='euclidean', n_neighbors=15, method='umap', runPCA=True, nPC=50)
+
+    # run louvain to cluster data
+    sc.tl.louvain(myGraph._adata)
+
+    # run umap to project in 2-space
+    sc.tl.umap(myGraph._adata)
+
+    # plot the knn graph
+    sc.pl.umap(myGraph._adata,  color=['Cell type', 'batch', 'louvain'])
+
+if __name__ == "__main__":
+    main()

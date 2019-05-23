@@ -5,6 +5,7 @@ import scanpy as sc
 from matplotlib import pyplot
 import numpy as np
 from euclid_bbknn import bbknn_graph
+import sys
 
 
 
@@ -81,13 +82,20 @@ class ARIStatistic():
             # append ari to results list
             self._results.append(ars)
             
-
+            print("finished sample " + str(sample))
+            print("ars = " + str(ars))
 
 
 def main():
+    '''
+    this is an optional driver for the class
+    '''
+    if(len(sys.argv) != 2):
+        sys.stderr.write("usage: " + __file__ + " <adata-file-path>\n")
+        sys.exit(1)
 
-    # read in AnnData object
-    adata_bbknn = sc.read('/Users/jcasaletto/PycharmProjects/BME230B/HW2/BME-230b-spring2019-hw2/PBMC.merged.h5ad')
+    # read in adata object from file system
+    adata_bbknn = sc.read(sys.argv[1])
 
     # run bbknn on adata
     bbknn = bbknn_graph(adata_bbknn, neighbors_within_batch=6, runPCA=True, pcs=50)
@@ -95,8 +103,8 @@ def main():
     # run louvain to cluster data
     sc.tl.louvain(bbknn._adata)
 
-    # read in AnnData object
-    adata_blknn = sc.read('/Users/jcasaletto/PycharmProjects/BME230B/HW2/BME-230b-spring2019-hw2/PBMC.merged.h5ad')
+    # read in AnnData object (again)
+    adata_blknn = sc.read(sys.argv[1])
 
     # instantiate ARIStatistic object
     myARIStat = ARIStatistic(adata=adata_blknn, k_per_batch=6, l=3, n_components=50, n_samples=10,
