@@ -248,7 +248,7 @@ def main():
     adata = sc.read(sys.argv[1])
 
     # build bblknn graph
-    myGraph = bbknn_graph(data=adata, batchLabel=None, neighbors_within_batch=6, runPCA=True, pcs=50, method='umap')
+    myGraph = bbknn_graph(adata=adata, batchLabel=None, neighbors_within_batch=6, runPCA=True, pcs=50, method='umap')
 
     # run louvain to cluster data
     sc.tl.louvain(myGraph._adata)
