@@ -7,19 +7,17 @@ import numpy as np
 def pca(adata):
     #calculate pca
     pca = PCA(n_components=50)
-    result_pca = pca.fit_transform(adata.X)
-    result_pca = np.array(result_pca, dtype = np.float32)
-    adata.obsm['X_pca'] = result_pca
-    return result_pca
+    adata.obsm['X_pca'] = pca.fit_transform(adata.X)
+
 
 def l_k_bbknn(adata, batch_unique,neighbors_within_batch,l):
 
     #this method makes an l subsampling of the bbknn computed in the graph() method
     # if k=4, meaning you are finding 4 neighbors between batches, and l=2:
     ## subsample 2 neighbors from batch1 and 2 neighbors from batch2
-
-    result_pca = pca(adata)
-    knn_indices, knn_distances = bbknn(adata,batch_unique,neighbors_within_batch)
+    pca(adata) #run pca
+    knn_indices, knn_distances = bbknn(adata,batch_unique,neighbors_within_batch)  #get result from bbknn 
+    random_sample = random.sample(range(0,neighbors_within_batch), l)  #create indices for random sampling l from k
 
     if l >= neighbors_within_batch:
         raise ValueError('l cannot be equal or larger than k')
@@ -31,13 +29,13 @@ def l_k_bbknn(adata, batch_unique,neighbors_within_batch,l):
 
         batch_id = batch_unique[i]  #get batch id for ref_batch
         bool_idx = adata.obs['batch'] == batch_id  #get booleen index for reference batch
-        ref_batch_pca = result_pca[bool_idx]  #using booleen index to get pca data for reference batch
+        ref_batch_pca = adata.obsm['X_pca'][bool_idx]  #using booleen index to get pca data for reference batch
         ref_batch_idx = np.arange(adata.shape[0])[bool_idx] #create a booleen index for ref_batch to map back to pca matrix
 
         for j in range(len(batch_unique)):
             batch_id = batch_unique[j]   #get batch id for query_batch
             bool_idx = adata.obs['batch'] == batch_id  #get booleen index for query batch
-            query_batch_pca = result_pca[bool_idx] #using booleen index to get pca data for query batch
+            query_batch_pca = adata.obsm['X_pca'][bool_idx] #using booleen index to get pca data for query batch
             query_batch_idx = np.arange(adata.shape[0])[bool_idx]  #create a booleen index for query_batch to map back to pca matrix
 
             D = pairwise_distances(X=query_batch_pca, Y=ref_batch_pca)  #calculate pairwise_distances between query batch and ref_batch
@@ -51,7 +49,6 @@ def l_k_bbknn(adata, batch_unique,neighbors_within_batch,l):
                     neighbors[n,k]=ref_batch_idx[temp_neighbor]   #map n nearest neighbors to pca indices
 
             col_range = np.arange(i*l, (i+1)*l)
-            random_sample = random.sample(range(0,neighbors_within_batch), l)  #create indices for random sampling l from k
             #pass random sampled l nearest neighbors to l_bbknn_indices and distances matrix
             l_bbknn_indices[query_batch_idx[:,None], col_range[None,:]]= neighbors[:,random_sample]
             l_bbknn_distances[query_batch_idx[:,None], col_range[None,:]] = sorted_D[:,random_sample]
