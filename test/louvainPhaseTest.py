@@ -145,6 +145,8 @@ class LouvianPhaseTest(unittest.TestCase):
             9:{'cluserId': 9,  'numNodes':4 , 'weightsInsideCluster':10, 'totalWeight': 12}
             }
         
+        self.logger.info("TODO: empty clusters should be pruned, notice")
+        
         self.checkClusters(expectedAfterPhaseI, louvainLevel0._clusters)
         
         for cId in [5, 9]:

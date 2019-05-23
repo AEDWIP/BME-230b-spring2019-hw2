@@ -476,7 +476,7 @@ class Louvain(object):
 #                         print('')
 
 
-            # TODO: purne empty clusters
+            # TODO: prune empty clusters
                     
             print('')
             for cid,c in self._clusters.items():
@@ -487,63 +487,154 @@ class Louvain(object):
         self.logger.info("Q:{}".format(self._Q))        
         self.logger.info("END\n")     
         
+        
+#    ############################################################ 
+#     def _phaseII(self, isLouvainInit=False):      
+#         '''
+#         TODO
+#         '''
+#         self.logger.info("BEGIN")         
+#         
+#         
+#         # create a list of edges in the graph
+#         nodeEdgesDict = dict() # key is new nodeId == leaf clusterId: list of edges          
+#         for leafClusterId, leafCluster in self._leafLouvain._clusters.items():
+# #             newNodesList = []
+# #             newWeightsInsideCluster = leafCluster._weightsInsideCluster
+# #             newTotalWeight = leafCluster._totalWeight
+# #             edgesInside = []
+# #             edgesBetween = []
+#             for leafNode in leafCluster._nodeList:
+#                 leafNodeClusterId = leafNode._clusterId
+# #                 if leafClusterId == leafNodeClusterId:
+# #                     # we do not care about inside value they do not 
+# #                     # contribute to modularity or
+# #                     # the weight of between edges
+# #                     pass
+# #                 else :
+#                     # create edges between 
+#                 if not leafNodeClusterId in nodeEdgesDict:
+#                     nodeEdgesDict[leafNodeClusterId] = []
+#                     
+#                 # over all the clusters the node is connected to
+#                 for lnClusterId, lnNodeSet in leafNode._nodesInClusterDict.items():
+#                     if lnClusterId == leafClusterId:
+#                         # we do not care about inside value they do not 
+#                         # contribute to modularity or
+#                         # the weight of between edges
+#                         continue    
+#                                         
+#                     #leafNodeId = leafNode._nodeId
+#                     ln = self._leafLouvain._nodeLookup[leafNodeId]
+#                     # w should be a constant inside this for loop
+#                     # its easier to fetch this way. not a big deal it runs in
+#                     # Big O of 1
+#                     w = leafNode._weightsInClusterDict[leafNodeClusterId]                                                
+#                     e = Edge(weight=w , srcId=leafNodeClusterId, targetId=leafNodeClusterId)
+#                     nodeEdgesDict[leafNodeClusterId].append(e)
+#                         
+#         # create new nodes and cluster
+#         # each node should be in a separate cluster
+#         for nodeId, edgeList in nodeEdgesDict.items():
+#             n = Node(clusterId=nodeId, nodeId=nodeId)
+#             n.addEdges(edgeList)
+#             self._nodeLookup[nodeId] = n
+#             c = Cluster(clusterId=nodeId, nodeList=[n])
+#             self._clusters[nodeId] = c
+#             
+#         self.logger.info("END\n")   
+        
+        
+    ############################################################ 
+    def _phaseIICreateNewEdges(self, isLouvainInit=False):      
+        '''
+        TODO
+        creates edges from leafLouvain clusters
+        
+        does not calculate weights use betweenEdgeWeightsDict to adjust weights
+        
+        returns (nodeEdgesDict, betweenEdgeWeightsDict)
+            nodeEdgesDict # key is new nodeId, value list of edges
+            
+            betweenEdgeWeightsDict # key is (srcId:targetId) value is list of weight of leaf edges
+        '''
+        self.logger.info("BEGIN")   
+        
+        nodeEdgesDict = dict() # key is new nodeId == leaf clusterId: list of edges
+        UNKNONWN_WEIGHT = None # place holder. we need to calculate weights later
+        
+        # key is tuple (srcId:targetId) value is list of weight of leaf edges
+        # use a list to make debugging easier
+        # most of our unit test use edge weight = 1. anadata will be distance value
+        # be careful not to double weight. keys will be double entry (a,b) and (b,a)
+        betweenEdgeWeightsDict = dict() 
+        
+        for leafNodeId, leafNode in self._leafLouvain._nodeLookup.items():
+            leafNodeClusterId = leafNode._clusterId
+            
+            # to make debugging easier our new node ids will be the leaf cluster ids            
+            newNodeId = leafNodeClusterId
+            
+            for adjLeafNodeClusteId, adjLeafNodeSet in leafNode._nodesInClusterDict.items():
+                if adjLeafNodeClusteId == leafNodeClusterId:
+                    # edges inside leaf clusters do not create edges between cluster
+                    # in phase II.  
+                    continue
+               
+                # create edges between clusters
+                if adjLeafNodeSet:
+                    # https://www.pythoncentral.io/how-to-check-if-a-list-tuple-or-dictionary-is-empty-in-python/
+                    # weird python syntax to test if list, set, dict is empty or not
+                    
+                    if not newNodeId in nodeEdgesDict:
+                        nodeEdgesDict[newNodeId] = []
+                        
+                    for adjNodeId in adjLeafNodeSet:
+                        adjNode = self._leafLouvain._nodeLookup[adjNodeId]
+                        newTargetNodeId = adjNode._clusterId
+                        e = Edge(weight=UNKNONWN_WEIGHT, srcId=newNodeId, targetId=newTargetNodeId)
+                        nodeEdgesDict[newNodeId].append(e)
+                        
+                        if not leafNodeClusterId in betweenEdgeWeightsDict:
+                            betweenEdgeWeightsDict[newNodeId] = []
+                        
+                        w = adjNode._edgesDict[leafNodeId]._weight
+                        key = (newNodeId,newTargetNodeId)
+                        if not key in betweenEdgeWeightsDict:
+                            betweenEdgeWeightsDict[key] = []
+                        betweenEdgeWeightsDict[key].append(w)
+                        
+        self.logger.info("END\n") 
+        return nodeEdgesDict, betweenEdgeWeightsDict, 
+        
     ############################################################ 
     def _phaseII(self, isLouvainInit=False):      
         '''
-        TODO
+        TODO creates graph from leafLouvain
         '''
         self.logger.info("BEGIN") 
+        nodeEdgesDict, betweenEdgeWeightsDict = self._phaseIICreateNewEdges()
         
-        
-        # create a list of edges in the graph
-        nodeEdgesDict = dict() # key is new nodeId == leaf clusterId: list of edges          
-        for leafClusterId, leafCluster in self._leafLouvain._clusters.items():
-#             newNodesList = []
-#             newWeightsInsideCluster = leafCluster._weightsInsideCluster
-#             newTotalWeight = leafCluster._totalWeight
-#             edgesInside = []
-#             edgesBetween = []
-            for leafNode in leafCluster._nodeList:
-                leafNodeClusterId = leafNode._clusterId
-#                 if leafClusterId == leafNodeClusterId:
-#                     # we do not care about inside value they do not 
-#                     # contribute to modularity or
-#                     # the weight of between edges
-#                     pass
-#                 else :
-                    # create edges between 
-                if not leafNodeClusterId in nodeEdgesDict:
-                    nodeEdgesDict[leafNodeClusterId] = []
-                    
-                # over all the clusters the node is connected to
-                for lnClusterId, lnNodeSet in leafNode._nodesInClusterDict.items():
-                    if lnClusterId == leafClusterId:
-                        # we do not care about inside value they do not 
-                        # contribute to modularity or
-                        # the weight of between edges
-                        continue    
-                                        
-                    #leafNodeId = leafNode._nodeId
-                    ln = self._leafLouvain._nodeLookup[leafNodeId]
-                    # w should be a constant inside this for loop
-                    # its easier to fetch this way. not a big deal it runs in
-                    # Big O of 1
-                    w = leafNode._weightsInClusterDict[leafNodeClusterId]                                                
-                    e = Edge(weight=w , srcId=leafNodeClusterId, targetId=leafNodeClusterId)
-                    nodeEdgesDict[leafNodeClusterId].append(e)
-                        
-        # create new nodes and cluster
-        # each node should be in a separate cluster
-        for nodeId, edgeList in nodeEdgesDict.items():
-            n = Node(clusterId=nodeId, nodeId=nodeId)
-            n.addEdges(edgeList)
-            self._nodeLookup[nodeId] = n
-            c = Cluster(clusterId=nodeId, nodeList=[n])
-            self._clusters[nodeId] = c
+        # calculate edge weights
+        for nodeId in nodeEdgesDict.keys():
+            edges = nodeEdgesDict[nodeId]
+            for e in edges:
+                key = (nodeId,e._targetId)
+                listOfWeights = betweenEdgeWeightsDict[key]
+                e._weight = sum(listOfWeights)
+                
+        # create nodes and clusters
+        for newNodeId, edgeList in nodeEdgesDict.items():
+            newClusterId = newNodeId
+            newNode = Node(newClusterId, newNodeId)
+            self._nodeLookup[newNodeId] = newNode
             
-        self.logger.info("END\n")   
+            newCluster = Cluster(newClusterId, [newNode])
+            self._clusters[newClusterId] = newCluster
         
-                    
+        self.logger.info("END\n") 
+        
+        
     ############################################################                
     def __repr__(self):
         self._forceAllLazyEval()
