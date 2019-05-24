@@ -43,7 +43,8 @@ class LouvainScanpyIntegrationTest(unittest.TestCase):
         
         # build out init graph and calculate Q
         louvainLevel0 = Louvain.buildGraph("level0", listOfEdges, listOfWeight)
-                
+        louvainLevel0._calculateQ() 
+               
         # run phase I: find best cluster assignments
         louvainLevel0._phaseI(isLouvainInit=True) 
         
@@ -53,6 +54,7 @@ class LouvainScanpyIntegrationTest(unittest.TestCase):
         # create next level and run phaseII
         # phase II consolidates clusters found in previous level
         louvainLevel1 = Louvain.buildLouvain("level1", louvainLevel0)
+        louvainLevel1._phaseII()
         louvainLevel1._calculateQ()
         
         # lets assume this is the top level.
