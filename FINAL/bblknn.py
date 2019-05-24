@@ -8,6 +8,15 @@ import logging
 import sys
 
 
+# ## 4.a. [10 pts]
+# Turn in code that can compute a bb-l-k-NNG from a given bb-k-NNG. In addition to the input bb-k-NNG, the method should
+# take in a parameter specifying the number of subsampled graphs that should be returned. Each of the returned subsampled
+# graphs should represent a distinct sub-sampled bb-l-k-NNG from the given input graph.
+# Fill in the l_k_bbknn method in euclid_bknn.py. You can set the l parameter accordingly.
+# NOTE: in order to run this function successfully you will have to run the bbknn() method first, and then run the
+# l_k_bbknn method. Consult example usage within euclid_bbknn.py.
+#
+
 ################################################################################
 class bblknn_graph():
     '''

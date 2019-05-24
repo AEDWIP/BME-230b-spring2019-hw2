@@ -1,15 +1,15 @@
-#! /usr/bin/env/ python
-
 from euclid_knn import KnnG
 import logging
 import numpy as np
-# import scipy
 from scanpy.neighbors import compute_connectivities_umap
 import sys
 import scanpy as sc
 
-
-# from scipy import sparse
+# ## 3.a. [10 pts]
+# Write code to form a bb-k-NNG based on the two chemistries (5prime and 3prime). You should fill in the methods of the
+# class named bbknn_graph contained in the euclid_bbknn script. Turn in your code. Compute a bb-k-NNG over the PBMC
+# dataset using k=6 to use for the next clustering step.
+#
 
 ################################################################################
 class bbknn_graph():
