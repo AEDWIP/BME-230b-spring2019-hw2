@@ -471,11 +471,6 @@ class Louvain(object):
                                      .format(self._Q, change, node._nodeId, fromC._clusterId, toC._clusterId))
                     fromCluster.moveNode(targetCluster, node, self._nodeLookup, isLouvainInit)
                     
-#                     for cid,c in self._clusters.items():
-#                         self.logger.info(c)
-#                         print('')
-
-
             # TODO: prune empty clusters
                     
             print('')
@@ -486,63 +481,6 @@ class Louvain(object):
             
         self.logger.info("Q:{}".format(self._Q))        
         self.logger.info("END\n")     
-        
-        
-#    ############################################################ 
-#     def _phaseII(self, isLouvainInit=False):      
-#         '''
-#         TODO
-#         '''
-#         self.logger.info("BEGIN")         
-#         
-#         
-#         # create a list of edges in the graph
-#         nodeEdgesDict = dict() # key is new nodeId == leaf clusterId: list of edges          
-#         for leafClusterId, leafCluster in self._leafLouvain._clusters.items():
-# #             newNodesList = []
-# #             newWeightsInsideCluster = leafCluster._weightsInsideCluster
-# #             newTotalWeight = leafCluster._totalWeight
-# #             edgesInside = []
-# #             edgesBetween = []
-#             for leafNode in leafCluster._nodeList:
-#                 leafNodeClusterId = leafNode._clusterId
-# #                 if leafClusterId == leafNodeClusterId:
-# #                     # we do not care about inside value they do not 
-# #                     # contribute to modularity or
-# #                     # the weight of between edges
-# #                     pass
-# #                 else :
-#                     # create edges between 
-#                 if not leafNodeClusterId in nodeEdgesDict:
-#                     nodeEdgesDict[leafNodeClusterId] = []
-#                     
-#                 # over all the clusters the node is connected to
-#                 for lnClusterId, lnNodeSet in leafNode._nodesInClusterDict.items():
-#                     if lnClusterId == leafClusterId:
-#                         # we do not care about inside value they do not 
-#                         # contribute to modularity or
-#                         # the weight of between edges
-#                         continue    
-#                                         
-#                     #leafNodeId = leafNode._nodeId
-#                     ln = self._leafLouvain._nodeLookup[leafNodeId]
-#                     # w should be a constant inside this for loop
-#                     # its easier to fetch this way. not a big deal it runs in
-#                     # Big O of 1
-#                     w = leafNode._weightsInClusterDict[leafNodeClusterId]                                                
-#                     e = Edge(weight=w , srcId=leafNodeClusterId, targetId=leafNodeClusterId)
-#                     nodeEdgesDict[leafNodeClusterId].append(e)
-#                         
-#         # create new nodes and cluster
-#         # each node should be in a separate cluster
-#         for nodeId, edgeList in nodeEdgesDict.items():
-#             n = Node(clusterId=nodeId, nodeId=nodeId)
-#             n.addEdges(edgeList)
-#             self._nodeLookup[nodeId] = n
-#             c = Cluster(clusterId=nodeId, nodeList=[n])
-#             self._clusters[nodeId] = c
-#             
-#         self.logger.info("END\n")   
         
         
     ############################################################ 
@@ -616,7 +554,9 @@ class Louvain(object):
     ############################################################     
     def _fixThisBugUseTrueOOEncapsliations(self, nodeEdgesDict, betweenEdgeWeightsDict):
         '''
-        coded in hast. assume oh all the code is same package
+        do not be lazy! it leads to bugs
+        
+        coded in haste. assume oh all the code is same package
         no need to implement accessor fuctions. This lead to 
         lots of issue.
         
@@ -657,7 +597,6 @@ class Louvain(object):
             for e in edgeSet: 
                 newNode._addEdge(e)
                 
-
         
         # init node caches
         for nId in self._nodeLookup.keys():
@@ -688,41 +627,6 @@ class Louvain(object):
         self.logger.info("BEGIN") 
         nodeEdgesDict, betweenEdgeWeightsDict = self._phaseIICreateNewEdges()    
         self._fixThisBugUseTrueOOEncapsliations(nodeEdgesDict, betweenEdgeWeightsDict) 
-        
-#         # calculate edge weights
-#         for nodeId in nodeEdgesDict.keys():
-#             edges = nodeEdgesDict[nodeId]
-#             for e in edges:
-#                 key = (nodeId,e._targetId)
-#                 listOfWeights = betweenEdgeWeightsDict[key]
-#                 e._weight = sum(listOfWeights)
-#                 
-#         print()
-#         for k,v in nodeEdgesDict.items():
-#             self.logger.info("nodeEdgesDict nodeId:{} edges:{}".format(k,v))
-#             
-#         print()
-#         for k,v in betweenEdgeWeightsDict.items():
-#             self.logger.info("betweenEdgeWeightsDict key:{} listOfWeights:{}".format(k,v))        
-#                             
-#         # create nodes 
-#         for newNodeId in nodeEdgesDict.keys():
-#             newClusterId = newNodeId
-#             newNode = Node(newClusterId, newNodeId) 
-#             self._nodeLookup[newNodeId] = newNode
-#             
-#             
-#         # add edges to nodes       
-#         for newNodeId in nodeEdgesDict.keys():
-#             edgeList = nodeEdgesDict[newNodeId]
-#             newNode.addEdges(edgeList,  self._nodeLookup) 
-#             newClusterId = newNodeId
-#             newCluster = Cluster(newClusterId, [newNode])
-#             self._clusters[newClusterId] = newCluster
-#         
-#         self._fixThisBugUseTrueOOEncapsliations(nodeEdgesDict, betweenEdgeWeightsDict) 
-#         
-#         self.logger.info("END\n") 
         
         
     ############################################################                
