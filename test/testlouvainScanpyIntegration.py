@@ -158,6 +158,26 @@ class LouvainScanpyIntegrationTest(unittest.TestCase):
         
         self.logger.info("END\n")        
         
+    ############################################################
+    def testGetAdataInput(self):
+        '''
+        TODO
+        '''
+        self.logger.info("BEGIN")     
+        anndata = sc.read("../PBMC.merged.h5ad")
+               
+        adjacency = anndata.uns['neighbors']['connectivities']
+        sources, targets = adjacency.nonzero()
+        listOfWeights = adjacency[sources, targets]
+        if isinstance(listOfWeights, np.matrix):
+            # Return listOfWeights as a flattened np.array
+            # https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matrix.A1.html
+            listOfWeights = listOfWeights.A1
+            
+        listOfEdges = list(zip(sources, targets))
+  
+        self.logger.info("END\n")  
+               
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

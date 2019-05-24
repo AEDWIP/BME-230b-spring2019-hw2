@@ -6,9 +6,8 @@ Created on May 16, 2019
 import logging   
 from Edge import Edge
 from Node import Node
+import numpy as np
 from Cluster import Cluster
-from idlelib.idle_test.test_colorizer import source
-from scanpy.tools._louvain import louvain
 import pandas as pd
 
 ############################################################
@@ -44,7 +43,10 @@ class Louvain(object):
     @staticmethod
     def runWithAdata(adata):   
         '''
-        TODO:
+        factory method. Build level0 louvain graph from adata and
+        runs louvain to completion
+        
+        input: (no function arguments)
             reads data from adata.uns['neighbors']['connectivities']
             
         returns:
@@ -58,18 +60,16 @@ class Louvain(object):
         # ref: knn_to_graphModule get_igraph_from_adjacency()
         
         adjacency = adata.uns['neighbors']['connectivities']
-        Louvain.logger.info("type(adjacency):{}".format(type(adjacency)))
         sources, targets = adjacency.nonzero()
-        Louvain.logger.info("type(sources):{} shape:{}".format(type(sources), sources.shape))
-        Louvain.logger.info("type(targets):{} shape:{}".format(type(targets), targets.shape))
-        listOfWeight = adjacency[sources, targets]
+        listOfWeights = adjacency[sources, targets]
+        if isinstance(listOfWeights, np.matrix):
+            # Return listOfWeights as a flattened np.array
+            # https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matrix.A1.html
+            listOfWeights = listOfWeights.A1
+            
         listOfEdges = list(zip(sources, targets))
-        Louvain.logger.info("len(listOfEdges):{} listOfEdges[0:5]:{}"\
-                            .format(len(listOfEdges),listOfEdges[0:5]))
-        Louvain.logger.info("len(listOfWeight):{} listOfWeight[0:5]:{}"\
-                            .format(len(listOfWeight),listOfWeight[0:5]))
         
-        root = Louvain.run(listOfEdges, listOfWeight)
+        root = Louvain.run(listOfEdges, listOfWeights)
         
         # get the top level assignments and transform the
         # into the format scanpy expects
@@ -85,7 +85,7 @@ class Louvain(object):
         sortedTuples = sorted(flatTuples,  key=lambda x: x[0])
         Louvain.logger.debug("sortedTuples:{}".format(sortedTuples))
         
-        # split out just the custer ids
+        # split out just the cluster ids
         clusterAssigments = [t[1] for t in sortedTuples]
         Louvain.logger.debug("clusterAssigments:{}".format(clusterAssigments))
         
@@ -93,7 +93,7 @@ class Louvain(object):
         assignmentPS = pd.Series(data=clusterAssigments, index=idx)
         adata.obs['louvain'] = assignmentPS
         
-   ############################################################
+    ############################################################
     @staticmethod
     def run(listOfEdges, listOfWeight):
         '''
