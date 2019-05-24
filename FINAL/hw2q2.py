@@ -178,7 +178,7 @@ class hw2q2():
             rows = df['louvain'] == clusterId
             N = sum(rows)
 
-            totalCount = cellCount(df, cellType)
+            totalCount = hw2q2.cellCount(df, cellType)
             n = totalCount # number of cell types in populations
 
             randomVariable = stats.hypergeom(M, n, N)
@@ -204,7 +204,7 @@ class hw2q2():
         K_P_VALUE = 1
 
         for clusterId in clusterIds:
-            stats = annotationProbsForCluster(anndata, cellTypesInClusters, clusterId, cellCountsByClusterId)
+            stats = hw2q2.annotationProbsForCluster(anndata, cellTypesInClusters, clusterId, cellCountsByClusterId)
 
             best = min(stats, key=lambda tup : tup[K_P_VALUE])
 
@@ -241,7 +241,7 @@ class hw2q2():
 
     @staticmethod
     def testGetCellsIdxForCluster(anndata):
-        ret = getCellsIdxForCluster(anndata,clusterId='9')
+        ret = hw2q2.getCellsIdxForCluster(anndata,clusterId='9')
         print("TEST len(ret):{}".format(len(ret)))
 
     @staticmethod
@@ -259,7 +259,7 @@ class hw2q2():
             anndata
             clusterId: a string
         '''
-        cellIndices = getCellsIdxForCluster(anndata ,clusterId)
+        cellIndices = hw2q2.getCellsIdxForCluster(anndata ,clusterId)
         # pathways are in gene space not pca(50) space
         # anndata.obsm is a pandas data frame
         # data = anndata.obsm['X_pca'][cellIndices]
@@ -271,7 +271,7 @@ class hw2q2():
 
     @staticmethod
     def testGetGeneExpressionSignatureForCluster(anndata):
-        ret = getGeneExpressionSignatureForCluster(anndata, clusterId='9')
+        ret = hw2q2.getGeneExpressionSignatureForCluster(anndata, clusterId='9')
         # Sample data
         # PCA 50
         #expFirst = np.array([-5.547451, 13.029236, -0.9483415,
@@ -298,7 +298,7 @@ class hw2q2():
 
         clusterSigs = {}
         for clusterId in pd.unique(louvainDF['louvain']) :
-            sig = getGeneExpressionSignatureForCluster(anndata, clusterId)
+            sig = hw2q2.getGeneExpressionSignatureForCluster(anndata, clusterId)
             clusterSigs[clusterId] = sig
 
         return clusterSigs
@@ -352,7 +352,7 @@ class hw2q2():
         '''
         retDF = pd.DataFrame()
         for clusterId in clusterSigs.keys():
-            csvPath, preRes = rankPathWaysForCluster(anndata,
+            csvPath, preRes = hw2q2.rankPathWaysForCluster(anndata,
                                              clusterSigs,
                                              clusterId)
             df = pd.read_csv(csvPath)
