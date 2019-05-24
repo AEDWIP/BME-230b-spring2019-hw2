@@ -24,6 +24,61 @@ class Louvain(object):
         getModularity()
     '''
     logger = logging.getLogger(__name__)
+    
+    ############################################################
+    def countClusters(self):
+        '''
+        returns the number of non empty clusters
+        '''
+        ret = 0
+        for cluster in self._clusters.values():
+            if not cluster._nodeList:
+             # empty cluster
+             continue
+            
+            ret += 1
+            
+        return ret
+    
+   ############################################################
+    @staticmethod
+    def run(listOfEdges, listOfWeight):
+        '''
+        TODO:
+        
+        return turns root louvain Object 
+        '''
+        louvainId = 0
+        level = Louvain.buildGraph(louvainId, listOfEdges, listOfWeight)
+        louvainId += 1
+        level._calculateQ() # TODO nice to have for debug, add argument to decide if user wants to run
+        level._phaseI(isLouvainInit=True) # TODO: can probably get rid of isLouvainInit
+        
+        # count the number of clusters
+        previousNumClusters = level.countClusters()
+            
+        done = False
+        while not done:
+            previousLevel = level
+            level = Louvain.buildLouvain(louvainId, previousLevel)
+            louvainId += 1
+            
+            # construct a new graph by consolidating nodes from previous level
+            level._phaseII(isLouvainInit=False) # TODO: can probably get rid of isLouvainInit
+            
+            # run clustering on consolidated nodes
+            level._calculateQ() # TODO nice to have for debug, add argument to decide if user wants to run            
+            level._phaseI(isLouvainInit=False) # TODO: can probably get rid of isLouvainInit)
+            
+            # count the number of clusters
+            numClusters = level.countClusters()
+            Louvain.logger.info("louvainId:{} numClusters:{}".format(louvainId, numClusters))
+            # should never be possible for numClusters to be less then one
+            if numClusters <= 1 or numClusters == previousNumClusters:
+                done = True
+            previousNumClusters = numClusters
+            
+        return level
 
     ############################################################
     @staticmethod
@@ -103,9 +158,7 @@ class Louvain(object):
         for nodeId, node in ret._nodeLookup.items():
             node._initKiinCache(graphNodesLookup=ret._nodeLookup)
 
-        ret._calculateQ()
-        
-        # TODO: AEDWIP run phase I
+        #ret._calculateQ()
         
         Louvain.logger.info("END\n")                
         return ret
@@ -135,7 +188,7 @@ class Louvain(object):
         
         ret._Q = None
         
-        ret._phaseII(ret._leafLouvain) # this destroys starting assigments
+        #ret._phaseII(ret._leafLouvain) 
         
         Louvain.logger.info("END louvainID:{}\n".format(louvainId))        
         return ret
@@ -465,7 +518,7 @@ class Louvain(object):
                     bestMove = (-1, -1, -1, -1) # (changeInQ, node, fromCluster, toCluster
 
                     self._Q += change
-                    print('')
+                    #print('')
                     self.logger.debug("Q:{}, change:{} nodeId:{} fromClusterId:{} toClusterId:{}"\
                                      .format(self._Q, change, node._nodeId, fromC._clusterId, toC._clusterId))
                     fromCluster.moveNode(targetCluster, node, self._nodeLookup, isLouvainInit)
@@ -562,7 +615,7 @@ class Louvain(object):
         we need to construct the full object graph before calculating
         any of the values
         '''
-        self.logger.debug("BEGIN")
+        self.logger.info("BEGIN lovainId:{}".format(self._louvainId))
         # calculate edge weights
         for nodeId in nodeEdgesDict.keys():
             edges = nodeEdgesDict[nodeId]
@@ -618,7 +671,7 @@ class Louvain(object):
             cluster.getSumOfWeights()
             cluster.getSumOfWeightsInsideCluster(self._nodeLookup) 
                                
-        self.logger.debug("END\n")     
+        self.logger.info("END louvainId:{}\n".format(self._louvainId))     
     
     def _phaseII(self, isLouvainInit=False):      
         '''

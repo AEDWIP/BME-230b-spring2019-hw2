@@ -70,6 +70,23 @@ class LouvainScanpyIntegrationTest(unittest.TestCase):
 
         self.logger.info("END\n")
            
+    ############################################################
+    def testRun(self):
+        self.logger.info("BEGIN")
+        
+        # build lovain level tree
+        listOfEdges = [(0,1), (1,0), (0,2), (2,0), (1,2), (2,1),
+                        (0,3), (0,6), (0,7),
+                        (3,4), (4,3), (3,5), (5,3),
+                        (3,0),
+                        (6,7),(7,6), (6,8), (8,6), (6,9), (9,6), (8,9), (9,8), (9,7), (7,9), 
+                        (6,0), (7,0)
+                       ]
+        listOfWeight = [1 for i in listOfEdges]
+        root = Louvain.run(listOfEdges, listOfWeight)
+        rootClusterAssigments = root.getClusterAssigments()
+        self.logger.info("louvainId: {} root cluster assigments:\n{}".format(root._louvainId, rootClusterAssigments))
+        self.assertEqual(rootClusterAssigments, {9: [9, 6, 7, 8, 0, 1, 2, 3, 4, 5]})
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
