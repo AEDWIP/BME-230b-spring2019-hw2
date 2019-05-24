@@ -646,6 +646,13 @@ class Louvain(object):
     ############################################################                    
     def getClusterAssigments(self):   
         '''
+        returns dictionary key is cluster that have nodes
+                the values are the node ids. by construction these match the
+                cluster id of the previous leaf louvain object
+                
+                example: 
+                    {5: [0, 1, 2, 3, 4, 5], 9: [9, 6, 7, 8]}
+                    {9: [9, 6, 7, 8, 0, 1, 2, 3, 4, 5]}
         '''   
         self.logger.debug("BEGIN lovainId:{}".format(self._louvainId))
         ret = None
