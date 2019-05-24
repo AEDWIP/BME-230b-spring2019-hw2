@@ -33,9 +33,9 @@ class Louvain(object):
         ret = 0
         for cluster in self._clusters.values():
             if not cluster._nodeList:
-             # empty cluster
-             continue
-            
+                # empty cluster
+                continue
+                
             ret += 1
             
         return ret
