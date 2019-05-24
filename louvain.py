@@ -9,7 +9,7 @@ from Node import Node
 from Cluster import Cluster
 from idlelib.idle_test.test_colorizer import source
 from scanpy.tools._louvain import louvain
-
+import pandas as pd
 
 ############################################################
 class Louvain(object):
@@ -58,12 +58,40 @@ class Louvain(object):
         # ref: knn_to_graphModule get_igraph_from_adjacency()
         
         adjacency = adata.uns['neighbors']['connectivities']
+        Louvain.logger.info("type(adjacency):{}".format(type(adjacency)))
         sources, targets = adjacency.nonzero()
+        Louvain.logger.info("type(sources):{} shape:{}".format(type(sources), sources.shape))
+        Louvain.logger.info("type(targets):{} shape:{}".format(type(targets), targets.shape))
         listOfWeight = adjacency[sources, targets]
         listOfEdges = list(zip(sources, targets))
+        Louvain.logger.info("len(listOfEdges):{} listOfEdges[0:5]:{}"\
+                            .format(len(listOfEdges),listOfEdges[0:5]))
+        Louvain.logger.info("len(listOfWeight):{} listOfWeight[0:5]:{}"\
+                            .format(len(listOfWeight),listOfWeight[0:5]))
         
         root = Louvain.run(listOfEdges, listOfWeight)
-        aedwip
+        
+        # get the top level assignments and transform the
+        # into the format scanpy expects
+        rootAssigment = root.getClusterAssigments()
+        flatTuples = []
+        for clusterId, nodeList in rootAssigment.items():
+            for nodeId in nodeList:
+                flatTuples.append( (nodeId, clusterId) )
+                
+        Louvain.logger.debug("flatTuples:{}".format(flatTuples))
+                
+        # sort by node id. this makes it easy to match up with the cell bar codes
+        sortedTuples = sorted(flatTuples,  key=lambda x: x[0])
+        Louvain.logger.debug("sortedTuples:{}".format(sortedTuples))
+        
+        # split out just the custer ids
+        clusterAssigments = [t[1] for t in sortedTuples]
+        Louvain.logger.debug("clusterAssigments:{}".format(clusterAssigments))
+        
+        idx = adata.obs['louvain'].index
+        assignmentPS = pd.Series(data=clusterAssigments, index=idx)
+        adata.obs['louvain'] = assignmentPS
         
    ############################################################
     @staticmethod
@@ -312,7 +340,7 @@ class Louvain(object):
 #             else:
             fmt = "target clusterId:{} missing from nodeId:{} _nodesInClusterDict."
             fmt += " should not try  move to clusters node is not connected to "
-            self.logger.warn(fmt.format(targetCluster._clusterId, node._nodeId)) 
+            self.logger.warning(fmt.format(targetCluster._clusterId, node._nodeId)) 
             return 0
             
         m = self._getM()
@@ -430,7 +458,7 @@ class Louvain(object):
             return   
              
 #         if not self._clusters:
-#             self.logger.warn("self is not initialized. this is okay if you are running a unit test")
+#             self.logger.warning("self is not initialized. this is okay if you are running a unit test")
 #             return
         
         for c in clusters:

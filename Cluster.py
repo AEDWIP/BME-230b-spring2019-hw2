@@ -140,10 +140,10 @@ class Cluster(object):
         '''
         self.logger.debug("node._adjacentEdgeWeights:{}".format(node._adjacentEdgeWeights))
         if not node:
-            self.loggger.warn("AEDWIP DEBUG node is none!!")
+            self.loggger.warning("AEDWIP DEBUG node is none!!")
             
         if self._totalWeight == None:
-            self.loggger.warn("AEDWIP DEBUG _totalWeight is none!!")
+            self.loggger.warning("AEDWIP DEBUG _totalWeight is none!!")
             
         self._totalWeight += node.getSumAdjWeights()
         kiin = node.getSumOfWeightsInsideCluster(targetClusterId, graphNodesLookup)

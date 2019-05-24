@@ -12,6 +12,10 @@ import numpy as np
 import pandas as pd
 from setupLogging import setupLogging
 import unittest
+import scanpy.api as sc
+from euclid_knn import KnnG
+from timeit import default_timer as timer
+from datetime import timedelta
 
 class LouvainScanpyIntegrationTest(unittest.TestCase):
 
@@ -117,6 +121,41 @@ class LouvainScanpyIntegrationTest(unittest.TestCase):
         self.logger.info("assignmentPS:\n{}".format(assignmentPS))
         
         self.logger.info("END\n")
+        
+    ############################################################
+    def testAdata(self):
+        '''
+        The real deal
+        '''
+        self.logger.info("BEGIN") 
+        anndata = sc.read("../PBMC.merged.h5ad")
+               
+        xxx = anndata.uns['neighbors']['connectivities']
+        
+        
+# anndata.uns['neighbors']['connectivities'] csr_matrix
+# shape <class 'tuple'>: (15476, 15476)
+# 
+# adata.obs['louvain']
+# Series: index
+# data_3p-AAACCTGAGCATCATC-0     9
+# data_3p-AAACCTGAGCTAGTGG-0     5
+# <class 'tuple'>: (15476,)
+
+        #knn takes about 3 or 4 min
+        # run our implementation of nearest neighboors and update anndata
+        todo try running with out knng maybe adata has values already save time
+        KnnG(anndata, n_neighbors=12, runPCA=True, nPC=50)
+        
+        self.logger.info("begin Louvain.runWithAdata")
+        start = timer()
+        root = Louvain.runWithAdata(anndata)
+        end = timer()
+        self.logger.info("Louvain.runWithAdata execution time:{}"\
+                         .format(timedelta(seconds=end-start)))        
+        
+        
+        self.logger.info("END\n")        
         
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

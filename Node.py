@@ -128,7 +128,7 @@ class Node(object):
         '''
         # this only changes if an edge is added
         if self._adjacentEdgeWeights == None:
-            self.logger.warn("AEDWIP debug _adjacentEdgeWeight is none!")
+            self.logger.warning("AEDWIP debug _adjacentEdgeWeight is none!")
             
         return self._adjacentEdgeWeights 
     

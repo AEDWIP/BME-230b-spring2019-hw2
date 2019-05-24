@@ -75,8 +75,8 @@ class LouvainTest(unittest.TestCase):
         self.logger.info("membership:{}".format(ml))
         expectedModularity = g.modularity(ml)
         self.logger.info("iGraph Modularity:{}".format(expectedModularity))
-        self.logger.warn("iGraph Modularity can not be used to test bootstrap")
-        self.logger.warn("the cluster only have a single node. no edge is inside how come modularity is not 0")
+        self.logger.warning("iGraph Modularity can not be used to test bootstrap")
+        self.logger.warning("the cluster only have a single node. no edge is inside how come modularity is not 0")
         
         # test out code
         listOfEdges = [ e.tuple for e in g.es]

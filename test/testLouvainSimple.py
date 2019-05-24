@@ -451,7 +451,7 @@ class LouvainSimpleTest(unittest.TestCase):
         expectedChangeInQ = -0.08  #-0.28125  
         self.assertAlmostEqual(changeInQ, expectedChangeInQ)
         
-        self.logger.warn("TODO: AEDWIP: try and calculate what the change is by fast formula")
+        self.logger.warning("TODO: AEDWIP: try and calculate what the change is by fast formula")
         
         self.logger.info("END\n")            
 
