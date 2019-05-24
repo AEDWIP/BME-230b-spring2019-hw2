@@ -96,70 +96,7 @@ class euclid_knnTest(unittest.TestCase):
         
         print("ret:\n{}".format(ret[0:5,0:5]))
         
-        self.logger.info("END \n")
-
-    ############################################################
-#     @unittest.skip("skip this test it assume adj list not adj matrix")
-#     def testGetNeighborsAdjList(self):
-#         '''
-#         TODO:
-#         '''
-#         self.logger.info("BEGIN ")
-#         
-#         anndata = sc.read("../PBMC.merged.h5ad")
-#         knng = knnG(anndata)
-#         
-#         # call get_neighbors using our test data
-#         D = np.array([
-#                         [ 0, 1, 2, 3, 4, 5],
-#                         [11, 0, 9, 8, 7, 6],
-#                         [12, 3, 0, 5, 4, 2]
-#                     ])
-#         
-#         knng.n_neighbors = 4
-#         knng.nearestNeighborsGraph = {}
-#         knng.get_neighbors(D)
-#         self.logger.info("nearestNeighbors:\n{}".format(knng.nearestNeighborsGraph))
-#         
-#         expected = {0: [1, 2, 3, 4], 1: [6, 7, 8, 9], 2: [2, 3, 4, 5]}
-#         self.assertTrue(knng.nearestNeighborsGraph == expected)
-#         
-#         self.logger.info("END \n")
-
-      
-#     ############################################################
-#     @unittest.skip("skip this test it assume adj list not adj matrix")
-#     def testGetNeighborsAdjMatrix(self):
-#         '''
-#         TODO:
-#         '''
-#         self.logger.info("BEGIN ")
-#         
-#         mockDistance = np.array([
-#                         [ 0, .1, .2, .3, .4, .5],
-#                         [.11, 0, .9, .8, .7, .6],
-#                         [.12, .3, 0, .5, .4, .2]
-#                     ])
-#         
-#         knng = knnG(None)
-#         
-#         knng.n_neighbors = 4
-#         knng.nearestNeighborsGraph = {}
-#         ret = knng.get_neighbors(mockDistance)
-#         self.logger.info("nearestNeighbors:\n{}".format(ret))
-# 
-#         expected = np.array([
-#                             [0.,   0.1,  0.2,  0.3,  0.4,  0.  ],
-#                              [0.11, 0.,   0.,   0.8,  0.7,  0.6 ],
-#                              [0.12, 0.3,  0.,   0.,   0.4,  0.2 ]
-#                              ])
-#         
-#         self.logger.info("expected:\n{}".format(expected))
-#         
-#         self.assertTrue( (ret == expected).all() )
-#         
-#         self.logger.info("END \n")
-#         
+        self.logger.info("END \n")      
         
     ############################################################
     def testGetNeighbors(self):

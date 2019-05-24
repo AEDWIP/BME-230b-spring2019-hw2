@@ -284,7 +284,7 @@ class LouvainTest(unittest.TestCase):
         listOfEdges = [(0,1), (1,2)]
         listOfWeight = [1 for i in listOfEdges]
         louvainLevel0 = Louvain.buildGraph("trival graph", listOfEdges, listOfWeight)
-
+        louvainLevel0._calculateQ()
         self.logger.info("louvainLevel0:{}".format(louvainLevel0))
         
         # make sure graph is set u as expected

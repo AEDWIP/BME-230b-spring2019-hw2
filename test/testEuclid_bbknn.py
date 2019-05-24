@@ -222,7 +222,8 @@ class Eculid_bbknnTest(unittest.TestCase):
         
         self.logger.info("END\n")
 
-   ######################################################################                 
+   ######################################################################
+    @unittest.skip("skip this test it takes over 3 mins")                 
     def test_l_k_adata(self):
         self.logger.info("BEGIN")
         

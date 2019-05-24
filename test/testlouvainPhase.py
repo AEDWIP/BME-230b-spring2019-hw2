@@ -48,7 +48,7 @@ class LouvianPhaseTest(unittest.TestCase):
         listOfEdges = [(0,1), (1,2)]
         listOfWeight = [1 for i in listOfEdges]
         louvainLevel0 = Louvain.buildGraph("trival graph", listOfEdges, listOfWeight)
-        
+        louvainLevel0._calculateQ()
         louvainLevel0._phaseI(isLouvainInit=True) 
         
         for clusterId, cluster in louvainLevel0._clusters.items():

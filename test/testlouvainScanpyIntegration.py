@@ -123,6 +123,7 @@ class LouvainScanpyIntegrationTest(unittest.TestCase):
         self.logger.info("END\n")
         
     ############################################################
+    @unittest.skip("skip this test it takes over 3 mins")
     def testAdata(self):
         '''
         The real deal
@@ -144,7 +145,7 @@ class LouvainScanpyIntegrationTest(unittest.TestCase):
 
         #knn takes about 3 or 4 min
         # run our implementation of nearest neighboors and update anndata
-        todo try running with out knng maybe adata has values already save time
+# todo try running with out knng maybe adata has values already save time
         KnnG(anndata, n_neighbors=12, runPCA=True, nPC=50)
         
         self.logger.info("begin Louvain.runWithAdata")
