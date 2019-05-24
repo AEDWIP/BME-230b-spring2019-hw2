@@ -179,7 +179,7 @@ class Louvain(object):
         # TODO should we move the mulply out? it should technically be faster
         # does not effect Big O
         m = self._getM()
-        self.logger.info("m:{}".format(m))
+        self.logger.debug("m:{}".format(m))
         
         modularitySumTerm = 0
         for edge in self._edges:
@@ -206,10 +206,10 @@ class Louvain(object):
             i = edge._srcId
             j = edge._targetId
             print('') # AEDWIP:
-            self.logger.info("i:{} j:{} A{}{}:{} k{}:{} k{}:{} 2*m:{}".format(i,j, i, j, Aij, i, ki, j, kj, 2*m))
-            self.logger.info(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
+            self.logger.debug("i:{} j:{} A{}{}:{} k{}:{} k{}:{} 2*m:{}".format(i,j, i, j, Aij, i, ki, j, kj, 2*m))
+            self.logger.debug(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
             term = Aij - (ki*kj) / (2*m) 
-            self.logger.info("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
+            self.logger.debug("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
             modularitySumTerm += term 
         
 
@@ -258,7 +258,7 @@ class Louvain(object):
             # multiply by 2 because links are modeled as directed edges
             term = (2 * (Aij - (ki*kj/(2*m))))
             ret += term
-            self.logger.info("ni:{} ti:{} Aij:{} ki:{} kj:{} m:{}"\
+            self.logger.debug("ni:{} ti:{} Aij:{} ki:{} kj:{} m:{}"\
                              .format(node._nodeId, targetNodeId, Aij, ki, kj, m))
             
         ret = ret * (1/(2*m))        
@@ -388,14 +388,14 @@ class Louvain(object):
         '''
         TODO
         '''     
-        self.logger.info("BEGIN")
+        self.logger.debug("BEGIN")
         
         changeIfRemoveNode = self.changeInModularityIfNodeRemoved(node, fromCluster)
         changeIfAddNode = self.changeInModularityIfNodeAdded(node, targetCluster)
 
         ret = changeIfAddNode - changeIfRemoveNode
-        self.logger.info("ret:{} changeIfAddNode:{} loss:{}".format(ret, changeIfAddNode, changeIfRemoveNode, isLouvainInit=False))
-        self.logger.info("END\n")
+        self.logger.debug("ret:{} changeIfAddNode:{} loss:{}".format(ret, changeIfAddNode, changeIfRemoveNode, isLouvainInit=False))
+        self.logger.debug("END\n")
         return ret
         
     ############################################################ 

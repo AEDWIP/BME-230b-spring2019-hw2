@@ -112,7 +112,7 @@ class Cluster(object):
         
         self._totalWeight -= node.getSumAdjWeights()   
         kiin = node.getSumOfWeightsInsideCluster(self._clusterId, graphNodesLookup)
-        self.logger.info("clusterId:{} nodeId:{}  _weightsInsideCluster:{} kiin:{}"\
+        self.logger.debug("clusterId:{} nodeId:{}  _weightsInsideCluster:{} kiin:{}"\
                 .format(self._clusterId, node._nodeId, self._weightsInsideCluster, kiin))  
                       
 
@@ -120,8 +120,13 @@ class Cluster(object):
             # account for edges that get transformed from inside our cluster to
             # between our cluster. remember we model links between nodes a pair
             # of directed edges
-            w = 2 * node._weightsInClusterDict[self._clusterId]
-            self._weightsInsideCluster -= 4
+            
+            # there is not requirement that we have links to other nodes
+            # in our cluster
+            # TODO: get rid of isLouvainInit it is not a special case
+            if self._clusterId in node._weightsInClusterDict:
+                w = 2 * node._weightsInClusterDict[self._clusterId]
+                self._weightsInsideCluster -= w
         
         self._nodeList.remove(node)  
           
@@ -133,7 +138,7 @@ class Cluster(object):
         in production use move()
 
         '''
-        self.logger.info("node._adjacentEdgeWeights:{}".format(node._adjacentEdgeWeights))
+        self.logger.debug("node._adjacentEdgeWeights:{}".format(node._adjacentEdgeWeights))
         if not node:
             self.loggger.warn("AEDWIP DEBUG node is none!!")
             
@@ -142,7 +147,7 @@ class Cluster(object):
             
         self._totalWeight += node.getSumAdjWeights()
         kiin = node.getSumOfWeightsInsideCluster(targetClusterId, graphNodesLookup)
-        self.logger.info("clusterId:{} nodeId:{} targetClusterId:{} _weightsInsideCluster:{} kiin:{}"\
+        self.logger.debug("clusterId:{} nodeId:{} targetClusterId:{} _weightsInsideCluster:{} kiin:{}"\
                 .format(self._clusterId, node._nodeId, targetClusterId, self._weightsInsideCluster, kiin))
         
         # we gain twice. there is an edge between the node being moved
@@ -166,7 +171,7 @@ class Cluster(object):
                 
                 default value is False        
         '''
-        self.logger.info("clusterId:{} nodeId:{} targetClusterId:{}"\
+        self.logger.debug("clusterId:{} nodeId:{} targetClusterId:{}"\
                          .format(self._clusterId, node._nodeId, targetCluster._clusterId))
         
         targetClusterId = targetCluster._clusterId        

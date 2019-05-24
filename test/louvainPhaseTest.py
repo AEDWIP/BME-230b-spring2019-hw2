@@ -37,7 +37,6 @@ class LouvianPhaseTest(unittest.TestCase):
             self.assertEqual(len(cluster._nodeList), expected[clusterId]['numNodes'], msg)
             self.assertEqual(cluster._weightsInsideCluster, expected[clusterId]['weightsInsideCluster'], msg)
             self.assertEqual(cluster._totalWeight, expected[clusterId]['totalWeight'], msg) 
-            print()
                    
         self.logger.info("END\n")
         
@@ -167,13 +166,21 @@ class LouvianPhaseTest(unittest.TestCase):
             }
         self.checkClusters(expectedAfterPhaseL1_II, louvainLevel1._clusters)
         
+        # check the node caches are set up correctl
+        for clusterId, cluster in louvainLevel1._clusters.items():
+            for node in cluster._nodeList:
+                self.logger.info("clusterId:{} nodeId:{} _weightsInClusterDict:{}"\
+                          .format(clusterId, node._nodeId, node._weightsInClusterDict))
+                self.logger.info("clusterId:{} nodeId:{} _nodesInClusterDict:{}"\
+                          .format(clusterId, node._nodeId, node._nodesInClusterDict))                
+        
         # test Louvain algo would run Phase I on louvainLevel2
         # we have to calculate Q before phaseI
         louvainLevel1._calculateQ()
         louvainLevel1._phaseI()
         
         print('')
-        self.logger.info("************ check L1 phase I")
+        self.logger.info("************ check L1 after phase I")
         for clusterId, cluster in louvainLevel1._clusters.items():
             self.logger.info("clusterId:{} cluster:{}".format(clusterId,cluster))        
         

@@ -225,7 +225,7 @@ class Node(object):
                              toClusterId=clusterId, 
                              weight=e._weight)
         
-        self.logger.info("nodeId:{} currentClusterId:{} toClusterId:{}"\
+        self.logger.debug("nodeId:{} currentClusterId:{} toClusterId:{}"\
             .format(self._nodeId, self._clusterId, clusterId))
         self._clusterId = clusterId
         
