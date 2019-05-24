@@ -9,6 +9,7 @@ import logging
 from louvain import Louvain
 from Node import Node
 import numpy as np
+import pandas as pd
 from setupLogging import setupLogging
 import unittest
 
@@ -109,8 +110,11 @@ class LouvainScanpyIntegrationTest(unittest.TestCase):
         
         clusterAssigments = [t[1] for t in sortedTuples]
         self.logger.info("clusterAssigments:{}".format(clusterAssigments))
-
         self.assertEqual(clusterAssigments, [5, 5, 5, 5, 5, 5, 9, 9, 9, 9])
+        
+        idx = [chr(65 + i) for i in range(10)]
+        assignmentPS = pd.Series(data=clusterAssigments, index=idx)
+        self.logger.info("assignmentPS:\n{}".format(assignmentPS))
         
         self.logger.info("END\n")
         
