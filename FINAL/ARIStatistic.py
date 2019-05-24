@@ -82,7 +82,6 @@ class ARIStatistic():
             # append ari to results list
             self._results.append(ars)
             
-            print("finished sample " + str(sample))
             print("ars = " + str(ars))
 
 
