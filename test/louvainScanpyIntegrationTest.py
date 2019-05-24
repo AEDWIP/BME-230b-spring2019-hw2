@@ -90,6 +90,30 @@ class LouvainScanpyIntegrationTest(unittest.TestCase):
         self.logger.info("louvainId: {} root cluster assigments:\n{}".format(root._louvainId, rootClusterAssigments))
         self.assertEqual(rootClusterAssigments, {9: [9, 6, 7, 8, 0, 1, 2, 3, 4, 5]})
 
+    ############################################################
+    def testTransformClusterAssigments(self):
+        '''
+        convert cluster assignments to format scanpy expects
+        '''
+        self.logger.info("BEGIN")
+        rootAssigment = {5: [0, 1, 2, 3, 4, 5], 9: [9, 6, 7, 8]}
+        flatTuples = []
+        for clusterId, nodeList in rootAssigment.items():
+            for nodeId in nodeList:
+                flatTuples.append( (nodeId, clusterId) )
+        self.logger.info("flatTuples:{}".format(flatTuples))
+                
+        # sort by node id
+        sortedTuples = sorted(flatTuples,  key=lambda x: x[0])
+        self.logger.info("sortedTuples:{}".format(sortedTuples))
+        
+        clusterAssigments = [t[1] for t in sortedTuples]
+        self.logger.info("clusterAssigments:{}".format(clusterAssigments))
+
+        self.assertEqual(clusterAssigments, [5, 5, 5, 5, 5, 5, 9, 9, 9, 9])
+        
+        self.logger.info("END\n")
+        
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

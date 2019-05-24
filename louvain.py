@@ -42,6 +42,31 @@ class Louvain(object):
     
    ############################################################
     @staticmethod
+    def runWithAdata(adata):   
+        '''
+        TODO:
+            reads data from adata.uns['neighbors']['connectivities']
+            
+        returns:
+            root level Louvain object. 
+            cluster assignments are place in 
+                adata.obs['louvain'] (pandas.Series, dtype category)
+                Array of dim (number of samples) that stores the 
+                subgroup id ('0', '1', …) for each cell.
+        ''' 
+        
+        # ref: knn_to_graphModule get_igraph_from_adjacency()
+        
+        adjacency = adata.uns['neighbors']['connectivities']
+        sources, targets = adjacency.nonzero()
+        listOfWeight = adjacency[sources, targets]
+        listOfEdges = list(zip(sources, targets))
+        
+        root = Louvain.run(listOfEdges, listOfWeight)
+        aedwip
+        
+   ############################################################
+    @staticmethod
     def run(listOfEdges, listOfWeight):
         '''
         TODO:
@@ -87,13 +112,6 @@ class Louvain(object):
         use this factory method to bootstrap from anadata.
         
         assigns each cell to its own cluster and calculates modularity
-        
-        ref: knn_to_graphModule get_igraph_from_adjacency()
-        
-        adjacency = andatq.uns['neighbors']['connectivities']
-        sources, targets = adjacency.nonzero()
-        listOfWeight = adjacency[sources, targets]
-        listOfEdges = list(zip(sources, targets)))
         
         arguments
             listOfEdges: 
