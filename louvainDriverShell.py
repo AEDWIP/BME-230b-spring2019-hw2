@@ -17,6 +17,7 @@ import scipy.special
 import scipy.stats as stats
 import louvain as lv
 
+import logging
 from setupLogging import setupLogging
 setupLogging( default_path='logging.test.ini.json')
 
@@ -25,27 +26,27 @@ from datetime import timedelta
 
 def main():
     logger = logging.getLogger(__name__)
-
-	anndata = sc.read("PBMC.merged.h5ad")
-
-	# run our implementation of nearest neighboors and update anndata
-	KnnG(anndata, n_neighbors=12, runPCA=True, nPC=50)
-
-	# MacBook Pro (Retina, 15-inch, Late 2013)
-	# processor 2.6 GHz Intel Core i7
-	# memory 16 GB 1600 MHz DDR
-	logger.warning( "BEGIN lv.Louvain.runWithAdata(anndata)")
-	start = timer()
-	root = lv.Louvain.runWithAdata(anndata)
-	end = timer()
-    self.logger.warning("Louvain.runWithAdata execution time:{}"\
+    
+    anndata = sc.read("PBMC.merged.h5ad")
+    
+    # run our implementation of nearest neighboors and update anndata
+    KnnG(anndata, n_neighbors=12, runPCA=True, nPC=50)
+    
+    # MacBook Pro (Retina, 15-inch, Late 2013)
+    # processor 2.6 GHz Intel Core i7
+    # memory 16 GB 1600 MHz DDR
+    logger.warning( "BEGIN lv.Louvain.runWithAdata(anndata)")
+    start = timer()
+    root = lv.Louvain.runWithAdata(anndata)
+    end = timer()
+    logger.logger.warning("Louvain.runWithAdata execution time:{}"\
                          .format(timedelta(seconds=end-start)))
-	logger.warning( "END lv.Louvain.runWithAdata(anndata)\n")
-
-	logger.warning("modularity:{}".format(root._Q))
-
-	clusterAssignments = root.getClusterAssigments()
-	logger.warning("clusterAssignments:\n{}".format(clusterAssignments))
+    logger.warning( "END lv.Louvain.runWithAdata(anndata)\n")
+    
+    logger.warning("modularity:{}".format(root._Q))
+    
+    clusterAssignments = root.getClusterAssigments()
+    logger.warning("clusterAssignments:\n{}".format(clusterAssignments))
 
 if __name__ == '__main__':
     main()
