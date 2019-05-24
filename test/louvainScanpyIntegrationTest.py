@@ -41,16 +41,14 @@ class LouvainScanpyIntegrationTest(unittest.TestCase):
                        ]
         listOfWeight = [1 for i in listOfEdges]
         
-        # build out intial graph and calculate Q
+        # build out init graph and calculate Q
         louvainLevel0 = Louvain.buildGraph("level0", listOfEdges, listOfWeight)
-#         ll0ClusterAssigments = louvainLevel0.getClusterAssigments()
-#         self.logger.info("level0 cluster assigments:\n{}".format(ll0ClusterAssigments))  
                 
         # run phase I: find best cluster assignments
         louvainLevel0._phaseI(isLouvainInit=True) 
         
         ll_0_ClusterAssigments = louvainLevel0.getClusterAssigments()
-        self.logger.info("level0 cluster assigments:\n{}".format(ll_0_ClusterAssigments))  
+        self.logger.info("level0 cluster assignments:\n{}".format(ll_0_ClusterAssigments))  
                 
         # create next level and run phaseII
         # phase II consolidates clusters found in previous level
@@ -61,24 +59,14 @@ class LouvainScanpyIntegrationTest(unittest.TestCase):
         louvainLevel1._phaseI()     
  
         ll_1_ClusterAssigments = louvainLevel1.getClusterAssigments()
-        self.logger.info("level1 cluster assigments:\n{}".format(ll_1_ClusterAssigments))  
-
- 
-
-#         self.logger.info("louvainLevel0:\n{}".format(louvainLevel0._clusters.keys()))
-#         self.logger.info("louvainLevel1:\n{}".format(louvainLevel1._clusters.keys()))
-
-
+        self.logger.info("level1 cluster assignments:\n{}".format(ll_1_ClusterAssigments))  
 
         self.logger.info("**************** check for side effects output should be same as above")
         ll_0_ClusterAssigments = louvainLevel0.getClusterAssigments()
         self.assertEqual(ll_0_ClusterAssigments, {5: [0, 1, 2, 3, 4, 5], 9: [9, 6, 7, 8]})
-#         self.logger.info("level0 cluster assigments:\n{}".format(ll_0_ClusterAssigments))    
-#         
+
         ll_1_ClusterAssigments = louvainLevel1.getClusterAssigments()
         self.assertEqual(ll_1_ClusterAssigments, {9: [9, 6, 7, 8, 0, 1, 2, 3, 4, 5]})
-#         self.logger.info("level1 cluster assigments:\n{}".format(ll_1_ClusterAssigments))  
-#               
 
         self.logger.info("END\n")
            

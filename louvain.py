@@ -650,9 +650,7 @@ class Louvain(object):
         self.logger.debug("BEGIN lovainId:{}".format(self._louvainId))
         ret = None
         if not self._leafLouvain:
-            # the boot strap puts each node in a separate cluster
-            # we assigned the 
-            #ret = {k:k for k in self._clusters.keys()}
+            # map
             ret = {}
             for clusterId, cluster in self._clusters.items():
                 if not cluster._nodeList:
@@ -674,7 +672,7 @@ class Louvain(object):
                 if not clusterId in ret:
                     ret[clusterId] = []
                 for node in cluster._nodeList:
-#                     ret[clusterId].append(leafAssigment[node._nodeId])
+                    # reduce
                     ret[clusterId] = ret[clusterId] + leafAssigment[node._nodeId]
                 
         self.logger.debug("ret:{}".format(ret))
