@@ -135,11 +135,10 @@ class Louvain(object):
         
         ret._Q = None
         
-        ret._phaseII(louvain)
+        ret._phaseII(ret._leafLouvain) # this destroys starting assigments
         
-        Louvain.logger.info("END\n")        
+        Louvain.logger.info("END louvainID:{}\n".format(louvainId))        
         return ret
-        
         
     ############################################################
     def _build(self, nodeId, targetEdge):
@@ -403,9 +402,9 @@ class Louvain(object):
         '''
         TODO
         '''
-        self.logger.info("BEGIN")   
+        self.logger.info("BEGIN louvainID:{}".format(self._louvainId))   
           
-        self.logger.info("Q:{}".format(self._Q))
+        self.logger.debug("Q:{}".format(self._Q))
         
         # rework initialization
         # make sure cluster is init correctly
@@ -417,7 +416,7 @@ class Louvain(object):
         bestMove = (-1, -1, -1, -1) # (changeInQ, node, fromCluster, toCluster
         isImproving = True
         while isImproving:
-            self.logger.info("BEGIN EPOCH")
+            self.logger.debug("BEGIN EPOCH")
             isImproving = False
             
             # links in graph are modeled as a pair of directed edges
@@ -467,20 +466,20 @@ class Louvain(object):
 
                     self._Q += change
                     print('')
-                    self.logger.info("Q:{}, change:{} nodeId:{} fromClusterId:{} toClusterId:{}"\
+                    self.logger.debug("Q:{}, change:{} nodeId:{} fromClusterId:{} toClusterId:{}"\
                                      .format(self._Q, change, node._nodeId, fromC._clusterId, toC._clusterId))
                     fromCluster.moveNode(targetCluster, node, self._nodeLookup, isLouvainInit)
                     
             # TODO: prune empty clusters
                     
-            print('')
+            #print('')
             for cid,c in self._clusters.items():
-                self.logger.info(c)
-            self.logger.info("END of epoch\n")
+                self.logger.debug(c)
+            self.logger.debug("END of epoch\n")
                 
             
-        self.logger.info("Q:{}".format(self._Q))        
-        self.logger.info("END\n")     
+        self.logger.debug("Q:{}".format(self._Q))        
+        self.logger.info("END louvainID:{}\n".format(self._louvainId)) 
         
         
     ############################################################ 
@@ -563,6 +562,7 @@ class Louvain(object):
         we need to construct the full object graph before calculating
         any of the values
         '''
+        self.logger.debug("BEGIN")
         # calculate edge weights
         for nodeId in nodeEdgesDict.keys():
             edges = nodeEdgesDict[nodeId]
@@ -571,13 +571,13 @@ class Louvain(object):
                 listOfWeights = betweenEdgeWeightsDict[key]
                 e._weight = sum(listOfWeights)
                 
-        print()
+        #print()
         for k,v in nodeEdgesDict.items():
-            self.logger.info("nodeEdgesDict nodeId:{} edges:{}".format(k,v))
+            self.logger.debug("nodeEdgesDict nodeId:{} edges:{}".format(k,v))
             
-        print()
+        #print()
         for k,v in betweenEdgeWeightsDict.items():
-            self.logger.info("betweenEdgeWeightsDict key:{} listOfWeights:{}".format(k,v))        
+            self.logger.debug("betweenEdgeWeightsDict key:{} listOfWeights:{}".format(k,v))        
                             
         # create nodes and clusters
         for newNodeId in nodeEdgesDict.keys():
@@ -618,17 +618,18 @@ class Louvain(object):
             cluster.getSumOfWeights()
             cluster.getSumOfWeightsInsideCluster(self._nodeLookup) 
                                
-        self.logger.info("END\n")     
+        self.logger.debug("END\n")     
     
     def _phaseII(self, isLouvainInit=False):      
         '''
         TODO creates graph from leafLouvain
         '''
-        self.logger.info("BEGIN") 
+        self.logger.info("BEGIN louvainID:{}".format(self._louvainId)) 
         nodeEdgesDict, betweenEdgeWeightsDict = self._phaseIICreateNewEdges()    
         self._fixThisBugUseTrueOOEncapsliations(nodeEdgesDict, betweenEdgeWeightsDict) 
         
-        
+        self.logger.info("END louvainID:{}\n".format(self._louvainId)) 
+
     ############################################################                
     def __repr__(self):
         self._forceAllLazyEval()
@@ -640,4 +641,42 @@ class Louvain(object):
         for c in self._clusters:
             ret += "\t{}\n".format(c)
                         
-        return ret        
+        return ret  
+    
+    ############################################################                    
+    def getClusterAssigments(self):   
+        '''
+        '''   
+        self.logger.debug("BEGIN lovainId:{}".format(self._louvainId))
+        ret = None
+        if not self._leafLouvain:
+            # the boot strap puts each node in a separate cluster
+            # we assigned the 
+            #ret = {k:k for k in self._clusters.keys()}
+            ret = {}
+            for clusterId, cluster in self._clusters.items():
+                if not cluster._nodeList:
+                    # cluster is empty
+                    continue
+                
+                if not clusterId in ret:
+                    ret[clusterId] = []
+                for node in cluster._nodeList:
+                    ret[clusterId].append(node._nodeId)                
+        else:
+            leafAssigment = self._leafLouvain.getClusterAssigments()
+            ret = {}
+            for clusterId, cluster in self._clusters.items():
+                if not cluster._nodeList :
+                    # cluster is empty
+                    continue
+                
+                if not clusterId in ret:
+                    ret[clusterId] = []
+                for node in cluster._nodeList:
+#                     ret[clusterId].append(leafAssigment[node._nodeId])
+                    ret[clusterId] = ret[clusterId] + leafAssigment[node._nodeId]
+                
+        self.logger.debug("ret:{}".format(ret))
+        self.logger.debug("END lovainId:{}".format(self._louvainId))
+        return ret
