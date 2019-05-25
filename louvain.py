@@ -649,7 +649,7 @@ class Louvain(object):
         self.logger.info("Q:{}".format(self._Q))  
         end = timer()      
         self.logger.info("END louvainID:{}\ nun clusters: {}n time:{}"\
-                         .format(self._louvainId, self.countClusters(timedelta(seconds=end-start)))) 
+                         .format(self._louvainId, self.countClusters(), timedelta(seconds=end-start)))) 
         
         
     ############################################################ 
