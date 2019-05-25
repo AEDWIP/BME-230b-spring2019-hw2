@@ -43,7 +43,7 @@ def main():
     start = timer()
     root = lv.Louvain.runWithAdata(anndata)
     end = timer()
-    logger.logger.warning("Louvain.runWithAdata execution time:{}"\
+    logger.warning("Louvain.runWithAdata execution time:{}"\
                          .format(timedelta(seconds=end-start)))
     logger.warning( "END lv.Louvain.runWithAdata(anndata)\n")
     
