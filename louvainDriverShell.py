@@ -19,14 +19,18 @@ import louvain as lv
 
 import logging
 from setupLogging import setupLogging
-setupLogging( default_path='logging.test.ini.json')
+logConfigFile='./test/logging.test.ini.json'
+setupLogging( default_path=logConfigFile)
 
 from timeit import default_timer as timer
 from datetime import timedelta
 
 def main():
     logger = logging.getLogger(__name__)
-    
+    if not os.path.isfile(logConfigFile):
+        logger.error("missing logConfigFile file:{}".format(logConfigFile))
+        return
+        
     anndata = sc.read("PBMC.merged.h5ad")
     
     # run our implementation of nearest neighboors and update anndata
@@ -45,8 +49,12 @@ def main():
     
     logger.warning("modularity:{}".format(root._Q))
     
-    clusterAssignments = root.getClusterAssigments()
-    logger.warning("clusterAssignments:\n{}".format(clusterAssignments))
+    logger.warning("CLUSTER ASSIGMENTS")
+    level = root
+    while level:
+        clusterAssignments = level.getClusterAssigments()
+        logger.warning("{}:\n{}".format(level._louvainId, clusterAssignments))
+        level = level._leafLouvain
 
 if __name__ == '__main__':
     main()

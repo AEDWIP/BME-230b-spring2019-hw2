@@ -10,6 +10,9 @@ import numpy as np
 from Cluster import Cluster
 import pandas as pd
 
+from timeit import default_timer as timer
+from datetime import timedelta
+
 ############################################################
 class Louvain(object):
     '''    
@@ -106,6 +109,7 @@ class Louvain(object):
         louvainId += 1
         level._calculateQ() # TODO nice to have for debug, add argument to decide if user wants to run
         level._phaseI(isLouvainInit=True) # TODO: can probably get rid of isLouvainInit
+        level.logger.warn("louvainId:{} clusterAssigments:\n{}".format(level._louvainId, level.getClusterAssigments()))
         
         # count the number of clusters
         previousNumClusters = level.countClusters()
@@ -122,6 +126,8 @@ class Louvain(object):
             # run clustering on consolidated nodes
             level._calculateQ() # TODO nice to have for debug, add argument to decide if user wants to run            
             level._phaseI(isLouvainInit=False) # TODO: can probably get rid of isLouvainInit)
+            level.logger.warn("louvainId:{} clusterAssigments:\n{}".format(level._louvainId, level.getClusterAssigments()))
+            
             
             # count the number of clusters
             numClusters = level.countClusters()
@@ -491,7 +497,23 @@ class Louvain(object):
         changeIfRemoveNode = self.changeInModularityIfNodeRemoved(node, fromCluster)
         changeIfAddNode = self.changeInModularityIfNodeAdded(node, targetCluster)
 
-        ret = changeIfAddNode - changeIfRemoveNode
+        if changeIfAddNode <= 0:
+            eMsg = "addChange:{} must be greater than > 0  nodeId:{} fromCluster:{} targetCluster:{} "\
+                              .format(changeIfAddNode, node._nodeId, fromCluster._clusterId,
+                                       targetCluster._clusterId)
+            self.logger.error(eMsg)  
+            self.logger.error("booking bug? nodes is probably not connected to targetCluster")
+            raise ValueError(eMsg)
+        
+        if changeIfRemoveNode >= 0:
+            eMsg = "removeChange:{} must be less than > 0  nodeId:{} fromCluster:{} targetCluster:{} "\
+                              .format(changeIfAddNode, node._nodeId, fromCluster._clusterId,
+                                       targetCluster._clusterId)
+            self.logger.error(eMsg)  
+            self.logger.error("booking bug? nodes is probably not connected to targetCluster")
+            raise ValueError(eMsg)        
+            
+        ret = changeIfAddNode + changeIfRemoveNode
         self.logger.debug("ret:{} changeIfAddNode:{} loss:{}".format(ret, changeIfAddNode, changeIfRemoveNode, isLouvainInit=False))
         self.logger.debug("END\n")
         return ret
@@ -501,9 +523,9 @@ class Louvain(object):
         '''
         TODO
         '''
-        self.logger.info("BEGIN louvainID:{}".format(self._louvainId))   
+        self.logger.info("BEGIN louvainID:{} num clusters:{}".format(self._louvainId, self.countClusters()))   
           
-        self.logger.debug("Q:{}".format(self._Q))
+        self.logger.info("Q:{}".format(self._Q))
         
         # rework initialization
         # make sure cluster is init correctly
@@ -514,49 +536,70 @@ class Louvain(object):
         K_CHANGE_IN_Q = 0
         bestMove = (-1, -1, -1, -1) # (changeInQ, node, fromCluster, toCluster
         isImproving = True
-        while isImproving:
-            self.logger.debug("BEGIN EPOCH")
-            isImproving = False
+        epochCount = 0
+        numRows = len(self._nodeLookup.keys())        
+        startingNumCols = self.countClusters()
+        
             
-            # links in graph are modeled as a pair of directed edges
-            # keep track of moves so we do not cycle
-            # i.e. move na from cluster 1 to cluster 2, then back again
-            # use a set of tuples. each element is of form (srcNodeId, targetNodeId)
-            trackMoves = set()
+        # links in graph are modeled as a pair of directed edges
+        # keep track of moves so we do not cycle
+        # i.e. move na from cluster 1 to cluster 2, then back again
+        # use a set of tuples. each element is of form (srcNodeId, targetNodeId)
+        
+        #https://stackoverflow.com/questions/16256913/improving-performance-of-very-large-dictionary-in-python
+        #trackMoves = set()
+        trackMovesMatrix = np.zeros((numRows, startingNumCols),dtype=bool) 
+        self.logger.info("trackMovesMatrix.shape:{}".format(trackMovesMatrix.shape))        
+        
+        while isImproving:
+            epochCount += 1           
+            numMoves = 0 
+            startQ = self._Q
+            start = timer()
+            self.logger.info("BEGIN EPOCH count:{}  num clusters:{}".format(epochCount, self.countClusters()))
+            isImproving = False
+
                             
             for nodeId, node in self._nodeLookup.items():
-                # keep track of which clusters we have tested
-                testedClusters = set()
+#                 # keep track of which clusters we have tested
+#                 testedClusters = set()
                 
                 # Q will only improve if we are moving into a cluster that has a node 
                 # we are connected to
                 fromCluster = self._clusters[node._clusterId]
                 for candidateClusterId, candidateNodeSet in node._nodesInClusterDict.items():
-                    if node._clusterId == candidateClusterId:
+                    # track moves to prevent cycles
+                    possibleMove = (nodeId, candidateClusterId)
+                    #if possibleMove in trackMoves :
+                    self.logger.debug("possibleMove:{}".format(possibleMove))
+                    if trackMovesMatrix[possibleMove[0], possibleMove[1]]:
+                        self.logger.debug("bug possibleMove:{} in trackMoves  ".format(possibleMove))
                         continue
+                    #trackMoves.add(possibleMove)  level0 |trackMoves| = numCells x numCells, I think python sets get slow
+                    trackMovesMatrix[possibleMove[0], possibleMove[1]] = True    
+                                        
+                    if node._clusterId == candidateClusterId:
+                        continue        
                     
-                    #targetCluster = self._clusters[candidateClusterId]
-                    for candidateNodeId in candidateNodeSet:
-                        candidateNode = self._nodeLookup[candidateNodeId]
+#                     for candidateNodeId in candidateNodeSet:
+#                         candidateNode = self._nodeLookup[candidateNodeId]
+#                         
+#                         targetClusterId = candidateNode._clusterId
+#                         if fromCluster._clusterId == targetClusterId:
+#                             # these edges are inside the same cluster as node
+#                             continue 
+#                         
+#                         targetCluster = self._clusters[targetClusterId]
+# #                         if targetCluster in testedClusters :
+# #                             self.logger.warning("bug? targetCluster:{} in testedClusters".format(targetCluster))
+# #                             continue
+# #                         testedClusters.add(targetCluster)
                         
-                        targetClusterId = candidateNode._clusterId
-                        if fromCluster._clusterId == targetClusterId:
-                            continue
-                        
-                        targetCluster = self._clusters[targetClusterId]
-                        if targetCluster in testedClusters :
-                            continue
-                        testedClusters.add(targetCluster)
-                        
-                        # track moves to prevent cycles
-                        possibleMove = (nodeId, targetClusterId)
-                        if possibleMove in trackMoves :
-                            continue
-                        trackMoves.add(possibleMove)              
-                        
-                        predictedChange = self.modularityGainIfMove(fromCluster, targetCluster, node)
-                        if predictedChange > bestMove[K_CHANGE_IN_Q] and predictedChange > 0:
-                            bestMove = (predictedChange, node, fromCluster, targetCluster)
+        
+                    targetCluster = self._clusters[candidateClusterId]                        
+                    predictedChange = self.modularityGainIfMove(fromCluster, targetCluster, node)
+                    if predictedChange > bestMove[K_CHANGE_IN_Q] and predictedChange > 0:
+                        bestMove = (predictedChange, node, fromCluster, targetCluster)
                         
                 if bestMove[0] > 0:
                     isImproving = True
@@ -568,17 +611,21 @@ class Louvain(object):
                     self.logger.debug("Q:{}, change:{} nodeId:{} fromClusterId:{} toClusterId:{}"\
                                      .format(self._Q, change, node._nodeId, fromC._clusterId, toC._clusterId))
                     fromCluster.moveNode(targetCluster, node, self._nodeLookup, isLouvainInit)
+                    numMoves += 1  
                     
-            # TODO: prune empty clusters
+            # do not remove empty clusters. they are need to map nodes to the root level cluster ids
                     
             #print('')
-            for cid,c in self._clusters.items():
-                self.logger.debug(c)
-            self.logger.debug("END of epoch\n")
+#             for cid,c in self._clusters.items():
+#                 self.logger.debug(c)
+            end = timer()
+            self.logger.info("END EPOCH   Count:{} num clusters{} numMoves:{} Q:{} startQ:{} dq:{} time:{}"\
+                             .format(epochCount, self.countClusters(), numMoves, 
+                                     self._Q, startQ, (self._Q - startQ), timedelta(seconds=end-start)))
                 
             
-        self.logger.debug("Q:{}".format(self._Q))        
-        self.logger.info("END louvainID:{}\n".format(self._louvainId)) 
+        self.logger.info("Q:{}".format(self._Q))        
+        self.logger.info("END louvainID:{}\ nun clusters: {}n".format(self._louvainId, self.countClusters())) 
         
         
     ############################################################ 

@@ -165,6 +165,9 @@ class LouvainScanpyIntegrationTest(unittest.TestCase):
         '''
         self.logger.info("BEGIN")     
         anndata = sc.read("../PBMC.merged.h5ad")
+        
+        # run our implementation of nearest neighboors and update anndata
+        KnnG(anndata, n_neighbors=12, runPCA=True, nPC=50)        
                
         adjacency = anndata.uns['neighbors']['connectivities']
         sources, targets = adjacency.nonzero()

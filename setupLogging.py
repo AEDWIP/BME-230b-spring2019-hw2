@@ -23,7 +23,7 @@ def setupLogging (
         path = value
     if os.path.exists(path):
         logger = logging.getLogger('root')
-        logger.debug("loading log configuration:{}".format(default_path))
+        logger.warn("loading log configuration:{}".format(default_path))
         with open(path, 'rt') as f:
             config = json.load(f)
         logging.config.dictConfig(config)
