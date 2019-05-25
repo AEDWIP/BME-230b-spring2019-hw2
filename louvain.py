@@ -97,6 +97,8 @@ class Louvain(object):
         assignmentPS = pd.Series(data=clusterAssigments, index=idx)
         adata.obs['louvain'] = assignmentPS
         
+        return root
+        
     ############################################################
     @staticmethod
     def run(listOfEdges, listOfWeight, numRows):
