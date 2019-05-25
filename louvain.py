@@ -560,7 +560,7 @@ class Louvain(object):
         bestMove = (-1, -1, -1, -1) # (changeInQ, node, fromCluster, toCluster
         isImproving = True
         epochCount = 0
-        startingNumCols = self.countClusters()
+#         startingNumCols = self.countClusters()
         
             
         # links in graph are modeled as a pair of directed edges
@@ -570,7 +570,16 @@ class Louvain(object):
         
         #https://stackoverflow.com/questions/16256913/improving-performance-of-very-large-dictionary-in-python
         #trackMoves = set()
-        trackMovesMatrix = np.zeros((numRows, startingNumCols),dtype=bool) 
+        
+        # understanding size of trackMovesMatrix
+        # the shape is numCells x numClusters
+        # level 0 init puts each node in a separate cluster
+        # phaseII reduces the number of clusters how ever to make it easy to
+        # calculate the set of cells in the root level cluster in phase 2 we
+        # use continue to use the cluster id values from the leafLouvain
+        # 
+        # the amount of unused space should not be an issue
+        trackMovesMatrix = np.zeros((numRows, numRows),dtype=bool) 
         self.logger.info("trackMovesMatrix.shape:{}".format(trackMovesMatrix.shape))        
         
         while isImproving:
@@ -649,7 +658,7 @@ class Louvain(object):
         self.logger.info("Q:{}".format(self._Q))  
         end = timer()      
         self.logger.info("END louvainID:{}\ nun clusters: {}n time:{}"\
-                         .format(self._louvainId, self.countClusters(), timedelta(seconds=end-start)))) 
+                         .format(self._louvainId, self.countClusters(), timedelta(seconds=end-start))) 
         
         
     ############################################################ 
