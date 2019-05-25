@@ -43,9 +43,9 @@ class bblknn_graph():
 
             k_per_batch (number of neighbors per batch)
 
-            l (number of neighbors to subsample from each batch
+            l (number of neighbors to subsample from each batch)
 
-            n_components (number of principle components)
+            n_components (number of principal components)
 
         '''
 
