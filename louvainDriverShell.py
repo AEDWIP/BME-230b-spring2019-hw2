@@ -31,6 +31,7 @@ def main():
         logger.error("missing logConfigFile file:{}".format(logConfigFile))
         return
         
+    logger.warning("BEGIN")
     anndata = sc.read("PBMC.merged.h5ad")
     
     # run our implementation of nearest neighboors and update anndata
@@ -47,14 +48,18 @@ def main():
                          .format(timedelta(seconds=end-start)))
     logger.warning( "END lv.Louvain.runWithAdata(anndata)\n")
     
-    logger.warning("modularity:{}".format(root._Q))
+    logger.warning("clustering completed successfully root level modularity:{}".format(root._Q))
     
     logger.warning("CLUSTER ASSIGMENTS")
     level = root
     while level:
         clusterAssignments = level.getClusterAssigments()
-        logger.warning("{}:\n{}".format(level._louvainId, clusterAssignments))
+        assigments = "clustering completed successfully cluster assignments for level:{}\n{}:".format(level._louvainId, clusterAssignments)
+        logger.warning(assigments)
         level = level._leafLouvain
+        
+    logger.warning("END")
+        
 
 if __name__ == '__main__':
     main()

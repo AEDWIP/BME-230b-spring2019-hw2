@@ -61,7 +61,7 @@ class Louvain(object):
         ''' 
         
         # ref: knn_to_graphModule get_igraph_from_adjacency()
-        
+        Louvain.logger.info("BEGIN:")
         adjacency = adata.uns['neighbors']['connectivities']
         sources, targets = adjacency.nonzero()
         listOfWeights = adjacency[sources, targets]
@@ -73,8 +73,10 @@ class Louvain(object):
         listOfEdges = list(zip(sources, targets))
         
         numRows = adata.X.shape[0]
+        start = timer()        
         root = Louvain.run(listOfEdges, listOfWeights, numRows)
-        
+        end = timer()
+
         # get the top level assignments and transform the
         # into the format scanpy expects
         rootAssigment = root.getClusterAssigments()
@@ -96,7 +98,10 @@ class Louvain(object):
         idx = adata.obs['louvain'].index
         assignmentPS = pd.Series(data=clusterAssigments, index=idx)
         adata.obs['louvain'] = assignmentPS
-        
+
+        root._calculateQ()
+        Louvain.logger.info("END rootId:{} clustering algo compute time:{}: final Q:{}"\
+                            .format(root._louvainId, timedelta(seconds=end-start),root._Q))
         return root
         
     ############################################################
@@ -291,7 +296,7 @@ class Louvain(object):
         Ci and cj are the types of the two vertices (i and j). 
         delta(x,y) is one iff x=y, 0 otherwise.
         '''
-        self.logger.debug("BEGIN")
+        self.logger.info("BEGIN")
         # note implemenation already multiplied by 1/2
         # TODO should we move the mulply out? it should technically be faster
         # does not effect Big O
@@ -330,7 +335,7 @@ class Louvain(object):
             modularitySumTerm += term 
         
 
-        self.logger.debug("m:{} modularitySumTerm:{}".format(m, modularitySumTerm))
+        self.logger.info("m:{} modularitySumTerm:{}".format(m, modularitySumTerm))
         self._Q = modularitySumTerm/(2*m)
         
         if not (-1.0 <= self._Q <= 1.0):
@@ -338,7 +343,7 @@ class Louvain(object):
             self.logger.error(eMsg)
             raise ValueError(eMsg)
         
-        self.logger.debug("END\n")
+        self.logger.info("END _Q:{}\n".format(self._Q))
         
     ############################################################  
     def changeInModularityIfNodeAdded(self, node, targetCluster):#, isLouvainInit=False
@@ -520,9 +525,9 @@ class Louvain(object):
             eMsg = "addChange:{} must be greater than  0  nodeId:{} fromCluster:{} targetCluster:{} "\
                               .format(changeIfAddNode, node._nodeId, fromCluster._clusterId,
                                        targetCluster._clusterId)
-            self.logger.warn(eMsg)  
-            self.logger.warn("booking bug? nodes is probably not connected to targetCluster")
-            self.logger.warn("node._weightsInClusterDict:{}".format(node._weightsInClusterDict.keys()))
+            self.logger.info(eMsg)  
+            self.logger.info("book keeping bug? is nodes connected to targetCluster? are summary stats maintained correctly")            
+            self.logger.info("node._weightsInClusterDict:{}".format(node._weightsInClusterDict.keys()))
             #raise ValueError(eMsg)
         
         if changeIfRemoveNode > 0.0: # strictly >= AEDWIP: TODO: level 0 phaseI lots of zeros TODO: BUG
@@ -530,9 +535,9 @@ class Louvain(object):
                               .format(changeIfRemoveNode, node._nodeId, fromCluster._clusterId,
                                        targetCluster._clusterId)
             print()
-            self.logger.warn(eMsg)  
-            self.logger.warn("booking bug? nodes is probably not connected to targetCluster")
-            self.logger.warn("node._weightsInClusterDict:{}".format(node._weightsInClusterDict.keys()))            
+            self.logger.info(eMsg)  
+            self.logger.info("book keeping bug? is nodes connected to targetCluster? are summary stats maintained correctly")                        
+            self.logger.info("node._weightsInClusterDict:{}".format(node._weightsInClusterDict.keys()))            
             #raise ValueError(eMsg)        
             
         ret = changeIfAddNode + changeIfRemoveNode
@@ -547,7 +552,7 @@ class Louvain(object):
         arguments:
             numRows: The number of rows in the original data set. I.E. number of cells in adata.X
         '''
-        self.logger.info("BEGIN louvainID:{} num clusters:{}".format(self._louvainId, self.countClusters()))   
+        self.logger.info("BEGIN louvainID:{} numClusters:{}".format(self._louvainId, self.countClusters()))   
         start = timer()
         
         self.logger.info("Q:{}".format(self._Q))
@@ -659,7 +664,7 @@ class Louvain(object):
             
         self.logger.info("Q:{}".format(self._Q))  
         end = timer()      
-        self.logger.info("END louvainID:{}\ nun clusters: {}n time:{}"\
+        self.logger.info("END louvainID:{} numClusters: {} time:{}"\
                          .format(self._louvainId, self.countClusters(), timedelta(seconds=end-start))) 
         
         
@@ -809,7 +814,7 @@ class Louvain(object):
         nodeEdgesDict, betweenEdgeWeightsDict = self._phaseIICreateNewEdges()    
         self._fixThisBugUseTrueOOEncapsliations(nodeEdgesDict, betweenEdgeWeightsDict) 
         
-        self.logger.info("END louvainID:{}\n".format(self._louvainId)) 
+        self.logger.info("END louvainID:{} numCluster:{}\n".format(self._louvainId, self.countClusters())) 
 
     ############################################################                
     def __repr__(self):
