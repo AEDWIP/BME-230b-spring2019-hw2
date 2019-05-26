@@ -216,7 +216,7 @@ class LouvainTest(unittest.TestCase):
         # test change if node was removed from cluster
         removeChange = louvain.changeInModularityIfNodeRemoved(n0, fromCluster)
         self.logger.info("removeChange:{}".format(removeChange))
-        self.assertAlmostEqual(removeChange, 0.16)
+        self.assertAlmostEqual(removeChange, -0.16)
         
         # test change if node is added to cluster
         addChange = louvain.changeInModularityIfNodeAdded(n0, targetCluster)
