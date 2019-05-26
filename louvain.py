@@ -100,7 +100,7 @@ class Louvain(object):
         adata.obs['louvain'] = assignmentPS
 
         root._calculateQ()
-        Louvain.logger.info("END rootId:{} clustering algo compute time:{}: final Q:{}"\
+        Louvain.logger.debug("END rootId:{} clustering algo compute time:{}: final Q:{}"\
                             .format(root._louvainId, timedelta(seconds=end-start),root._Q))
         return root
         
@@ -125,15 +125,12 @@ class Louvain(object):
         louvainId = 0
         level = Louvain.buildGraph(louvainId, listOfEdges, listOfWeight)
         louvainId += 1
-        level._calculateQ() # TODO nice to have for debug, add argument to decide if user wants to run
-        level.logger.info("AEDWIP DEBUG: Q expected Q:0 actual Q:{}".format(level._Q))
         
         level._phaseI(numRows, isLouvainInit=True) # TODO: can probably get rid of isLouvainInit
-        
         level._calculateQ() # TODO nice to have for debug, add argument to decide if user wants to run
         level.logger.info("AEDWIP DEBUG: level0 after phase I Q:{}".format(level._Q))        
         
-        level.logger.warn("louvainId:{} clusterAssigments:\n{}".format(level._louvainId, level.getClusterAssigments()))
+        level.logger.debug("louvainId:{} clusterAssigments:\n{}".format(level._louvainId, level.getClusterAssigments()))
         
         # count the number of clusters
         previousNumClusters = level.countClusters()
@@ -146,15 +143,13 @@ class Louvain(object):
             
             # construct a new graph by consolidating nodes from previous level
             level._phaseII(isLouvainInit=False) # TODO: can probably get rid of isLouvainInit
-            level._calculateQ() # TODO nice to have for debug, add argument to decide if user wants to run  
-            level.logger.info("AEDWIP DEBUG:after phase II levelId:{} Q:{}".format(level._louvainId, level._Q)) 
                       
             # run clustering on consolidated nodes                      
             level._phaseI(numRows, isLouvainInit=False) # TODO: can probably get rid of isLouvainInit)
             level._calculateQ() # TODO nice to have for debug, add argument to decide if user wants to run
             level.logger.info("AEDWIP DEBUG:after phase I levelId:{} Q:{}".format(level._louvainId, level._Q)) 
                     
-            level.logger.warn("louvainId:{} clusterAssigments:\n{}".format(level._louvainId, level.getClusterAssigments()))
+            level.logger.debug("louvainId:{} clusterAssigments:\n{}".format(level._louvainId, level.getClusterAssigments()))
             
             # count the number of clusters
             numClusters = level.countClusters()
@@ -304,6 +299,8 @@ class Louvain(object):
         delta(x,y) is one iff x=y, 0 otherwise.
         '''
         self.logger.info("BEGIN")
+        start = timer()
+
         # note implemenation already multiplied by 1/2
         # TODO should we move the mulply out? it should technically be faster
         # does not effect Big O
@@ -342,7 +339,7 @@ class Louvain(object):
             modularitySumTerm += term 
         
 
-        self.logger.info("m:{} modularitySumTerm:{}".format(m, modularitySumTerm))
+        self.logger.debug("m:{} modularitySumTerm:{}".format(m, modularitySumTerm))
         self._Q = modularitySumTerm/(2*m)
         
         if not (-1.0 <= self._Q <= 1.0):
@@ -350,7 +347,10 @@ class Louvain(object):
             self.logger.error(eMsg)
             raise ValueError(eMsg)
         
-        self.logger.info("END _Q:{}\n".format(self._Q))
+        end = timer()        
+        self.logger.info("END _Q:{} time:{}\n".format(self._Q, timedelta(seconds=end-start)))
+        
+        return self._Q
         
     ############################################################  
     def changeInModularityIfNodeAdded(self, node, targetCluster):#, isLouvainInit=False
@@ -552,9 +552,6 @@ class Louvain(object):
                     raise ValueError(eMsg)
                 
             self._edges += c._getEdges()
-
-        # TODO: do we need Q? useful for debugging
-        self._calculateQ()
                         
     ############################################################  
     def modularityGainIfMove(self, fromCluster, targetCluster, node): # , isLouvainInit=False
@@ -601,7 +598,7 @@ class Louvain(object):
         self.logger.info("BEGIN louvainID:{} numClusters:{}".format(self._louvainId, self.countClusters()))   
         start = timer()
         
-        self.logger.info("Q:{}".format(self._Q))
+        self.logger.info("\tQ:{}".format(self._Q))
         
         # rework initialization
         # make sure cluster is init correctly
@@ -633,14 +630,13 @@ class Louvain(object):
         # 
         # the amount of unused space should not be an issue
         trackMovesMatrix = np.zeros((numRows, numRows),dtype=bool) 
-        self.logger.info("trackMovesMatrix.shape:{}".format(trackMovesMatrix.shape))        
+        self.logger.debug("\ttrackMovesMatrix.shape:{}".format(trackMovesMatrix.shape))        
         
         while isImproving:
             epochCount += 1           
             numMoves = 0 
-            startQ = self._Q
             start = timer()
-            self.logger.info("BEGIN EPOCH count:{} num clusters:{}".format(epochCount, self.countClusters()))
+            self.logger.info("\tBEGIN EPOCH count:{} num clusters:{}".format(epochCount, self.countClusters()))
             isImproving = False
 
                             
@@ -655,30 +651,15 @@ class Louvain(object):
                     # track moves to prevent cycles
                     possibleMove = (nodeId, candidateClusterId)
                     #if possibleMove in trackMoves :
-                    self.logger.debug("possibleMove:{}".format(possibleMove))
+                    self.logger.debug("\tpossibleMove:{}".format(possibleMove))
                     if trackMovesMatrix[possibleMove[0], possibleMove[1]]:
-                        self.logger.debug("bug possibleMove:{} in trackMoves  ".format(possibleMove))
+                        self.logger.debug("\tbug possibleMove:{} in trackMoves  ".format(possibleMove))
                         continue
                     #trackMoves.add(possibleMove)  level0 |trackMoves| = numCells x numCells, I think python sets get slow
                     trackMovesMatrix[possibleMove[0], possibleMove[1]] = True    
                                         
                     if node._clusterId == candidateClusterId:
                         continue        
-                    
-#                     for candidateNodeId in candidateNodeSet:
-#                         candidateNode = self._nodeLookup[candidateNodeId]
-#                         
-#                         targetClusterId = candidateNode._clusterId
-#                         if fromCluster._clusterId == targetClusterId:
-#                             # these edges are inside the same cluster as node
-#                             continue 
-#                         
-#                         targetCluster = self._clusters[targetClusterId]
-# #                         if targetCluster in testedClusters :
-# #                             self.logger.warning("bug? targetCluster:{} in testedClusters".format(targetCluster))
-# #                             continue
-# #                         testedClusters.add(targetCluster)
-                        
         
                     targetCluster = self._clusters[candidateClusterId]                        
                     predictedChange = self.modularityGainIfMove(fromCluster, targetCluster, node)
@@ -690,29 +671,21 @@ class Louvain(object):
                     change, node, fromC, toC = bestMove
                     bestMove = (-1, -1, -1, -1) # (changeInQ, node, fromCluster, toCluster
 
-                    self._Q += change
+                    #self._Q += change # ?? sum of changes can be > 1
                     #print('')
-                    self.logger.debug("Q:{}, change:{} nodeId:{} fromClusterId:{} toClusterId:{}"\
-                                     .format(self._Q, change, node._nodeId, fromC._clusterId, toC._clusterId))
+                    self.logger.debug("\tchange:{} nodeId:{} fromClusterId:{} toClusterId:{}"\
+                                     .format(change, node._nodeId, fromC._clusterId, toC._clusterId))
                     fromCluster.moveNode(targetCluster, node, self._nodeLookup, isLouvainInit)
                     numMoves += 1  
-                    
-            # do not remove empty clusters. they are need to map nodes to the root level cluster ids
-                    
-            #print('')
-#             for cid,c in self._clusters.items():
-#                 self.logger.debug(c)
+                                        
             end = timer()
-            self.logger.info("END   EPOCH Count:{} num clusters{} numMoves:{} Q:{} startQ:{} dq:{} time:{}"\
+            self.logger.info("\tEND   EPOCH Count:{} num clusters{} numMoves:{} time:{} Q{}"\
                              .format(epochCount, self.countClusters(), numMoves, 
-                                     self._Q, startQ, (self._Q - startQ), timedelta(seconds=end-start)))
+                                      timedelta(seconds=end-start), self._calculateQ()))
                 
-            
-        self.logger.info("Q:{}".format(self._Q))  
         end = timer()      
-        self.logger.info("END louvainID:{} numClusters: {} time:{}"\
+        self.logger.info("END louvainID:{} num non empty clusters: {} time:{}"\
                          .format(self._louvainId, self.countClusters(), timedelta(seconds=end-start))) 
-        
         
     ############################################################ 
     def _phaseIICreateNewEdges(self, isLouvainInit=False):      

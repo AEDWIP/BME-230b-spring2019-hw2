@@ -168,12 +168,12 @@ class KnnG():
         # you have to read the code to figure out how to call compute_connectivities_umap
         n_obs = self._adata.X.shape[0]
         
-        self.logger.info("type(knn_dists):{} knn_dists.shape:{}".format(type(knn_dists), knn_dists.shape))
-        self.logger.info("knn_dists[0:3:\n{}".format(knn_dists[0:3]))
+        self.logger.debug("type(knn_dists):{} knn_dists.shape:{}".format(type(knn_dists), knn_dists.shape))
+        self.logger.debug("knn_dists[0:3:\n{}".format(knn_dists[0:3]))
 
-        self.logger.info("type(knn_indices):{}".format(type(knn_indices)))
+        self.logger.debug("type(knn_indices):{}".format(type(knn_indices)))
         # does not have 'shape' self.logger.info("knn_indices.shape:{}".format(knn_indices.shape)
-        self.logger.info("knn_indices[0:3]:\n{}".format(knn_indices[0:3]))
+        self.logger.debug("knn_indices[0:3]:\n{}".format(knn_indices[0:3]))
         # ??? 
         
         # knn_indices is ?? array of rows. each contains the idx of its nearest neighbors
@@ -183,11 +183,11 @@ class KnnG():
                                                             n_obs, 
                                                             self._n_neighbors)
         
-        self.logger.info("type(distances):{}".format(type(distances)))
-        self.logger.info("distances:\n{}".format(distances))
+        self.logger.debug("type(distances):{}".format(type(distances)))
+        self.logger.debug("distances:\n{}".format(distances))
         
-        self.logger.info("type(connectivities):{}".format(type(connectivities)))
-        self.logger.info("connectivities:\n{}".format(connectivities))
+        self.logger.debug("type(connectivities):{}".format(type(connectivities)))
+        self.logger.debug("connectivities:\n{}".format(connectivities))
 
         self.logger.info("END")
         
