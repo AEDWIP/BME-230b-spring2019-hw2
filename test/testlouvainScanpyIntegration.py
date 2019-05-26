@@ -51,7 +51,8 @@ class LouvainScanpyIntegrationTest(unittest.TestCase):
         louvainLevel0._calculateQ() 
                
         # run phase I: find best cluster assignments
-        louvainLevel0._phaseI(isLouvainInit=True) 
+        numRows = 10 # number of nodes
+        louvainLevel0._phaseI(numRows, isLouvainInit=True) 
         
         ll_0_ClusterAssigments = louvainLevel0.getClusterAssigments()
         self.logger.info("level0 cluster assignments:\n{}".format(ll_0_ClusterAssigments))  
@@ -63,7 +64,7 @@ class LouvainScanpyIntegrationTest(unittest.TestCase):
         louvainLevel1._calculateQ()
         
         # lets assume this is the top level.
-        louvainLevel1._phaseI()     
+        louvainLevel1._phaseI(numRows)     
  
         ll_1_ClusterAssigments = louvainLevel1.getClusterAssigments()
         self.logger.info("level1 cluster assignments:\n{}".format(ll_1_ClusterAssigments))  
@@ -90,7 +91,8 @@ class LouvainScanpyIntegrationTest(unittest.TestCase):
                         (6,0), (7,0)
                        ]
         listOfWeight = [1 for i in listOfEdges]
-        root = Louvain.run(listOfEdges, listOfWeight)
+        numRows = 10# number of nodes
+        root = Louvain.run(listOfEdges, listOfWeight, numRows)
         rootClusterAssigments = root.getClusterAssigments()
         self.logger.info("louvainId: {} root cluster assigments:\n{}".format(root._louvainId, rootClusterAssigments))
         self.assertEqual(rootClusterAssigments, {9: [9, 6, 7, 8, 0, 1, 2, 3, 4, 5]})
@@ -159,6 +161,7 @@ class LouvainScanpyIntegrationTest(unittest.TestCase):
         self.logger.info("END\n")        
         
     ############################################################
+    @unittest.skip("skip this test it takes over 3 mins")
     def testGetAdataInput(self):
         '''
         TODO
@@ -178,6 +181,7 @@ class LouvainScanpyIntegrationTest(unittest.TestCase):
             listOfWeights = listOfWeights.A1
             
         listOfEdges = list(zip(sources, targets))
+        self.assertEqual(len(listOfEdges), 15473)
   
         self.logger.info("END\n")  
                

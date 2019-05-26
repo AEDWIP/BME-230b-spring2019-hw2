@@ -49,7 +49,8 @@ class LouvianPhaseTest(unittest.TestCase):
         listOfWeight = [1 for i in listOfEdges]
         louvainLevel0 = Louvain.buildGraph("trival graph", listOfEdges, listOfWeight)
         louvainLevel0._calculateQ()
-        louvainLevel0._phaseI(isLouvainInit=True) 
+        numRows = 3 # number of nodes
+        louvainLevel0._phaseI(numRows, isLouvainInit=True) 
         
         for clusterId, cluster in louvainLevel0._clusters.items():
             print()
@@ -77,7 +78,8 @@ class LouvianPhaseTest(unittest.TestCase):
         listOfWeight = [1 for i in listOfEdges]
         louvainLevel0 = Louvain.buildGraph("testPhaseI graph", listOfEdges, listOfWeight)
         louvainLevel0._calculateQ()
-        louvainLevel0._phaseI(isLouvainInit=True)
+        numRows = 5 # number of nodes
+        louvainLevel0._phaseI(numRows, isLouvainInit=True)
         
         for clusterId, cluster in louvainLevel0._clusters.items():
             print('')
@@ -129,7 +131,8 @@ class LouvianPhaseTest(unittest.TestCase):
         listOfWeight = [1 for i in listOfEdges]
         louvainLevel0 = Louvain.buildGraph("testPhaseII graph level0", listOfEdges, listOfWeight)
         louvainLevel0._calculateQ()
-        louvainLevel0._phaseI(isLouvainInit=True)    
+        numRows = 10 # the number of nodes
+        louvainLevel0._phaseI(numRows, isLouvainInit=True)    
         
         expectedAfterPhaseL0_I = {
             0:{'custerId': 0,  'numNodes':0 , 'weightsInsideCluster': 0, 'totalWeight': 0},
@@ -178,7 +181,8 @@ class LouvianPhaseTest(unittest.TestCase):
         # test Louvain algo would run Phase I on louvainLevel2
         # we have to calculate Q before phaseI
         louvainLevel1._calculateQ()
-        louvainLevel1._phaseI()
+        numRows = 10 # number of nodes        
+        louvainLevel1._phaseI(numRows)
         
         print('')
         self.logger.info("************ check L1 after phase I")
