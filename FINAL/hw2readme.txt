@@ -13,3 +13,5 @@ Python code:
 Required dataset:
   PBMC.merged.h5ad                          PBMC single-cell dataset
 
+Miscellaneous:
+  BME-230B-hw2-env.yml                      Conda environment specifications
