@@ -42,7 +42,7 @@ class Louvain(object):
             
         return ret
     
-   ############################################################
+    ############################################################
     @staticmethod
     def runWithAdata(adata):   
         '''
@@ -126,7 +126,13 @@ class Louvain(object):
         level = Louvain.buildGraph(louvainId, listOfEdges, listOfWeight)
         louvainId += 1
         level._calculateQ() # TODO nice to have for debug, add argument to decide if user wants to run
+        level.logger.info("AEDWIP DEBUG: Q expected Q:0 actual Q:{}".format(level._Q))
+        
         level._phaseI(numRows, isLouvainInit=True) # TODO: can probably get rid of isLouvainInit
+        
+        level._calculateQ() # TODO nice to have for debug, add argument to decide if user wants to run
+        level.logger.info("AEDWIP DEBUG: level0 after phase I Q:{}".format(level._Q))        
+        
         level.logger.warn("louvainId:{} clusterAssigments:\n{}".format(level._louvainId, level.getClusterAssigments()))
         
         # count the number of clusters
@@ -140,12 +146,15 @@ class Louvain(object):
             
             # construct a new graph by consolidating nodes from previous level
             level._phaseII(isLouvainInit=False) # TODO: can probably get rid of isLouvainInit
-            
-            # run clustering on consolidated nodes
-            level._calculateQ() # TODO nice to have for debug, add argument to decide if user wants to run            
+            level._calculateQ() # TODO nice to have for debug, add argument to decide if user wants to run  
+            level.logger.info("AEDWIP DEBUG:after phase II levelId:{} Q:{}".format(level._louvainId, level._Q)) 
+                      
+            # run clustering on consolidated nodes                      
             level._phaseI(numRows, isLouvainInit=False) # TODO: can probably get rid of isLouvainInit)
+            level._calculateQ() # TODO nice to have for debug, add argument to decide if user wants to run
+            level.logger.info("AEDWIP DEBUG:after phase I levelId:{} Q:{}".format(level._louvainId, level._Q)) 
+                    
             level.logger.warn("louvainId:{} clusterAssigments:\n{}".format(level._louvainId, level.getClusterAssigments()))
-            
             
             # count the number of clusters
             numClusters = level.countClusters()
@@ -277,7 +286,6 @@ class Louvain(object):
             self._clusterId += 1            
             self._clusters[cluster._clusterId] = cluster
            
-        # TODO: AEDWIP: should we be used addEdges ?? 
         n._addEdge(targetEdge) 
 
     ############################################################
@@ -313,11 +321,11 @@ class Louvain(object):
             
             # calculate the sigma term
             if  not nodeI._clusterId == nodeJ._clusterId:
-                self.logger.info("not in same cluster ni:{} cid:{} nj:{} cid:{}"\
+                self.logger.debug("not in same cluster ni:{} cid:{} nj:{} cid:{}"\
                                  .format(nodeI._nodeId, nodeI._clusterId, nodeJ._nodeId, nodeJ._clusterId))
                 continue
             else:
-                self.logger.info("ni:{} cid:{} nj:{} cid:{} adding to Q"\
+                self.logger.debug("ni:{} cid:{} nj:{} cid:{} adding to Q"\
                                  .format(nodeI._nodeId, nodeI._clusterId, nodeJ._nodeId, nodeJ._clusterId))
                 
             
@@ -326,11 +334,11 @@ class Louvain(object):
             kj = nodeJ.getSumAdjWeights()
             i = edge._srcId
             j = edge._targetId
-            print('') # AEDWIP:
-            self.logger.info("i:{} j:{} A{}{}:{} k{}:{} k{}:{} 2*m:{}".format(i,j, i, j, Aij, i, ki, j, kj, 2*m))
-            self.logger.info(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
+            #print('') # AEDWIP:
+            self.logger.debug("i:{} j:{} A{}{}:{} k{}:{} k{}:{} 2*m:{}".format(i,j, i, j, Aij, i, ki, j, kj, 2*m))
+            self.logger.debug(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
             term = Aij - (ki*kj) / (2*m) 
-            self.logger.info("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
+            self.logger.debug("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
             modularitySumTerm += term 
         
 
@@ -349,9 +357,12 @@ class Louvain(object):
         '''
         calculate change in Q if we add a node to a cluster
         
-        returns a value > 0
+        note: depending edge weight return value may be positive or negative
         
         formula publish in louvain paper does not work
+        
+        TODO: re-factor changeInModularityIfNodeAdded and changeInModularityIfNodeRemoved
+        they are almost identical 
         '''
         self.logger.debug("BEGIN") 
         
@@ -385,6 +396,39 @@ class Louvain(object):
                              .format(node._nodeId, targetNodeId, Aij, ki, kj, m))
             
         ret = ret * (1/(2*m))        
+        
+        # the assertion that adding edges always increase Q does not hold in general
+        # ni:990 
+        # term:-0.0038906029558859567 
+        # ti:883 
+        # Aij:3.2461485151277035e-05 
+        # ki:35.14117293896011 kj:6.981362672984684 
+        # m:62022.92125471043
+
+        
+#         if ret < 0.0: # strictly <= AEDWIP: TODO: level 0 phaseI lots of zeros TODO: BUG
+#             print()
+#             eMsg = "addChange:{} must be greater than  0  nodeId:{} fromCluster:{} targetCluster:{} "\
+#                               .format(ret, node._nodeId, self._clusterId,
+#                                        targetCluster._clusterId)
+#             self.logger.info(eMsg)  
+#             self.logger.info("book keeping bug? is nodes connected to targetCluster? are summary stats maintained correctly")            
+#             self.logger.info("node._weightsInClusterDict:{}".format(node._weightsInClusterDict.keys()))
+#             
+#             # debug
+#             for targetNodeId in nodeSet:
+#                 # edges have source and targets
+#                 targetNode = self._nodeLookup[targetNodeId]
+#                 # these edges would no longer in the cluster but between cluster
+#                 kj = targetNode.getSumAdjWeights()
+#                 Aij = node._edgesDict[targetNodeId]._weight
+#                 # multiply by 2 because links are modeled as directed edges
+#                 term = (2 * (Aij - (ki*kj/(2*m))))
+#                 ret += term
+#                 self.logger.info("ni:{} term:{} ti:{} Aij:{} ki:{} kj:{} m:{}"\
+#                                  .format(node._nodeId, term, targetNodeId, Aij, ki, kj, m))            
+#             #raise ValueError(eMsg)   
+                 
         self.logger.debug("END\n") 
         return ret    
     
@@ -393,9 +437,12 @@ class Louvain(object):
         '''
         calculate change in Q if we removed a node from a cluster
         
-        returns a value <= 0
+        depending on edge return value can be positive or negative
         
         formula publish in louvain paper does not work
+        
+        TODO: re-factor changeInModularityIfNodeAdded and changeInModularityIfNodeRemoved
+        they are almost identical 
         '''
         self.logger.debug("BEGIN")  
         
@@ -425,7 +472,7 @@ class Louvain(object):
                              .format(node._nodeId, targetNodeId, Aij, ki, kj, m))
             
         # 
-        ret = ret * (1/(2*m)) * -1
+        ret = ret * (1/(2*m))
                 
         self.logger.debug("END\n")  
         return ret
@@ -519,25 +566,25 @@ class Louvain(object):
         changeIfRemoveNode = self.changeInModularityIfNodeRemoved(node, fromCluster)
         changeIfAddNode = self.changeInModularityIfNodeAdded(node, targetCluster)
 
-        if changeIfAddNode < 0.0: # strictly <= AEDWIP: TODO: level 0 phaseI lots of zeros TODO: BUG
-            print()
-            eMsg = "addChange:{} must be greater than  0  nodeId:{} fromCluster:{} targetCluster:{} "\
-                              .format(changeIfAddNode, node._nodeId, fromCluster._clusterId,
-                                       targetCluster._clusterId)
-            self.logger.info(eMsg)  
-            self.logger.info("book keeping bug? is nodes connected to targetCluster? are summary stats maintained correctly")            
-            self.logger.info("node._weightsInClusterDict:{}".format(node._weightsInClusterDict.keys()))
-            #raise ValueError(eMsg)
+ 
+        # the assertion that removing edges always decrease Q does not hold in general
+        # this example was from add edge, only diff between and remove is sign
+        # ni:990 
+        # term:-0.0038906029558859567 
+        # ti:883 
+        # Aij:3.2461485151277035e-05 
+        # ki:35.14117293896011 kj:6.981362672984684 
+        # m:62022.92125471043        
         
-        if changeIfRemoveNode > 0.0: # strictly >= AEDWIP: TODO: level 0 phaseI lots of zeros TODO: BUG
-            eMsg = "removeChange:{} must be less than  0  nodeId:{} fromCluster:{} targetCluster:{} "\
-                              .format(changeIfRemoveNode, node._nodeId, fromCluster._clusterId,
-                                       targetCluster._clusterId)
-            print()
-            self.logger.info(eMsg)  
-            self.logger.info("book keeping bug? is nodes connected to targetCluster? are summary stats maintained correctly")                        
-            self.logger.info("node._weightsInClusterDict:{}".format(node._weightsInClusterDict.keys()))            
-            #raise ValueError(eMsg)        
+#         if changeIfRemoveNode > 0.0: # strictly >= AEDWIP: TODO: level 0 phaseI lots of zeros TODO: BUG
+#             eMsg = "removeChange:{} must be less than  0  nodeId:{} fromCluster:{} targetCluster:{} "\
+#                               .format(changeIfRemoveNode, node._nodeId, fromCluster._clusterId,
+#                                        targetCluster._clusterId)
+#             print()
+#             self.logger.info(eMsg)  
+#             self.logger.info("book keeping bug? is nodes connected to targetCluster? are summary stats maintained correctly")                        
+#             self.logger.info("node._weightsInClusterDict:{}".format(node._weightsInClusterDict.keys()))            
+#             #raise ValueError(eMsg)        
             
         ret = changeIfAddNode + changeIfRemoveNode
         self.logger.debug("ret:{} changeIfAddNode:{} loss:{}".format(ret, changeIfAddNode, changeIfRemoveNode, isLouvainInit=False))

@@ -86,7 +86,7 @@ class testDisjointGraphs(unittest.TestCase):
         
         # phase II
         louvainLevel1._phaseII(isLouvainInit=False) # TODO: can probably get rid of isLouvainInit)
-        self.logger.info("after phaseII() louvainLevel1:\n{}".format(louvainLevel1))
+        self.logger.info("after phaseII() louvainLevel1:\n{}".format(louvainLevel1)) this log line looks funnny
         l1Assignments = louvainLevel1.getClusterAssigments()
         self.logger.info("louvainLevel1 cluster assignments:\n{}".format(l1Assignments))
      
