@@ -38,10 +38,10 @@ class testDisjointGraphs(unittest.TestCase):
         
         # all other test assume weights are 1. set to a big number
         # that will make it easy to spot bugs in summary stats.
-        listOfWeight = [10 for i in listOfEdges]   
+        listOfWeight = [5, 5, 10, 10]   
         numRows = 4 # number of nodes
         
-        louvainLevel0 = Louvain.buildGraph("simple dis join  graph", listOfEdges, listOfWeight)
+        louvainLevel0 = Louvain.buildGraph("level 0", listOfEdges, listOfWeight)
         # check Q
         louvainLevel0._calculateQ()
         self.logger.info("after  buildGraph() louvainLevel0._Q:{}".format(louvainLevel0._Q))
@@ -71,14 +71,24 @@ class testDisjointGraphs(unittest.TestCase):
        
         # run phase I
         louvainLevel0._phaseI(numRows, isLouvainInit=True) # TODO: can probably get rid of isLouvainInit
-        self.logger.info("louvainLevel0:\n{}".format(louvainLevel0))
+        self.logger.info("after phase I() louvainLevel0:\n{}".format(louvainLevel0))
+        l0Assignments = louvainLevel0.getClusterAssigments()
+        self.logger.info("l0Assigments cluster assignments:\n{}".format(l0Assignments))        
         
         # check Q
         louvainLevel0._calculateQ()
-        self.logger.info("after phase I louvainLevel0._Q:{}".format(louvainLevel0._Q))
-        self.assertAlmostEqual(louvainLevel0._Q, 0.75)
+        self.logger.info("after phase I   louvainLevel0._Q:{}".format(louvainLevel0._Q))
+        self.assertAlmostEqual(louvainLevel0._Q, 0.7222222222222221)
              
-#         louvainLevel0._phaseI(numRows, isLouvainInit=True) 
+        # build next level
+        louvainLevel1 = Louvain.buildLouvain("level 1 ", louvainLevel0)
+        self.logger.info("after buildLouvain louvainLevel1\n{}".format(louvainLevel1))
+        
+        # phase II
+        louvainLevel1._phaseII(isLouvainInit=False) # TODO: can probably get rid of isLouvainInit)
+        self.logger.info("after phaseII() louvainLevel1:\n{}".format(louvainLevel1))
+        l1Assignments = louvainLevel1.getClusterAssigments()
+        self.logger.info("louvainLevel1 cluster assignments:\n{}".format(l1Assignments))
      
         self.logger.info("END\n")
 
