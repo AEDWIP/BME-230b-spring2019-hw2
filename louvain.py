@@ -276,7 +276,6 @@ class Louvain(object):
             cluster = Cluster(self._clusterId, [n])
             self._clusterId += 1            
             self._clusters[cluster._clusterId] = cluster
-            self._nodeLookup[nodeId] = n
            
         # TODO: AEDWIP: should we be used addEdges ?? 
         n._addEdge(targetEdge) 
@@ -301,7 +300,7 @@ class Louvain(object):
         # TODO should we move the mulply out? it should technically be faster
         # does not effect Big O
         m = self._getM()
-        self.logger.debug("m:{}".format(m))
+        self.logger.info("m:{}".format(m))
         
         modularitySumTerm = 0
         for edge in self._edges:
@@ -314,11 +313,11 @@ class Louvain(object):
             
             # calculate the sigma term
             if  not nodeI._clusterId == nodeJ._clusterId:
-                self.logger.debug("ni:{} cid:{} nj:{} cid:{} not in same cluster"\
+                self.logger.info("not in same cluster ni:{} cid:{} nj:{} cid:{}"\
                                  .format(nodeI._nodeId, nodeI._clusterId, nodeJ._nodeId, nodeJ._clusterId))
                 continue
             else:
-                self.logger.debug("ni:{} cid:{} nj:{} cid:{} adding to Q"\
+                self.logger.info("ni:{} cid:{} nj:{} cid:{} adding to Q"\
                                  .format(nodeI._nodeId, nodeI._clusterId, nodeJ._nodeId, nodeJ._clusterId))
                 
             
@@ -328,10 +327,10 @@ class Louvain(object):
             i = edge._srcId
             j = edge._targetId
             print('') # AEDWIP:
-            self.logger.debug("i:{} j:{} A{}{}:{} k{}:{} k{}:{} 2*m:{}".format(i,j, i, j, Aij, i, ki, j, kj, 2*m))
-            self.logger.debug(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
+            self.logger.info("i:{} j:{} A{}{}:{} k{}:{} k{}:{} 2*m:{}".format(i,j, i, j, Aij, i, ki, j, kj, 2*m))
+            self.logger.info(" ki*kj / 2*m == {}".format( (ki*kj) / (2*m)))
             term = Aij - (ki*kj) / (2*m) 
-            self.logger.debug("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
+            self.logger.info("(Aij:{} - ki:{}*kj:{}/2m:{}) == {}".format(Aij, ki, kj, m, term))
             modularitySumTerm += term 
         
 
@@ -594,7 +593,7 @@ class Louvain(object):
             numMoves = 0 
             startQ = self._Q
             start = timer()
-            self.logger.info("BEGIN EPOCH count:{}  num clusters:{}".format(epochCount, self.countClusters()))
+            self.logger.info("BEGIN EPOCH count:{} num clusters:{}".format(epochCount, self.countClusters()))
             isImproving = False
 
                             
@@ -657,7 +656,7 @@ class Louvain(object):
 #             for cid,c in self._clusters.items():
 #                 self.logger.debug(c)
             end = timer()
-            self.logger.info("END EPOCH   Count:{} num clusters{} numMoves:{} Q:{} startQ:{} dq:{} time:{}"\
+            self.logger.info("END   EPOCH Count:{} num clusters{} numMoves:{} Q:{} startQ:{} dq:{} time:{}"\
                              .format(epochCount, self.countClusters(), numMoves, 
                                      self._Q, startQ, (self._Q - startQ), timedelta(seconds=end-start)))
                 
@@ -823,9 +822,10 @@ class Louvain(object):
         ret += "\tQ:{}".format(self._Q)
         ret += "\tnumber of Nodes:{}\n".format(len(self._nodeLookup.keys()))
         ret += "\tnumber of edges:{}\n".format(len(self._edges))
-        ret += "\tnumber of clusters:{}\n".format(len(self._clusters.keys()))
-        for c in self._clusters:
-            ret += "\t{}\n".format(c)
+        ret += "\tnumber of clusters:{}\n".format(self.countClusters())
+        for cluster in self._clusters.values():
+            if len(cluster._nodeList) > 0:
+                ret += "\t{}\n".format(cluster)
                         
         return ret  
     

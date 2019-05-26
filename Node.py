@@ -37,9 +37,13 @@ class Node(object):
         
     ############################################################                
     def __repr__(self):
-        return "clusterId:{} nodeId:{} numEdges:{} adjEdgeWeights:{}".format(self._clusterId, 
+        str1 = "clusterId:{} nodeId:{} numEdges:{} adjEdgeWeights:{}".format(self._clusterId, 
                                                            self._nodeId, len(self._edgesDict.keys()),
                                                            self._adjacentEdgeWeights)
+        str2 = "\n_weightsInClusterDict{}".format(self._weightsInClusterDict)
+        str3 = "\n_edgesDict{}".format(self._edgesDict)
+        
+        return str1 + str2 + str3
     
     ############################################################                    
     def __hash__(self):
