@@ -152,10 +152,10 @@ def main(myCommandLine=None):
             clusterAssignments = level.getClusterAssigments()
             numCluster = level.countClusters()
             msg = "clustering completed successfully cluster assignments for"
-            hdrMsg = "######## {} level:{} numClusters:{}:"\
+            hdrMsg = "######## {} level:{} numClusters:{}\n:"\
                 .format(msg, level._louvainId, numCluster)
             f.write(hdrMsg)
-            f.write(clusterAssignments)
+            f.write("{}\n".format(clusterAssignments))
             level = level._leafLouvain
         
     logger.warning("END")
