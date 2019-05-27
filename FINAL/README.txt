@@ -12,6 +12,7 @@ Python code (each of these have main() methods, so you can run them individually
 
 Louvain code for 2a:
   louvain.py				    Implementation of phase I and II
+  Cluster.py				    Implementation of graph
   Edge.py				    Implementation of graph edge
   Node.py				    Implementation of graph node
   louvainDriverShell.py			    Driver for louvain code
