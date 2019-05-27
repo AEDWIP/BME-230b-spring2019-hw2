@@ -117,38 +117,87 @@ class LouvianPhaseTest(unittest.TestCase):
         
         self.logger.info("END\n")        
         
+    ############################################################        
+    def initObjectGraph(self, louvain):
+        self.logger.info("BEGIN")
+                # init node caches
+        for nId in louvain._nodeLookup.keys():
+            node = louvain._nodeLookup[nId]
+            # because we used _addEdge() instead of addEdges()
+            # we need to make sure cache is set up
+            node._initKiinCache(louvain._nodeLookup)      
+            
+        # force nodes to calc cached values
+        for nodeId in louvain._nodeLookup.keys():
+            node = louvain._nodeLookup[nodeId]
+            node.getSumAdjWeights()
+            node.getSumOfWeightsInsideCluster(nodeId, louvain._nodeLookup)
+            
+        # force clusters to calc cached values
+        for clusterId in louvain._clusters.keys():
+            # run lazy eval
+            cluster = louvain._clusters[clusterId]
+            cluster.getSumOfWeights()
+            cluster.getSumOfWeightsInsideCluster(louvain._nodeLookup) 
+            
+        self.logger.info("END\n")
+        
     ############################################################
     def testPhaseIICreateNewEdges(self):
         self.logger.info("BEGIN")
         listOfEdges = [(0,1), (1,0),    (0,2), (2,0),    (0,3), (3,0), (1,2), (2,1),
                        (3,4), (4,3) ]
-        listOfWeight = [1 for i in listOfEdges]
+        # choose weights to force into two cluster
+        listOfWeight = [10,   10,       10,    10,       2,      2,    10,    10 ]
+        listOfWeight += [10,  10]
         
         l0 = Louvain.buildGraph("l0", listOfEdges, listOfWeight)   
-        self.logger.info("l0:\n{}".format(l0)) 
-        
-        # makes sure is configured as expected
-        expectedL0 = {
-            0 : {'clusterId':0 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':3},
-            1 : {'clusterId':1 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':2},
-            2 : {'clusterId':2 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':2},
-            3 : {'clusterId':3 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':2},
-            4 : {'clusterId':4 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':1}
+        # check graph is configured as expected
+        self.logger.info("l0 before phase I:\n{}".format(l0)) 
+        expectedL0BeforePhaseI = {
+            0 : {'clusterId':0 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':22},
+            1 : {'clusterId':1 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':20},
+            2 : {'clusterId':2 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':20},
+            3 : {'clusterId':3 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':12},
+            4 : {'clusterId':4 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':10}
             }
-        self.checkClusters(expectedL0, l0._clusters)
+        self.checkClusters(expectedL0BeforePhaseI, l0._clusters)        
         
-        # at this ponit each node is in a separate cluster
-        # create two cluster 
-        c0NodeList = [l0._nodeLookup[0], l0._nodeLookup[1], l0._nodeLookup[2]]
-        c0 = Cluster(0, c0NodeList)  
-        c1NodeList = [l0._nodeLookup[3], l0._nodeLookup[4]]        
-        c1 = Cluster(1, c1NodeList)   
+        l0._phaseI(numRows=5, isLouvainInit=True)
+        self.logger.info("l0 after phase I:\n{}".format(l0)) 
         
+        
+#         # makes sure is configured as expected
+#         expectedL0 = {
+#             0 : {'clusterId':0 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':3},
+#             1 : {'clusterId':1 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':2},
+#             2 : {'clusterId':2 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':2},
+#             3 : {'clusterId':3 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':2},
+#             4 : {'clusterId':4 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':1}
+#             }
+#         self.checkClusters(expectedL0, l0._clusters)
+#         
+#         # at this ponit each node is in a separate cluster
+#         # create two cluster 
+#         c0NodeList = [l0._nodeLookup[0], l0._nodeLookup[1], l0._nodeLookup[2]]
+#         c0 = Cluster(0, c0NodeList)  
+#         c1NodeList = [l0._nodeLookup[3], l0._nodeLookup[4]]        
+#         c1 = Cluster(1, c1NodeList)   
+        
+        #
         # create a new louvain level that looks like phase I -> phase II -> phase I
+        #
         l1 = Louvain("l1", [c0, c1]) 
+        self.initObjectGraph(l1)
+#         # init node in graph
+#         for node in  l1._nodeLookup.values():
+#             node._initKiinCache(graphNodesLookup=l1._nodeLookup)
+            
         self.logger.info("l1:\n{}".format(l1))
         
+        #
         # test edge creation
+        #
         l2  = Louvain.buildLouvain('l2', l1)
         l2._phaseIICreateNewEdges()
         

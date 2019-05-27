@@ -504,10 +504,9 @@ class Louvain(object):
         return self.Q   
         
     ############################################################
-    def __init__(self, louvainId, clusters=None):
+    def __init__(self, louvainId, clustersList=None):
         '''
         TODO"
-        calculates modularity 
         
         should only be used by unit test
         
@@ -528,7 +527,7 @@ class Louvain(object):
         # list of all the edges in the graph
         self._edges = []
         
-        if not clusters:
+        if not clustersList:
             # called from either unit test or buildGraph()
             return   
              
@@ -536,16 +535,16 @@ class Louvain(object):
 #             self.logger.warning("self is not initialized. this is okay if you are running a unit test")
 #             return
         
-        for c in clusters:
+        for c in clustersList:
             # TODO: AEDWIP clean up
             self._clusters[c._clusterId] = c        
         
-        for clusterId, c in self._clusters.items():
+        for c in self._clusters.values():
             nodes = c._getNodes()
             for n in nodes:
                 if n._nodeId not in self._nodeLookup:
                     self._nodeLookup[n._nodeId] = n
-                    self.logger.debug("adding node:{}".format(n._nodeId))
+                    self.logger.info("adding node:{}".format(n._nodeId))
                 else:
                     eMsg = "processing cluster:{} node:{} was already in  _nodeLookup".format(c._clusterId, n._nodeId)
                     self.logger.error(eMsg)
@@ -673,7 +672,7 @@ class Louvain(object):
 
                     #self._Q += change # ?? sum of changes can be > 1
                     #print('')
-                    self.logger.debug("\tchange:{} nodeId:{} fromClusterId:{} toClusterId:{}"\
+                    self.logger.info("\tchange:{} nodeId:{} fromClusterId:{} toClusterId:{}"\
                                      .format(change, node._nodeId, fromC._clusterId, toC._clusterId))
                     fromCluster.moveNode(targetCluster, node, self._nodeLookup, isLouvainInit)
                     numMoves += 1  
