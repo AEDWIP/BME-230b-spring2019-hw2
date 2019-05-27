@@ -646,7 +646,7 @@ class Louvain(object):
                 # Q will only improve if we are moving into a cluster that has a node 
                 # we are connected to
                 fromCluster = self._clustersLookup[node._clusterId]
-                for candidateClusterId, candidateNodeSet in node._nodesInClusterDict.items():
+                for candidateClusterId in node._nodesInClusterDict.keys():
                     # track moves to prevent cycles
                     possibleMove = (nodeId, candidateClusterId)
                     #if possibleMove in trackMoves :
@@ -674,7 +674,7 @@ class Louvain(object):
                     #print('')
                     self.logger.info("\tchange:{} nodeId:{} fromClusterId:{} toClusterId:{}"\
                                      .format(change, node._nodeId, fromC._clusterId, toC._clusterId))
-                    fromCluster.moveNode(targetCluster, node, self._nodeLookup, isLouvainInit)
+                    fromCluster.moveNode(toC, node, self._nodeLookup, isLouvainInit)
                     numMoves += 1  
                                         
             end = timer()
