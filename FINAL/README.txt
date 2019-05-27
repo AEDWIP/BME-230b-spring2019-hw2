@@ -15,7 +15,6 @@ Louvain code for 2a:
   louvainDriverShell.py			    Driver for louvain code
 
 Unit tests:
-   LouvainSimpleTest.py.save	
    testLouvainSimple.py
    testlouvain.py
    testlouvainPhase.py
