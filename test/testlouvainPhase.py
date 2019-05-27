@@ -52,7 +52,7 @@ class LouvianPhaseTest(unittest.TestCase):
         numRows = 3 # number of nodes
         louvainLevel0._phaseI(numRows, isLouvainInit=True) 
         
-        for clusterId, cluster in louvainLevel0._clusters.items():
+        for clusterId, cluster in louvainLevel0._clustersLookup.items():
             print()
             self.logger.info("cluserId:{}".format(clusterId))
             self.logger.info(cluster)
@@ -63,7 +63,7 @@ class LouvianPhaseTest(unittest.TestCase):
                     2 : {'clusterId':2, 'numNodes':0, 'weightsInsideCluster':0, 'totalWeight':0}
                     }
             
-        self.checkClusters(expected, louvainLevel0._clusters)
+        self.checkClusters(expected, louvainLevel0._clustersLookup)
             
         self.assertEqual(louvainLevel0._Q, 0.5)
         
@@ -81,7 +81,7 @@ class LouvianPhaseTest(unittest.TestCase):
         numRows = 5 # number of nodes
         louvainLevel0._phaseI(numRows, isLouvainInit=True)
         
-        for clusterId, cluster in louvainLevel0._clusters.items():
+        for clusterId, cluster in louvainLevel0._clustersLookup.items():
             print('')
             self.logger.info("cluserId:{}".format(clusterId))
             self.logger.info(cluster)
@@ -94,14 +94,14 @@ class LouvianPhaseTest(unittest.TestCase):
             4 : {'clusterId':4, 'numNodes':2, 'weightsInsideCluster':2, 'totalWeight':3}
             }
         
-        self.checkClusters(expected, louvainLevel0._clusters)
+        self.checkClusters(expected, louvainLevel0._clustersLookup)
 
-        c3 = louvainLevel0._clusters[3]
+        c3 = louvainLevel0._clustersLookup[3]
         for n in c3._nodeList:
             self.logger.info("clusterId:{}, nodeId:{}".format(c3._clusterId, n._nodeId))
             
         print('')
-        c4 = louvainLevel0._clusters[4]
+        c4 = louvainLevel0._clustersLookup[4]
         for n in c4._nodeList:
             self.logger.info("clusterId:{}, nodeId:{}".format(c4._clusterId, n._nodeId))  
             
@@ -111,7 +111,7 @@ class LouvianPhaseTest(unittest.TestCase):
             }
         
         for clusterId in expectedNodesInCluster.keys():
-            c = louvainLevel0._clusters[clusterId]  
+            c = louvainLevel0._clustersLookup[clusterId]  
             nodeIds = [n._nodeId for n in c._nodeList]     
             self.assertEqual(sorted(nodeIds), sorted(expectedNodesInCluster[clusterId]))
         
@@ -134,9 +134,9 @@ class LouvianPhaseTest(unittest.TestCase):
             node.getSumOfWeightsInsideCluster(nodeId, louvain._nodeLookup)
             
         # force clusters to calc cached values
-        for clusterId in louvain._clusters.keys():
+        for clusterId in louvain._clustersLookup.keys():
             # run lazy eval
-            cluster = louvain._clusters[clusterId]
+            cluster = louvain._clustersLookup[clusterId]
             cluster.getSumOfWeights()
             cluster.getSumOfWeightsInsideCluster(louvain._nodeLookup) 
             
@@ -151,8 +151,11 @@ class LouvianPhaseTest(unittest.TestCase):
         listOfWeight = [10,   10,       10,    10,       2,      2,    10,    10 ]
         listOfWeight += [10,  10]
         
-        l0 = Louvain.buildGraph("l0", listOfEdges, listOfWeight)   
+        l0 = Louvain.buildGraph("l0", listOfEdges, listOfWeight) 
+        
+        #  
         # check graph is configured as expected
+        #
         self.logger.info("l0 before phase I:\n{}".format(l0)) 
         expectedL0BeforePhaseI = {
             0 : {'clusterId':0 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':22},
@@ -161,12 +164,32 @@ class LouvianPhaseTest(unittest.TestCase):
             3 : {'clusterId':3 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':12},
             4 : {'clusterId':4 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':10}
             }
-        self.checkClusters(expectedL0BeforePhaseI, l0._clusters)        
+        self.checkClusters(expectedL0BeforePhaseI, l0._clustersLookup)        
+        
+        # check Nodes:
+        expectedL0NodesBeforePhaseI = {
+            0 : { 'nicd' : {1: {1}, 2: {2}, 3: {3}}, 'wicd': {1: 10, 2: 10, 3: 2} },
+            1 : { 'nicd' : {0: {0}, 2: {2}},         'wicd': {0: 10, 2: 10}       },
+            2 : { 'nicd' : {0: {0}, 1: {1}},         'wicd': {0: 10, 1: 10}       },
+            3 : { 'nicd' : {0: {0}, 4: {4}},         'wicd': {0: 2, 4: 10}        },
+            4 : { 'nicd' : {3: {3}},                 'wicd': {3: 10}              }
+            }
+
+        for cluster in l0._clustersLookup.values():
+            for node in cluster._nodeList:
+                self.logger.info("nodeId:{}\n\t _nodesInClusterDict:{}\n\t_weightsInClusterDict:{}"\
+                                 .format(node._nodeId, node._nodesInClusterDict, node._weightsInClusterDict))
+                expected = expectedL0NodesBeforePhaseI[node._nodeId]
+                ret = {'nicd': node._nodesInClusterDict, 'wicd':node._weightsInClusterDict}
+                
+                self.assertEqual(ret, expected, "clusterId:{} nodeId:{}"\
+                                 .format(cluster._clusterId, node._nodeId))
         
         l0._phaseI(numRows=5, isLouvainInit=True)
         self.logger.info("l0 after phase I:\n{}".format(l0)) 
         
         
+        AEDWIP        
 #         # makes sure is configured as expected
 #         expectedL0 = {
 #             0 : {'clusterId':0 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':3},
@@ -175,7 +198,7 @@ class LouvianPhaseTest(unittest.TestCase):
 #             3 : {'clusterId':3 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':2},
 #             4 : {'clusterId':4 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':1}
 #             }
-#         self.checkClusters(expectedL0, l0._clusters)
+#         self.checkClusters(expectedL0, l0._clustersLookup)
 #         
 #         # at this ponit each node is in a separate cluster
 #         # create two cluster 
@@ -239,10 +262,10 @@ class LouvianPhaseTest(unittest.TestCase):
         
         self.logger.info("TODO: empty clusters should be pruned, notice")
         
-        self.checkClusters(expectedAfterPhaseL0_I, louvainLevel0._clusters)
+        self.checkClusters(expectedAfterPhaseL0_I, louvainLevel0._clustersLookup)
         
         for cId in [5, 9]:
-            nodeIdList = sorted([n._nodeId for n in louvainLevel0._clusters[cId]._nodeList])
+            nodeIdList = sorted([n._nodeId for n in louvainLevel0._clustersLookup[cId]._nodeList])
             self.logger.info("clusterId:{} nodeList[{}]".format(cId, nodeIdList))
         
         # check phase II
@@ -251,17 +274,17 @@ class LouvianPhaseTest(unittest.TestCase):
         
         print('')
         self.logger.info("************ check L1 phase II")
-        for clusterId, cluster in louvainLevel1._clusters.items():
+        for clusterId, cluster in louvainLevel1._clustersLookup.items():
             self.logger.info("clusterId:{} cluster:{}".format(clusterId,cluster))
             
         expectedAfterPhaseL1_II = {
             5 : {'cluster':5, 'numNodes':1, 'weightsInsideCluster':0, 'totalWeight':2},
             9 : {'cluster':9, 'numNodes':1, 'weightsInsideCluster':0, 'totalWeight':2},
             }
-        self.checkClusters(expectedAfterPhaseL1_II, louvainLevel1._clusters)
+        self.checkClusters(expectedAfterPhaseL1_II, louvainLevel1._clustersLookup)
         
         # check the node caches are set up correctl
-        for clusterId, cluster in louvainLevel1._clusters.items():
+        for clusterId, cluster in louvainLevel1._clustersLookup.items():
             for node in cluster._nodeList:
                 self.logger.info("clusterId:{} nodeId:{} _weightsInClusterDict:{}"\
                           .format(clusterId, node._nodeId, node._weightsInClusterDict))
@@ -276,7 +299,7 @@ class LouvianPhaseTest(unittest.TestCase):
         
         print('')
         self.logger.info("************ check L1 after phase I")
-        for clusterId, cluster in louvainLevel1._clusters.items():
+        for clusterId, cluster in louvainLevel1._clustersLookup.items():
             self.logger.info("clusterId:{} cluster:{}".format(clusterId,cluster))        
         
         self.logger.info("END\n")

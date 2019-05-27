@@ -33,7 +33,7 @@ class Louvain(object):
         returns the number of non empty clusters
         '''
         ret = 0
-        for cluster in self._clusters.values():
+        for cluster in self._clustersLookup.values():
             if not cluster._nodeList:
                 # empty cluster
                 continue
@@ -182,7 +182,7 @@ class Louvain(object):
 
         ret = Louvain(louvainId, None)
         ret._leafLouvain = None                
-        ret._clusters = dict()  # key is clusterId, value is cluster object
+        ret._clustersLookup = dict()  # key is clusterId, value is cluster object
         
         # dictionary of all the the nodes in the graph
         # key is nodeId, value is node object
@@ -251,7 +251,7 @@ class Louvain(object):
         Louvain.logger.info("BEGIN louvainID:{}".format(louvainId))        
         ret = Louvain(louvainId, None)
         ret._leafLouvain = leafLouvain        
-        ret._clusters = dict()  # key is clusterId, value is cluster object
+        ret._clustersLookup = dict()  # key is clusterId, value is cluster object
         
         # dictionary of all the the nodes in the graph
         # key is nodeId, value is node object
@@ -279,7 +279,7 @@ class Louvain(object):
             self._nodeLookup[nodeId] = n
             cluster = Cluster(self._clusterId, [n])
             self._clusterId += 1            
-            self._clusters[cluster._clusterId] = cluster
+            self._clustersLookup[cluster._clusterId] = cluster
            
         n._addEdge(targetEdge) 
 
@@ -479,7 +479,7 @@ class Louvain(object):
         
     ############################################################    
     def _forceAllLazyEval(self):
-        for clusterId,c in self._clusters.items():
+        for clusterId,c in self._clustersLookup.items():
             c.getSumOfWeights()
             c.getSumOfWeightsInsideCluster(self._nodeLookup)           
     
@@ -493,7 +493,7 @@ class Louvain(object):
         '''
         if not self._m :
             m = 0
-            for clusterId, cluster in self._clusters.items():
+            for clusterId, cluster in self._clustersLookup.items():
                 m += cluster._getM()
             self._m = m
     
@@ -516,7 +516,7 @@ class Louvain(object):
         '''
         self._louvainId = louvainId
         self._leafLouvain = None                        
-        self._clusters = dict()
+        self._clustersLookup = dict()
         self._Q = None
         self._m = None
         
@@ -531,15 +531,15 @@ class Louvain(object):
             # called from either unit test or buildGraph()
             return   
              
-#         if not self._clusters:
+#         if not self._clustersLookup:
 #             self.logger.warning("self is not initialized. this is okay if you are running a unit test")
 #             return
         
         for c in clustersList:
             # TODO: AEDWIP clean up
-            self._clusters[c._clusterId] = c        
+            self._clustersLookup[c._clusterId] = c        
         
-        for c in self._clusters.values():
+        for c in self._clustersLookup.values():
             nodes = c._getNodes()
             for n in nodes:
                 if n._nodeId not in self._nodeLookup:
@@ -601,7 +601,7 @@ class Louvain(object):
         
         # rework initialization
         # make sure cluster is init correctly
-        for cId, c in self._clusters.items():
+        for cId, c in self._clustersLookup.items():
             c.getSumOfWeightsInsideCluster(self._nodeLookup)
             c.getSumOfWeights()
         
@@ -645,7 +645,7 @@ class Louvain(object):
                 
                 # Q will only improve if we are moving into a cluster that has a node 
                 # we are connected to
-                fromCluster = self._clusters[node._clusterId]
+                fromCluster = self._clustersLookup[node._clusterId]
                 for candidateClusterId, candidateNodeSet in node._nodesInClusterDict.items():
                     # track moves to prevent cycles
                     possibleMove = (nodeId, candidateClusterId)
@@ -660,7 +660,7 @@ class Louvain(object):
                     if node._clusterId == candidateClusterId:
                         continue        
         
-                    targetCluster = self._clusters[candidateClusterId]                        
+                    targetCluster = self._clustersLookup[candidateClusterId]                        
                     predictedChange = self.modularityGainIfMove(fromCluster, targetCluster, node)
                     if predictedChange > bestMove[K_CHANGE_IN_Q] and predictedChange > 0:
                         bestMove = (predictedChange, node, fromCluster, targetCluster)
@@ -823,7 +823,7 @@ class Louvain(object):
             self._nodeLookup[newNodeId] = newNode
             # create new cluster
             newCluster = Cluster(newClusterId, [newNode])
-            self._clusters[newClusterId] = newCluster            
+            self._clustersLookup[newClusterId] = newCluster            
             
         # add edges to nodes       
         for newNodeId, edgeSet in nodeEdgesDict.items():
@@ -848,9 +848,9 @@ class Louvain(object):
             node.getSumOfWeightsInsideCluster(nodeId, self._nodeLookup)
             
         # force clusters to calc cached values
-        for clusterId in self._clusters.keys():
+        for clusterId in self._clustersLookup.keys():
             # run lazy eval
-            cluster = self._clusters[clusterId]
+            cluster = self._clustersLookup[clusterId]
             cluster.getSumOfWeights()
             cluster.getSumOfWeightsInsideCluster(self._nodeLookup) 
                                
@@ -874,7 +874,7 @@ class Louvain(object):
         ret += "\tnumber of Nodes:{}\n".format(len(self._nodeLookup.keys()))
         ret += "\tnumber of edges:{}\n".format(len(self._edges))
         ret += "\tnumber of clusters:{}\n".format(self.countClusters())
-        for cluster in self._clusters.values():
+        for cluster in self._clustersLookup.values():
             if len(cluster._nodeList) > 0:
                 ret += "\t{}\n".format(cluster)
                         
@@ -896,7 +896,7 @@ class Louvain(object):
         if not self._leafLouvain:
             # map
             ret = {}
-            for clusterId, cluster in self._clusters.items():
+            for clusterId, cluster in self._clustersLookup.items():
                 if not cluster._nodeList:
                     # cluster is empty
                     continue
@@ -908,7 +908,7 @@ class Louvain(object):
         else:
             leafAssigment = self._leafLouvain.getClusterAssigments()
             ret = {}
-            for clusterId, cluster in self._clusters.items():
+            for clusterId, cluster in self._clustersLookup.items():
                 if not cluster._nodeList :
                     # cluster is empty
                     continue
