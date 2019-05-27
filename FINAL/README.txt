@@ -16,7 +16,7 @@ Louvain code for 2a:
 
 Unit tests:
    LouvainSimpleTest.py.save	
-   testLouvainSimple.		
+   testLouvainSimple.py
    testlouvain.py
    testlouvainPhase.py
    testlouvainScanpyIntegration.py
