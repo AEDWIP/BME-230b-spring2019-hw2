@@ -167,7 +167,7 @@ class Louvain(object):
         '''
         use this factory method to bootstrap from anadata.
         
-        assigns each cell to its own cluster and calculates modularity
+        assigns each cell to its own cluster 
         
         arguments
             listOfEdges: 
@@ -221,13 +221,13 @@ class Louvain(object):
                 tmpDirectedEdgeLookup.add((node1Id, node2Id))
                 edge1 = Edge(weight, srcId=node1Id, targetId=node2Id)
                 ret._edges.append(edge1)
-                ret._build(node1Id, targetEdge=edge1)
+                ret._buildNodeAndCluster(node1Id, targetEdge=edge1)
 
             if not (node2Id, node1Id) in tmpDirectedEdgeLookup:
                 tmpDirectedEdgeLookup.add((node2Id, node1Id))  
                 edge2 = Edge(weight, srcId=node2Id, targetId=node1Id)
                 ret._edges.append(edge2)
-                ret._build(node2Id, targetEdge=edge2)
+                ret._buildNodeAndCluster(node2Id, targetEdge=edge2)
                 
         for nodeId, node in ret._nodeLookup.items():
             node._initKiinCache(graphNodesLookup=ret._nodeLookup)
@@ -268,9 +268,9 @@ class Louvain(object):
         return ret
         
     ############################################################
-    def _build(self, nodeId, targetEdge):
+    def _buildNodeAndCluster(self, nodeId, targetEdge):
         '''
-        todo:
+        TODO
         '''
         if nodeId in self._nodeLookup:
             n = self._nodeLookup[nodeId]
@@ -691,7 +691,6 @@ class Louvain(object):
     ############################################################ 
     def _phaseIICreateNewEdges(self, isLouvainInit=False):      
         '''
-        TODO
         creates edges from leafLouvain clusters
         
         does not calculate weights use betweenEdgeWeightsDict to adjust weights
@@ -703,6 +702,7 @@ class Louvain(object):
             betweenEdgeWeightsDict 
                 key is (srcId:targetId) value is list of weight of leaf edges
                 be careful not to double weight. keys will be double entry (a,b) and (b,a)
+               
         '''
         self.logger.info("BEGIN")   
         
@@ -755,20 +755,16 @@ class Louvain(object):
         self.logger.info("END\n") 
         return nodeEdgesDict, betweenEdgeWeightsDict, 
         
-
     ############################################################     
-    def _fixThisBugUseTrueOOEncapsliations(self, nodeEdgesDict, betweenEdgeWeightsDict):
+    def _calculatePhaseIIEdgeWeights(self):
         '''
-        do not be lazy! it leads to bugs
-        
-        coded in haste. assume oh all the code is same package
-        no need to implement accessor fuctions. This lead to 
-        lots of issue.
-        
-        we need to construct the full object graph before calculating
-        any of the values
+        The second phase of the algorithm consists in building a new network whose nodes
+        are now the communities found during the first phase. To do so, the weights of 
+        the links between the new nodes are given by the sum of the weight of the links
+        between nodes in the corresponding two communities         
         '''
-        self.logger.info("BEGIN lovainId:{}".format(self._louvainId))
+        aedwip
+        self.logger.info("BEGIN")
         # calculate edge weights
         for nodeId in nodeEdgesDict.keys():
             edges = nodeEdgesDict[nodeId]
@@ -783,7 +779,42 @@ class Louvain(object):
             
         #print()
         for k,v in betweenEdgeWeightsDict.items():
-            self.logger.debug("betweenEdgeWeightsDict key:{} listOfWeights:{}".format(k,v))        
+            self.logger.debug("betweenEdgeWeightsDict key:{} listOfWeights:{}".format(k,v)) 
+            
+        self.logger.info("END\n")
+                   
+    ############################################################     
+    def _initPhaseIIObjGraph(self, nodeEdgesDict, betweenEdgeWeightsDict):
+        '''
+        we need to construct the full object graph before calculating
+        any of the values
+                
+        do not be lazy! it leads to bugs
+        
+        coded in haste. assume of all the code is same package
+        no need to implement accessor functions. This lead to 
+        lots of issue. OO Encapsulation would make obj graph initialization
+        less error prone
+        
+        '''
+        self.logger.info("BEGIN lovainId:{}".format(self._louvainId))
+        
+        self._calculatePhaseIIEdgeWeights()
+#         # calculate edge weights
+#         for nodeId in nodeEdgesDict.keys():
+#             edges = nodeEdgesDict[nodeId]
+#             for e in edges:
+#                 key = (nodeId,e._targetId)
+#                 listOfWeights = betweenEdgeWeightsDict[key]
+#                 e._weight = sum(listOfWeights)
+#                 
+#         #print()
+#         for k,v in nodeEdgesDict.items():
+#             self.logger.debug("nodeEdgesDict nodeId:{} edges:{}".format(k,v))
+#             
+#         #print()
+#         for k,v in betweenEdgeWeightsDict.items():
+#             self.logger.debug("betweenEdgeWeightsDict key:{} listOfWeights:{}".format(k,v))        
                             
         # create nodes and clusters
         for newNodeId in nodeEdgesDict.keys():
@@ -832,7 +863,7 @@ class Louvain(object):
         '''
         self.logger.info("BEGIN louvainID:{}".format(self._louvainId)) 
         nodeEdgesDict, betweenEdgeWeightsDict = self._phaseIICreateNewEdges()    
-        self._fixThisBugUseTrueOOEncapsliations(nodeEdgesDict, betweenEdgeWeightsDict) 
+        self._initPhaseIIObjGraph(nodeEdgesDict, betweenEdgeWeightsDict) 
         
         self.logger.info("END louvainID:{} numCluster:{}\n".format(self._louvainId, self.countClusters())) 
 

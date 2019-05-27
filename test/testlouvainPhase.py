@@ -118,6 +118,47 @@ class LouvianPhaseTest(unittest.TestCase):
         self.logger.info("END\n")        
         
     ############################################################
+    def testPhaseIICreateNewEdges(self):
+        self.logger.info("BEGIN")
+        listOfEdges = [(0,1), (1,0),    (0,2), (2,0),    (0,3), (3,0), (1,2), (2,1),
+                       (3,4), (4,3) ]
+        listOfWeight = [1 for i in listOfEdges]
+        
+        l0 = Louvain.buildGraph("l0", listOfEdges, listOfWeight)   
+        self.logger.info("l0:\n{}".format(l0)) 
+        
+        # makes sure is configured as expected
+        expectedL0 = {
+            0 : {'clusterId':0 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':3},
+            1 : {'clusterId':1 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':2},
+            2 : {'clusterId':2 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':2},
+            3 : {'clusterId':3 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':2},
+            4 : {'clusterId':4 ,'numNodes':1 ,'weightsInsideCluster':0 ,'totalWeight':1}
+            }
+        self.checkClusters(expectedL0, l0._clusters)
+        
+        # at this ponit each node is in a separate cluster
+        # create two cluster 
+        c0NodeList = [l0._nodeLookup[0], l0._nodeLookup[1], l0._nodeLookup[2]]
+        c0 = Cluster(0, c0NodeList)  
+        c1NodeList = [l0._nodeLookup[3], l0._nodeLookup[4]]        
+        c1 = Cluster(1, c1NodeList)   
+        
+        # create a new louvain level that looks like phase I -> phase II -> phase I
+        l1 = Louvain("l1", [c0, c1]) 
+        self.logger.info("l1:\n{}".format(l1))
+        
+        # test edge creation
+        l2  = Louvain.buildLouvain('l2', l1)
+        l2._phaseIICreateNewEdges()
+        
+        for nodeId, node in l2._nodeLookup.items():
+            self.logger.info("node")
+  
+        
+        self.logger.info("END\n")
+                
+    ############################################################
     def testPhaseII(self):
         self.logger.info("BEGIN")
         
