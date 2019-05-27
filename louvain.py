@@ -596,7 +596,7 @@ class Louvain(object):
             numRows: The number of rows in the original data set. I.E. number of cells in adata.X
         '''
         self.logger.info("BEGIN louvainID:{} numClusters:{}".format(self._louvainId, self.countClusters()))   
-        start = timer()
+        phaseIStart = timer()
         
         self.logger.info("\tQ:{}".format(self._Q))
         
@@ -679,13 +679,14 @@ class Louvain(object):
                     numMoves += 1  
                                         
             end = timer()
-            self.logger.info("\tEND   EPOCH Count:{} num clusters{} numMoves:{} time:{} Q{}"\
+            self.logger.info("\tEND   EPOCH Count:{} num clusters{} numMoves:{} time:{}"\
                              .format(epochCount, self.countClusters(), numMoves, 
-                                      timedelta(seconds=end-start), self._calculateQ()))
+                                      timedelta(seconds=end-start)))
+            self.logger.info("Q:{}".format(self._calculateQ()))
                 
-        end = timer()      
+        phaseIEnd = timer()      
         self.logger.info("END louvainID:{} num non empty clusters: {} time:{}"\
-                         .format(self._louvainId, self.countClusters(), timedelta(seconds=end-start))) 
+                         .format(self._louvainId, self.countClusters(), timedelta(seconds=phaseIEnd-phaseIStart))) 
         
     ############################################################ 
     def _phaseIICreateNewEdges(self, isLouvainInit=False):      
