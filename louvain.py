@@ -391,10 +391,12 @@ class Louvain(object):
             Aij = node._edgesDict[targetNodeId]._weight
             # multiply by 2 because links are modeled as directed edges
             term = (2 * (Aij - (ki*kj/(2*m))))
-            ret += term
-            self.logger.debug("ni:{} ti:{} Aij:{} ki:{} kj:{} m:{}"\
-                             .format(node._nodeId, targetNodeId, Aij, ki, kj, m))
+            self.logger.debug("i:{} j:{} Aij:{} ki:{} kj:{} m:{} term:{} ret:{}"\
+                             .format(node._nodeId, targetNodeId, Aij, ki, kj, m, term, ret))
+            ret = ret + term
+            pass
             
+        self.logger.debug("ret:{}".format(ret))
         ret = ret * (1/(2*m))        
         
         # the assertion that adding edges always increase Q does not hold in general
@@ -411,9 +413,9 @@ class Louvain(object):
 #             eMsg = "addChange:{} must be greater than  0  nodeId:{} fromCluster:{} targetCluster:{} "\
 #                               .format(ret, node._nodeId, self._clusterId,
 #                                        targetCluster._clusterId)
-#             self.logger.info(eMsg)  
-#             self.logger.info("book keeping bug? is nodes connected to targetCluster? are summary stats maintained correctly")            
-#             self.logger.info("node._weightsInClusterDict:{}".format(node._weightsInClusterDict.keys()))
+#             self.logger.warning(eMsg)  
+#             self.logger.warning("book keeping bug? is nodes connected to targetCluster? are summary stats maintained correctly")            
+#             self.logger.warning("node._weightsInClusterDict:{}".format(node._weightsInClusterDict.keys()))
 #             
 #             # debug
 #             for targetNodeId in nodeSet:
@@ -468,11 +470,19 @@ class Louvain(object):
             # multiply by 2 because links are modeled as directed edges
             term = (2 * (Aij - (ki*kj/(2*m))))
             ret += term
-            self.logger.debug("ni:{} ti:{} Aij:{} ki:{} kj:{} m:{}"\
-                             .format(node._nodeId, targetNodeId, Aij, ki, kj, m))
+            self.logger.debug("i:{} j:{} Aij:{} ki:{} kj:{} m:{} term:{}"\
+                             .format(node._nodeId, targetNodeId, Aij, ki, kj, m, term))
             
         # 
         ret = ret * (1/(2*m))
+         
+#         if ret < 0.0: # strictly <= AEDWIP: TODO: level 0 phaseI lots of zeros TODO: BUG
+#             print()
+#             eMsg = "removeChange:{} must be greater than  0  nodeId:{} fromCluster:{} "\
+#                               .format(ret, node._nodeId, self._clusterId)
+#             self.logger.warning(eMsg)  
+#             self.logger.warning("book keeping bug? is nodes connected to targetCluster? are summary stats maintained correctly")            
+#             self.logger.warning("node._weightsInClusterDict:{}".format(node._weightsInClusterDict.keys()))
                 
         self.logger.debug("END\n")  
         return ret
@@ -678,13 +688,14 @@ class Louvain(object):
                     numMoves += 1  
                                         
             end = timer()
-            self.logger.info("\tEND   EPOCH Count:{} num clusters{} numMoves:{} time:{}"\
+            Q = self._calculateQ() # AEDWIP: TODO: FIXME: remove debug
+            self.logger.info("Q:{}".format(Q))
+            self.logger.info("\tEND   EPOCH Count:{} num clusters{} numMoves:{} time:{}\n"\
                              .format(epochCount, self.countClusters(), numMoves, 
                                       timedelta(seconds=end-start)))
-            self.logger.info("Q:{}".format(self._calculateQ()))
                 
         phaseIEnd = timer()      
-        self.logger.info("END louvainID:{} num non empty clusters: {} time:{}"\
+        self.logger.info("END louvainID:{} num non empty clusters: {} time:{}\n"\
                          .format(self._louvainId, self.countClusters(), timedelta(seconds=phaseIEnd-phaseIStart))) 
         
     ############################################################ 
