@@ -72,10 +72,10 @@ class TestAEDWIP(unittest.TestCase):
         # check Q
         louvainLevel0._calculateQ()
         self.logger.info("after phase I   louvainLevel0._Q:{}".format(louvainLevel0._Q))
-#            
-#         # build next level
-#         louvainLevel1 = Louvain.buildLouvain("level 1 ", louvainLevel0)
-#         self.logger.info("after buildLouvain louvainLevel1\n{}".format(louvainLevel1))
+            
+        # build next level
+        louvainLevel1 = Louvain.buildLouvain("level 1 ", louvainLevel0)
+        self.logger.info("after buildLouvain louvainLevel1\n{}".format(louvainLevel1))
 #          
 #         # phase II
 #         louvainLevel1._phaseII(isLouvainInit=False) # TODO: can probably get rid of isLouvainInit)
