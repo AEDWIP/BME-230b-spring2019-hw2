@@ -100,7 +100,7 @@ class Louvain(object):
         assignmentPS = pd.Series(data=clusterAssigments, index=idx)
         adata.obs['louvain'] = assignmentPS
 
-        root._calculateQ()
+        #root._calculateQ()
         Louvain.logger.debug("END rootId:{} clustering algo compute time:{}: final Q:{}"\
                             .format(root._louvainId, timedelta(seconds=end-start),root._Q))
         return root
@@ -128,8 +128,8 @@ class Louvain(object):
         louvainId += 1
         
         level._phaseI(numRows, isLouvainInit=True) # TODO: can probably get rid of isLouvainInit
-        level._calculateQ() # TODO nice to have for debug, add argument to decide if user wants to run
-        level.logger.info("AEDWIP DEBUG: level0 after phase I Q:{}".format(level._Q))        
+        #level._calculateQ() # TODO nice to have for debug, add argument to decide if user wants to run
+        #level.logger.info("AEDWIP DEBUG: level0 after phase I Q:{}".format(level._Q))        
         
         level.logger.debug("louvainId:{} clusterAssigments:\n{}".format(level._louvainId, level.getClusterAssigments()))
         
@@ -147,8 +147,8 @@ class Louvain(object):
                       
             # run clustering on consolidated nodes                      
             level._phaseI(numRows, isLouvainInit=False) # TODO: can probably get rid of isLouvainInit)
-            level._calculateQ() # TODO nice to have for debug, add argument to decide if user wants to run
-            level.logger.info("AEDWIP DEBUG:after phase I levelId:{} Q:{}".format(level._louvainId, level._Q)) 
+            #level._calculateQ() # TODO nice to have for debug, add argument to decide if user wants to run
+            #level.logger.info("AEDWIP DEBUG:after phase I levelId:{} Q:{}".format(level._louvainId, level._Q)) 
                     
             level.logger.debug("louvainId:{} clusterAssigments:\n{}".format(level._louvainId, level.getClusterAssigments()))
             
@@ -392,7 +392,7 @@ class Louvain(object):
             Aij = node._edgesDict[targetNodeId]._weight
             # multiply by 2 because links are modeled as directed edges
             term = (2 * (Aij - (ki*kj/(2*m))))
-            self.logger.info("i:{} j:{} Aij:{} ki:{} kj:{} m:{} term:{} ret:{}"\
+            self.logger.debug("i:{} j:{} Aij:{} ki:{} kj:{} m:{} term:{} ret:{}"\
                              .format(node._nodeId, targetNodeId, Aij, ki, kj, m, term, ret))
             ret = ret + term
             pass
@@ -471,7 +471,7 @@ class Louvain(object):
             # multiply by 2 because links are modeled as directed edges
             term = (2 * (Aij - (ki*kj/(2*m))))
             ret += term
-            self.logger.info("i:{} j:{} Aij:{} ki:{} kj:{} m:{} term:{}"\
+            self.logger.debug("i:{} j:{} Aij:{} ki:{} kj:{} m:{} term:{}"\
                              .format(node._nodeId, targetNodeId, Aij, ki, kj, m, term))
             
         # 
@@ -575,7 +575,7 @@ class Louvain(object):
         '''
         TODO
         '''     
-        self.logger.info("BEGIN nId:{} from:{} to:{}".format(node._nodeId, fromCluster, targetCluster))
+        self.logger.debug("BEGIN nId:{} from:{} to:{}".format(node._nodeId, fromCluster, targetCluster))
         
         changeIfRemoveNode = self.changeInModularityIfNodeRemoved(node, fromCluster)
         changeIfAddNode = self.changeInModularityIfNodeAdded(node, targetCluster)
@@ -601,7 +601,7 @@ class Louvain(object):
 #             #raise ValueError(eMsg)        
             
         ret = changeIfAddNode - changeIfRemoveNode
-        self.logger.info("ret:{} changeIfAddNode:{} loss:{}".format(ret, changeIfAddNode, changeIfRemoveNode, isLouvainInit=False))
+        self.logger.debug("ret:{} changeIfAddNode:{} loss:{}".format(ret, changeIfAddNode, changeIfRemoveNode, isLouvainInit=False))
         self.logger.debug("END\n")
         return ret
         
@@ -690,14 +690,14 @@ class Louvain(object):
 
                     #self._Q += change # ?? sum of changes can be > 1
                     #print('')
-                    self.logger.info("\tchange:{} nodeId:{} fromClusterId:{} toClusterId:{}"\
+                    self.logger.debug("\tchange:{} nodeId:{} fromClusterId:{} toClusterId:{}"\
                                      .format(change, node._nodeId, fromC._clusterId, toC._clusterId))
                     fromCluster.moveNode(toC, node, self._nodeLookup, isLouvainInit)
                     numMoves += 1  
                                         
             end = timer()
-            Q = self._calculateQ() # AEDWIP: TODO: FIXME: remove debug
-            self.logger.info("Q:{}".format(Q))
+            #Q = self._calculateQ() # AEDWIP: TODO: FIXME: remove debug
+            #self.logger.info("Q:{}".format(Q))
             self.logger.info("\tEND   EPOCH Count:{} num clusters{} numMoves:{} time:{}\n\n"\
                              .format(epochCount, self.countClusters(), numMoves, 
                                       timedelta(seconds=end-start)))
@@ -785,7 +785,7 @@ class Louvain(object):
         self.logger.info("BEGIN")   
         for leafClusterId, leafCluster in self._leafLouvain._clustersLookup.items():
             if not leafCluster._nodeList:
-                self.logger.info("leafCluster._clusterId:{} was empty".format(leafClusterId))
+                self.logger.debug("leafCluster._clusterId:{} was empty".format(leafClusterId))
                 continue
             
             # create a new node for each cluster in the previous louvain level
@@ -798,6 +798,14 @@ class Louvain(object):
             newClusterEdgeWeightsDict = {}  # key = leafClusterId, value = weight
             for leafNode in leafCluster._nodeList:
                 for tmpClusterId, weight  in leafNode._weightsInClusterDict.items():
+                    if not leafNode._nodesInClusterDict[tmpClusterId] :
+                        self.logger.debug("AEDWIP tmpClusterId:{} is empty in leafNodeId:{}"\
+                                         .format(tmpClusterId, leafNode._nodeId))
+                        continue
+#                     if weight == 0: #AEDWIP:may be not a good test
+#                         self.logger.info("AEDWIP weight was zero tmpClusterId:{} leafNode.id:{}"\
+#                                          .format(tmpClusterId, leafNode._nodeId))
+#                         continue
                     if not tmpClusterId in newClusterEdgeWeightsDict:
                         newClusterEdgeWeightsDict[tmpClusterId] = 0
                     newClusterEdgeWeightsDict[tmpClusterId] += weight
@@ -808,6 +816,10 @@ class Louvain(object):
             # All the other edges correspond to edges between clusters in the 
             # leaf graph
             for targetNodeId, weight in newClusterEdgeWeightsDict.items():
+                if weight == 0:
+                    self.logger.info("AEDWIP weight==0 nodeId:{} targetNodeId:{}"\
+                                     .format(newNodeId, targetNodeId))
+                    continue
                 newEdge = Edge(weight, newNodeId, targetNodeId)
                 newNode._addEdge(newEdge)
                 self._edges.append(newEdge)

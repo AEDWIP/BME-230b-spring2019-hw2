@@ -90,7 +90,13 @@ class Node(object):
         '''
         self.logger.debug("BEGIN")
         for key, e in self._edgesDict.items():
-            targetNode = graphNodesLookup[e._targetId]
+            try :
+                targetNode = graphNodesLookup[e._targetId]
+            except Exception as exc:
+                self.logger.warn(exc)
+                self.logger.warn("graphNodesLookup[e._targetId] failed: nodeId:{} key:{} edge:{}".format(self._nodeId, key, e))
+                continue
+            
             targetClusterId = targetNode._clusterId
             self.logger.debug("nodeId:{} e:{} targetNodeClusterId:{}"\
                              .format(self._nodeId, e, targetClusterId))
@@ -283,7 +289,7 @@ class Node(object):
           
     ############################################################
     def moveToCluster(self, toClusterId, graphNodesLookup):
-        self.logger.info("BEGIN nodeId:{} fromClusterId:{} toClusterId:{}"\
+        self.logger.debug("BEGIN nodeId:{} fromClusterId:{} toClusterId:{}"\
                          .format(self._nodeId, self._clusterId, toClusterId))   
         fromClusterId = self._clusterId
         for edge in self._edgesDict.values():
