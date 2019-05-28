@@ -94,7 +94,13 @@ class TestAEDWIP(unittest.TestCase):
         retStr = "{}".format(louvainLevel1._clustersLookup[6])          
         self.assertEqual(retStr,'clusterId:6 numNodes:1 :weightsInsideCluster:8 totalWeight:10')
         retStr = "{}".format(louvainLevel1._clustersLookup[11])  
-        self.assertEqual(retStr,'clusterId:11 numNodes:1 :weightsInsideCluster:8 totalWeight:9')        
+        self.assertEqual(retStr,'clusterId:11 numNodes:1 :weightsInsideCluster:8 totalWeight:9')     
+        
+        # check Q
+        louvainLevel1._calculateQ()
+        self.logger.info("after phase I   louvainLevel1._Q:{}".format(louvainLevel1._Q))
+        self.assertEqual(louvainLevel1._getM(), 14, "total edge weight in graph was not preserved")
+                       
 
         self.logger.info("END\n")
 
