@@ -69,9 +69,9 @@ class TestAEDWIP(unittest.TestCase):
         self.logger.info("l0Assigments cluster assignments:\n{}".format(l0Assignments)) 
         self.assertEqual(louvainLevel0.countClusters(), 3)       
           
-#         # check Q
-#         louvainLevel0._calculateQ()
-#         self.logger.info("after phase I   louvainLevel0._Q:{}".format(louvainLevel0._Q))
+        # check Q
+        louvainLevel0._calculateQ()
+        self.logger.info("after phase I   louvainLevel0._Q:{}".format(louvainLevel0._Q))
 #            
 #         # build next level
 #         louvainLevel1 = Louvain.buildLouvain("level 1 ", louvainLevel0)
