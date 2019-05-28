@@ -67,6 +67,9 @@ class Cluster(object):
             graphNodesLookup:
                 a dictionary or set of nodes in graph. keys should be 
                 node ids. 
+                
+        TODO: AEDWIP: FIXME: if all the nodes wind up in a single cluster the value should be 1/2
+        we do not use SigmaIn so deal with this as time permits
         '''
         
         if not self._weightsInsideCluster:
@@ -88,6 +91,10 @@ class Cluster(object):
         '''
         This is the 'Sigma total' term in Louvain paper 
         "Fast unfolding of communities in large networks"
+        
+        TODO: AEDWIP: FIXME: this value is not correct. If all nodes
+        get move into a single cluster the value should be 1/2
+        we do not use sigmaTotal os not an issue fix as time permits
         '''
         if not self._totalWeight:
             self._totalWeight = 0

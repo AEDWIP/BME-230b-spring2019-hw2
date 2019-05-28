@@ -210,84 +210,157 @@ class Node(object):
 #         '''
 
         
+#     ############################################################
+#     def SAVE_moveToCluster(self, clusterId, graphNodesLookup):
+#         '''
+#         TODO:
+#         '''
+#         we are still connected to the same notes its just the what cluster they are in has changed
+#         
+#         for key, e in self._edgesDict.items():
+#             targetNode = graphNodesLookup[e._targetId]
+#             targetNode._adjustKiin(nodeId=self._nodeId,  
+#                          fromClusterId=self._clusterId,
+#                          toClusterId=clusterId, 
+#                          weight=e._weight)
+#         
+#         # AEDWIP we always need to adju our selves if self._clusterId != clusterId:
+#         # we need to adjust our kiin 
+#         self._adjustKiin(nodeId=self._nodeId,  
+#                          fromClusterId=self._clusterId,
+#                          toClusterId=clusterId, 
+#                          weight=e._weight)
+#         
+#         self.logger.debug("nodeId:{} currentClusterId:{} toClusterId:{}"\
+#             .format(self._nodeId, self._clusterId, clusterId))
+#         self._clusterId = clusterId
+      
     ############################################################
-    def moveToCluster(self, clusterId, graphNodesLookup):
+    def _updateAdjNodeMoved(self, adjNodeId, fromClusterId, toClusterId):
         '''
-        TODO:
+        adjust sufficient stats
         '''
-        for key, e in self._edgesDict.items():
-            targetNode = graphNodesLookup[e._targetId]
-            targetNode._adjustKiin(nodeId=self._nodeId,  
-                         fromClusterId=self._clusterId,
-                         toClusterId=clusterId, 
-                         weight=e._weight)
+        self.logger.info("BEGIN")
         
-        if self._clusterId != clusterId:
-            # we need to adjust our kiin 
-            self._adjustKiin(nodeId=self._nodeId,  
-                             fromClusterId=self._clusterId,
-                             toClusterId=clusterId, 
-                             weight=e._weight)
+        # find the edge connecting self to adjNodeId
+#         edge = None
+#         if adjNodeId in self._edgesDict:
+#             edge = self._edgesDict[adjNodeId]
+#         else :
+#             self.logger.error("AEDWIp: nodeId:{} adjNodeId:{} not in _edgesDict:{}"\
+#                          .format(self.nodeId, adjNodeId, self._edgesDict))
+#         weight = edge._weight
+        weight = self.getWeightForEdge(adjNodeId)
         
-        self.logger.debug("nodeId:{} currentClusterId:{} toClusterId:{}"\
-            .format(self._nodeId, self._clusterId, clusterId))
-        self._clusterId = clusterId
-        
-    ############################################################
-    def _adjustKiin(self, nodeId, fromClusterId, toClusterId, weight):
-        '''
-        a node we are connected to was moved into a new cluster.
-        
-        arguments:
-            nodeId is the id of the node being moved
-        '''
-        if (self._nodeId != nodeId) and (self._clusterId == toClusterId):
-            # node was moved to the same cluster we are in
-            if fromClusterId in self._weightsInClusterDict:
-                self._weightsInClusterDict[fromClusterId] -= weight
-                self._nodesInClusterDict[fromClusterId].remove(nodeId)
-            else:
-                eMsg = "node moved into our cluster self._nodeId:{}  weightsInClusterDic[{}] is missing".format(self._nodeId, fromClusterId)
-                self.logger.error(eMsg)
-                raise ValueError(eMsg)
-            
-            if not toClusterId in self._weightsInClusterDict:
-                self._weightsInClusterDict[toClusterId] = 0
-                self._nodesInClusterDict[toClusterId] = set()
-            self._weightsInClusterDict[toClusterId] += weight
-            self._nodesInClusterDict[toClusterId].add(nodeId)
-            
-        elif (self._nodeId != nodeId) and (self._clusterId != toClusterId):
-            # node was moved out of our cluster
-            if not toClusterId in self._weightsInClusterDict:
-                self._weightsInClusterDict[toClusterId] = 0 # TODO: AEDWIP: FIXME: why are we creating and empty entry
-                self._nodesInClusterDict[toClusterId] = set()
-
-            # AEDWIP: TODO: FIXME: this looks funny
-            self._weightsInClusterDict[toClusterId] += weight  
-            self._nodesInClusterDict[toClusterId].add(nodeId)
-            
-            if not fromClusterId in self._weightsInClusterDict:
-                eMsg = "node moved into our cluster self._nodeId:{}  weightsInClusterDic[{}] is missing".format(self._nodeId, fromClusterId)
-                self.logger.error(eMsg)
-                raise ValueError(eMsg)
-            else:
-                self._weightsInClusterDict[fromClusterId] -= weight 
-                self._nodesInClusterDict[fromClusterId].remove(nodeId) 
+        # remove the adjNode from our sufficient stats 
+        # the adjNode is no longer in the fromCluster
+        self._weightsInClusterDict[fromClusterId] -= weight 
+        if self._weightsInClusterDict[fromClusterId] == 0 :
+            # we are no longer connected to a node in this cluster
+            # a tidy obj graph should help track down bug
+            check = self._weightsInClusterDict.pop(fromClusterId, None)
+            if check == None:
+                self.warning("nodeId:{} fromClusterId:{} was missing from _weightsInClusterDict:{}"\
+                             .format(self._nodeId, fromClusterId, self._weightsInClusterDict))
                 
-        elif (self._nodeId == nodeId) and (self._clusterId != toClusterId):
-            # we are moving to a new cluster
-            if not toClusterId:
-                self._weightsInClusterDict[toClusterId] = 0
-                self._nodesInClusterDict[toClusterId] = set()
-
-            # do not add our selves to our selves. no self loops allowed
-            #self._weightsInClusterDict[toClusterId] += weight
-            #self._nodesInClusterDict[toClusterId].add(nodeId)
-            
+            check = self._nodesInClusterDict.pop(fromClusterId, None)
+            if check == None:
+                self.warning("nodeId:{} fromClusterId:{} was missing from _nodesInClusterDict:{}"\
+                             .format(self._nodeId, fromClusterId, self._nodesInClusterDict))            
         else:
-            eMsg = "self.nodeId:{} nodeId:{} fromClusterId:{} toClusterId:{} weight:{}"\
-            .format(self._nodeId, nodeId, fromClusterId, toClusterId, weight)
-            self.logger.error(eMsg)
-            raise ValueError(eMsg)
+            self._nodesInClusterDict[fromClusterId].remove(adjNodeId) 
+            
+        # add the node back to our sufficient stats 
+        # it is now in the toCluster
+        if not toClusterId in self._weightsInClusterDict:
+            self._weightsInClusterDict[toClusterId] = 0
+            self._nodesInClusterDict[toClusterId] = set()
+            
+        self._weightsInClusterDict[toClusterId] += weight
+        self._nodesInClusterDict[toClusterId].add(adjNodeId)
+        
+        self.logger.info("END\n")
+          
+    ############################################################
+    def moveToCluster(self, toClusterId, graphNodesLookup):
+        self.logger.info("BEGIN nodeId:{} fromClusterId:{} toClusterId:{}"\
+                         .format(self._nodeId, self._clusterId, toClusterId))   
+        fromClusterId = self._clusterId
+        for edge in self._edgesDict.values():
+            adjNodeId = edge._targetId
+            adjNode = graphNodesLookup[adjNodeId]
+            adjNode._updateAdjNodeMoved(self._nodeId, fromClusterId, toClusterId)
+            
+            
+        # update our selvs
+        # the nodes we are connected to did not change
+        self._clusterId = toClusterId
+        
+        
+        self.logger.info("END\n")  
+              
+#     ############################################################
+#     def SAVE_adjustKiin(self, nodeId, fromClusterId, toClusterId, weight):
+#         '''
+#         a node we are connected to was moved into a new cluster.
+#         
+#         arguments:
+#             nodeId is the id of the node being moved
+#         '''
+#         if (self._nodeId != nodeId) and (self._clusterId == toClusterId):
+#             # node was moved to the same cluster we are in
+#             if fromClusterId in self._weightsInClusterDict:
+#                 self._weightsInClusterDict[fromClusterId] -= weight 
+#                 if self._weightsInClusterDict[fromClusterId] == 0 :
+#                     # we are no longer connected to a node in this cluster
+#                     # a tidy obj graph should help track down bug
+#                     self._weightsInClusterDict.remove(fromClusterId)
+#                     self._nodesInClusterDict.remove(fromClusterId)
+#                 else:
+#                     self._nodesInClusterDict[fromClusterId].remove(nodeId) 
+#             else:
+#                 eMsg = "node moved into our cluster self._nodeId:{}  weightsInClusterDic[{}] is missing".format(self._nodeId, fromClusterId)
+#                 self.logger.error(eMsg)
+#                 raise ValueError(eMsg)
+#             
+#             if not toClusterId in self._weightsInClusterDict:
+#                 self._weightsInClusterDict[toClusterId] = 0
+#                 self._nodesInClusterDict[toClusterId] = set()
+#             self._weightsInClusterDict[toClusterId] += weight
+#             self._nodesInClusterDict[toClusterId].add(nodeId)
+#             
+#         elif (self._nodeId != nodeId) and (self._clusterId != toClusterId):
+#             # node was moved out of our cluster
+#             if not toClusterId in self._weightsInClusterDict:
+#                 self._weightsInClusterDict[toClusterId] = 0 # TODO: AEDWIP: FIXME: why are we creating and empty entry
+#                 self._nodesInClusterDict[toClusterId] = set()
+# 
+#             # AEDWIP: TODO: FIXME: this looks funny
+#             self._weightsInClusterDict[toClusterId] += weight  
+#             self._nodesInClusterDict[toClusterId].add(nodeId)
+#             
+#             if not fromClusterId in self._weightsInClusterDict:
+#                 eMsg = "node moved into our cluster self._nodeId:{}  weightsInClusterDic[{}] is missing".format(self._nodeId, fromClusterId)
+#                 self.logger.error(eMsg)
+#                 raise ValueError(eMsg)
+#             else:
+#                 self.logger.warning("TODO AEDWIP break pt :::::see line 247 check for zero check for empty set")
+#                 self._weightsInClusterDict[fromClusterId] -= weight 
+#                 self._nodesInClusterDict[fromClusterId].remove(nodeId) 
+#                 
+#         elif (self._nodeId == nodeId) and (self._clusterId != toClusterId):
+#             # we are moving to a new cluster
+#             if not toClusterId:
+#                 self._weightsInClusterDict[toClusterId] = 0
+#                 self._nodesInClusterDict[toClusterId] = set()
+# 
+#             # do not add our selves to our selves. no self loops allowed
+#             #self._weightsInClusterDict[toClusterId] += weight
+#             #self._nodesInClusterDict[toClusterId].add(nodeId)
+#             
+#         else:
+#             eMsg = "self.nodeId:{} nodeId:{} fromClusterId:{} toClusterId:{} weight:{}"\
+#             .format(self._nodeId, nodeId, fromClusterId, toClusterId, weight)
+#             self.logger.error(eMsg)
+#             raise ValueError(eMsg)
 
