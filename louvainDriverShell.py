@@ -142,7 +142,7 @@ def main(myCommandLine=None):
     clusterAssigmentOutputFile = myCommandLine.args.clusterAssigmentOutputFile 
     if not clusterAssigmentOutputFile:
         clusterAssigmentOutputFile = "./louvainDriverShell.py.out"
-        logger.warn("clusterAssigment output will be written to:{}".format(clusterAssigmentOutputFile))
+        logger.warning("clusterAssigment output will be written to:{}".format(clusterAssigmentOutputFile))
         
     logger.info("clusterAssigmentOutputFile:{}".format(clusterAssigmentOutputFile))
             

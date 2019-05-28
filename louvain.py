@@ -651,9 +651,10 @@ class Louvain(object):
         
         while isImproving:
             epochCount += 1           
+            startingNumClusters = self.countClusters()
             numMoves = 0 
             start = timer()
-            self.logger.info("\tBEGIN EPOCH count:{} num clusters:{}".format(epochCount, self.countClusters()))
+            self.logger.info("\tBEGIN EPOCH count:{} num clusters:{}".format(epochCount, startingNumClusters))
             isImproving = False
 
                             
@@ -672,8 +673,7 @@ class Louvain(object):
                     if trackMovesMatrix[possibleMove[0], possibleMove[1]]:
                         self.logger.debug("\tbug possibleMove:{} in trackMoves  ".format(possibleMove))
                         continue
-                    #trackMoves.add(possibleMove)  level0 |trackMoves| = numCells x numCells, I think python sets get slow
-                    trackMovesMatrix[possibleMove[0], possibleMove[1]] = True    
+#                     trackMovesMatrix[possibleMove[0], possibleMove[1]] = True    
                                         
                     if node._clusterId == candidateClusterId:
                         continue        
@@ -685,21 +685,27 @@ class Louvain(object):
                         
                 if bestMove[0] > 0:
                     isImproving = True
-                    change, node, fromC, toC = bestMove
+                    bestChange, bestNode, bestFromC, bestToC = bestMove
                     bestMove = (-1, -1, -1, -1) # (changeInQ, node, fromCluster, toCluster
 
                     #self._Q += change # ?? sum of changes can be > 1
                     #print('')
                     self.logger.debug("\tchange:{} nodeId:{} fromClusterId:{} toClusterId:{}"\
-                                     .format(change, node._nodeId, fromC._clusterId, toC._clusterId))
-                    fromCluster.moveNode(toC, node, self._nodeLookup, isLouvainInit)
+                                     .format(bestChange, bestNode._nodeId, bestFromC._clusterId, bestToC._clusterId))
+                    # make sure we do not test this move again
+                    trackMovesMatrix[bestNode._nodeId, bestToC._clusterId] = True                        
+                    bestFromC.moveNode(bestToC, bestNode, self._nodeLookup, isLouvainInit)
                     numMoves += 1  
                                         
             end = timer()
             #Q = self._calculateQ() # AEDWIP: TODO: FIXME: remove debug
             #self.logger.info("Q:{}".format(Q))
+            endingNumClusters = self.countClusters()
+            if endingNumClusters == startingNumClusters:
+                isImproving = False
+                
             self.logger.info("\tEND   EPOCH Count:{} num clusters{} numMoves:{} time:{}\n\n"\
-                             .format(epochCount, self.countClusters(), numMoves, 
+                             .format(epochCount, endingNumClusters, numMoves, 
                                       timedelta(seconds=end-start)))
                 
         phaseIEnd = timer()      
