@@ -87,7 +87,14 @@ class TestAEDWIP(unittest.TestCase):
         louvainLevel1._phaseII(isLouvainInit=False) # TODO: can probably get rid of isLouvainInit)
         self.logger.info("after phaseII() louvainLevel1  this log line looks funnny:\n{}".format(louvainLevel1)) 
         l1Assignments = louvainLevel1.getClusterAssigments()
-        self.logger.info("louvainLevel1 cluster assignments:\n{}".format(l1Assignments))          
+        self.logger.info("louvainLevel1 cluster assignments:\n{}".format(l1Assignments))  
+        
+        retStr = "{}".format(louvainLevel1._clustersLookup[1])  
+        self.assertEqual(retStr,'clusterId:1 numNodes:1 :weightsInsideCluster:8 totalWeight:9')
+        retStr = "{}".format(louvainLevel1._clustersLookup[6])          
+        self.assertEqual(retStr,'clusterId:6 numNodes:1 :weightsInsideCluster:8 totalWeight:10')
+        retStr = "{}".format(louvainLevel1._clustersLookup[11])  
+        self.assertEqual(retStr,'clusterId:11 numNodes:1 :weightsInsideCluster:8 totalWeight:9')        
 
         self.logger.info("END\n")
 
