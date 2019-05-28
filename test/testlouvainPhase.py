@@ -30,15 +30,15 @@ class LouvianPhaseTest(unittest.TestCase):
 
     ############################################################
     def checkClusters(self, expected, clustersDict):
-        self.logger.info("BEGIN")
+        self.logger.debug("BEGIN")
         for clusterId, cluster in clustersDict.items():
-            self.logger.info("clusterId:{}".format(clusterId))
+            self.logger.debug("clusterId:{}".format(clusterId))
             msg="clusterId:{}".format(clusterId)
             self.assertEqual(len(cluster._nodeList), expected[clusterId]['numNodes'], msg)
             self.assertEqual(cluster._weightsInsideCluster, expected[clusterId]['weightsInsideCluster'], msg)
             self.assertEqual(cluster._totalWeight, expected[clusterId]['totalWeight'], msg) 
                    
-        self.logger.info("END\n")
+        self.logger.debug("END\n")
         
     ############################################################
     def testSimplePhaseI(self):
@@ -167,6 +167,7 @@ class LouvianPhaseTest(unittest.TestCase):
         self.checkClusters(expectedL0BeforePhaseI, l0._clustersLookup)        
         
         # check Nodes:
+        self.logger.info("check nodes before L0 phase I")
         expectedL0NodesBeforePhaseI = {
             0 : { 'nicd' : {1: {1}, 2: {2}, 3: {3}}, 'wicd': {1: 10, 2: 10, 3: 2} },
             1 : { 'nicd' : {0: {0}, 2: {2}},         'wicd': {0: 10, 2: 10}       },
@@ -177,7 +178,7 @@ class LouvianPhaseTest(unittest.TestCase):
 
         for cluster in l0._clustersLookup.values():
             for node in cluster._nodeList:
-                self.logger.info("nodeId:{}\n\t _nodesInClusterDict:{}\n\t_weightsInClusterDict:{}"\
+                self.logger.debug("nodeId:{}\n\t _nodesInClusterDict:{}\n\t_weightsInClusterDict:{}"\
                                  .format(node._nodeId, node._nodesInClusterDict, node._weightsInClusterDict))
                 expected = expectedL0NodesBeforePhaseI[node._nodeId]
                 ret = {'nicd': node._nodesInClusterDict, 'wicd':node._weightsInClusterDict}

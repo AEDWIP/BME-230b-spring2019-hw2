@@ -240,7 +240,7 @@ class Node(object):
         '''
         adjust sufficient stats
         '''
-        self.logger.info("BEGIN")
+        self.logger.debug("BEGIN")
         
         # find the edge connecting self to adjNodeId
 #         edge = None
@@ -279,7 +279,7 @@ class Node(object):
         self._weightsInClusterDict[toClusterId] += weight
         self._nodesInClusterDict[toClusterId].add(adjNodeId)
         
-        self.logger.info("END\n")
+        self.logger.debug("END\n")
           
     ############################################################
     def moveToCluster(self, toClusterId, graphNodesLookup):
@@ -297,7 +297,7 @@ class Node(object):
         self._clusterId = toClusterId
         
         
-        self.logger.info("END\n")  
+        self.logger.debug("END\n")  
               
 #     ############################################################
 #     def SAVE_adjustKiin(self, nodeId, fromClusterId, toClusterId, weight):
