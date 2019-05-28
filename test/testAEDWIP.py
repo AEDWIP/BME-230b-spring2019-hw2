@@ -66,7 +66,8 @@ class TestAEDWIP(unittest.TestCase):
         louvainLevel0._phaseI(numRows, isLouvainInit=True) # TODO: can probably get rid of isLouvainInit
         self.logger.info("after phase I() louvainLevel0:\n{}".format(louvainLevel0))
         l0Assignments = louvainLevel0.getClusterAssigments()
-        self.logger.info("l0Assigments cluster assignments:\n{}".format(l0Assignments))        
+        self.logger.info("l0Assigments cluster assignments:\n{}".format(l0Assignments)) 
+        self.assertEqual(louvainLevel0.countClusters(), 3)       
           
 #         # check Q
 #         louvainLevel0._calculateQ()
