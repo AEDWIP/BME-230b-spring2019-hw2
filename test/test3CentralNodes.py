@@ -13,7 +13,7 @@ from setupLogging import setupLogging
 import unittest
 
 
-class TestAEDWIP(unittest.TestCase):
+class Test3CentralNodes(unittest.TestCase):
 
     setupLogging( default_path='logging.test.ini.json')
     logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ class TestAEDWIP(unittest.TestCase):
         logging.shutdown()
         
     ############################################################
-    def testAEDWIP(self):
+    def test3CentralNodes(self):
         self.logger.info("BEGIN")
         
         # full connected graph
