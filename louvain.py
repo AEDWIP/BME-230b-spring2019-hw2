@@ -719,7 +719,7 @@ class Louvain(object):
         # key is new nodeId == leaf clusterId: set of edges
         # use set to prevent duplicate edges
         nodeEdgesDict = dict() 
-        UNKNONWN_WEIGHT = None # place holder. we need to calculate weights later
+        #UNKNONWN_WEIGHT = None # place holder. we need to calculate weights later
         
         # key is tuple (srcId:targetId) value is list of weight of leaf edges
         # use a list to make debugging easier
@@ -735,9 +735,9 @@ class Louvain(object):
             
             for adjLeafNodeClusteId, adjLeafNodeSet in leafNode._nodesInClusterDict.items():
                 if adjLeafNodeClusteId == leafNodeClusterId:
-                    # edges inside leaf clusters do not create edges between cluster
-                    # in phase II.  
-                    continue
+                    # edges inside leaf clusters 
+                    create a self loop
+                    its weight should be the summ of the edges in the cluster
                
                 # create edges between clusters
                 if adjLeafNodeSet:
@@ -750,6 +750,7 @@ class Louvain(object):
                     for adjNodeId in adjLeafNodeSet:
                         adjNode = self._leafLouvain._nodeLookup[adjNodeId]
                         newTargetNodeId = adjNode._clusterId
+                        The weight should be the sum of the edges between the two leaf clusters
                         e = Edge(weight=UNKNONWN_WEIGHT, srcId=newNodeId, targetId=newTargetNodeId)
                         nodeEdgesDict[newNodeId].add(e) 
                         

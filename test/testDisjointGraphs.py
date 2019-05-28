@@ -49,7 +49,7 @@ class testDisjointGraphs(unittest.TestCase):
         
         # check is initialization of graph correct
         print()
-        for cluster in louvainLevel0._clusters.values():
+        for cluster in louvainLevel0._clustersLookup.values():
             self.logger.info("{}".format(cluster))
            
         print() 

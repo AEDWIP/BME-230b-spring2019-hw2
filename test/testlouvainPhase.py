@@ -249,7 +249,8 @@ class LouvianPhaseTest(unittest.TestCase):
         louvainLevel0 = Louvain.buildGraph("testPhaseII graph level0", listOfEdges, listOfWeight)
         louvainLevel0._calculateQ()
         numRows = 10 # the number of nodes
-        louvainLevel0._phaseI(numRows, isLouvainInit=True)    
+        louvainLevel0._phaseI(numRows, isLouvainInit=True)  
+        self.logger.info("louvainLevel0 after _phaseI:\n{}".format(louvainLevel0))  
         
         expectedAfterPhaseL0_I = {
             0:{'custerId': 0,  'numNodes':0 , 'weightsInsideCluster': 0, 'totalWeight': 0},
