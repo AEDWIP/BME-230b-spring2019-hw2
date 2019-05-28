@@ -67,7 +67,14 @@ class TestAEDWIP(unittest.TestCase):
         self.logger.info("after phase I() louvainLevel0:\n{}".format(louvainLevel0))
         l0Assignments = louvainLevel0.getClusterAssigments()
         self.logger.info("l0Assigments cluster assignments:\n{}".format(l0Assignments)) 
-        self.assertEqual(louvainLevel0.countClusters(), 3)       
+        self.assertEqual(louvainLevel0.countClusters(), 3)    
+        
+        retStr = "{}".format(louvainLevel0._clustersLookup[1])  
+        self.assertEqual(retStr, "clusterId:1 numNodes:5 :weightsInsideCluster:8 totalWeight:9")
+        retStr = "{}".format(louvainLevel0._clustersLookup[6])  
+        self.assertEqual(retStr, "clusterId:6 numNodes:5 :weightsInsideCluster:8 totalWeight:10")
+        retStr = "{}".format(louvainLevel0._clustersLookup[11])  
+        self.assertEqual(retStr, "clusterId:11 numNodes:5 :weightsInsideCluster:8 totalWeight:9")
           
         # check Q
         louvainLevel0._calculateQ()
@@ -75,13 +82,12 @@ class TestAEDWIP(unittest.TestCase):
             
         # build next level
         louvainLevel1 = Louvain.buildLouvain("level 1 ", louvainLevel0)
-        self.logger.info("after buildLouvain louvainLevel1\n{}".format(louvainLevel1))
-#          
-#         # phase II
-#         louvainLevel1._phaseII(isLouvainInit=False) # TODO: can probably get rid of isLouvainInit)
-#         self.logger.info("after phaseII() louvainLevel1  this log line looks funnny:\n{}".format(louvainLevel1)) 
-#         l1Assignments = louvainLevel1.getClusterAssigments()
-#         self.logger.info("louvainLevel1 cluster assignments:\n{}".format(l1Assignments))          
+          
+        # phase II
+        louvainLevel1._phaseII(isLouvainInit=False) # TODO: can probably get rid of isLouvainInit)
+        self.logger.info("after phaseII() louvainLevel1  this log line looks funnny:\n{}".format(louvainLevel1)) 
+        l1Assignments = louvainLevel1.getClusterAssigments()
+        self.logger.info("louvainLevel1 cluster assignments:\n{}".format(l1Assignments))          
 
         self.logger.info("END\n")
 
