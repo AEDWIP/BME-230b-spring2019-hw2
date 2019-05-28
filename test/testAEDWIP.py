@@ -55,27 +55,32 @@ class TestAEDWIP(unittest.TestCase):
         self.logger.info("len(listOfEdges):{} len(listOfWeights):{}"\
                          .format(len(listOfEdges), len(listOfWeights)))
         
-        louvainLevel0 = Louvain.buildGraph("level 0", listOfEdges, listOfWeight)
+        louvainLevel0 = Louvain.buildGraph("level 0", listOfEdges, listOfWeights)
+        self.logger.info("louvainLevel0 after buildGraph():\n{}".format(louvainLevel0))
          
+        self.logger.info("*********** did we insert a blank line" )        
+        self.logger.info('')    
+        self.logger.info("*********** did we insert a blank line" )        
+
         # run phase I
         louvainLevel0._phaseI(numRows, isLouvainInit=True) # TODO: can probably get rid of isLouvainInit
         self.logger.info("after phase I() louvainLevel0:\n{}".format(louvainLevel0))
         l0Assignments = louvainLevel0.getClusterAssigments()
         self.logger.info("l0Assigments cluster assignments:\n{}".format(l0Assignments))        
-         
-        # check Q
-        louvainLevel0._calculateQ()
-        self.logger.info("after phase I   louvainLevel0._Q:{}".format(louvainLevel0._Q))
-           
-        # build next level
-        louvainLevel1 = Louvain.buildLouvain("level 1 ", louvainLevel0)
-        self.logger.info("after buildLouvain louvainLevel1\n{}".format(louvainLevel1))
-         
-        # phase II
-        louvainLevel1._phaseII(isLouvainInit=False) # TODO: can probably get rid of isLouvainInit)
-        self.logger.info("after phaseII() louvainLevel1  this log line looks funnny:\n{}".format(louvainLevel1)) 
-        l1Assignments = louvainLevel1.getClusterAssigments()
-        self.logger.info("louvainLevel1 cluster assignments:\n{}".format(l1Assignments))          
+          
+#         # check Q
+#         louvainLevel0._calculateQ()
+#         self.logger.info("after phase I   louvainLevel0._Q:{}".format(louvainLevel0._Q))
+#            
+#         # build next level
+#         louvainLevel1 = Louvain.buildLouvain("level 1 ", louvainLevel0)
+#         self.logger.info("after buildLouvain louvainLevel1\n{}".format(louvainLevel1))
+#          
+#         # phase II
+#         louvainLevel1._phaseII(isLouvainInit=False) # TODO: can probably get rid of isLouvainInit)
+#         self.logger.info("after phaseII() louvainLevel1  this log line looks funnny:\n{}".format(louvainLevel1)) 
+#         l1Assignments = louvainLevel1.getClusterAssigments()
+#         self.logger.info("louvainLevel1 cluster assignments:\n{}".format(l1Assignments))          
 
         self.logger.info("END\n")
 

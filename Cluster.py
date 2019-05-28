@@ -36,19 +36,19 @@ class Cluster(object):
         self.logger.debug("c:{} ret:\n{}".format(self._clusterId, ret))
         return ret
     
-    ############################################################
-    def _getM(self):
-        '''
-        the partial m term in the Louvain paper
-        "Fast unfolding of communities in large networks"
-        
-        returns 1/2 the sum of all edges in the the cluster
-        '''
-        m = 0
-        for node in self._nodeList:
-            m += node.getM() 
-            
-        return m       
+#     ############################################################
+#     def _getM(self):
+#         '''
+#         the partial m term in the Louvain paper
+#         "Fast unfolding of communities in large networks"
+#         
+#         returns 1/2 the sum of all edges in the the cluster
+#         '''
+#         m = 0
+#         for node in self._nodeList:
+#             m += node.getM() 
+#             
+#         return m       
     
     ############################################################
     def _getNodes(self):

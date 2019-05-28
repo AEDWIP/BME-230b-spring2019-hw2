@@ -16,6 +16,7 @@ from datetime import timedelta
 ############################################################
 class Louvain(object):
     '''    
+    TODO
     public functions:
     
         @staticmethod
@@ -391,7 +392,7 @@ class Louvain(object):
             Aij = node._edgesDict[targetNodeId]._weight
             # multiply by 2 because links are modeled as directed edges
             term = (2 * (Aij - (ki*kj/(2*m))))
-            self.logger.debug("i:{} j:{} Aij:{} ki:{} kj:{} m:{} term:{} ret:{}"\
+            self.logger.info("i:{} j:{} Aij:{} ki:{} kj:{} m:{} term:{} ret:{}"\
                              .format(node._nodeId, targetNodeId, Aij, ki, kj, m, term, ret))
             ret = ret + term
             pass
@@ -470,7 +471,7 @@ class Louvain(object):
             # multiply by 2 because links are modeled as directed edges
             term = (2 * (Aij - (ki*kj/(2*m))))
             ret += term
-            self.logger.debug("i:{} j:{} Aij:{} ki:{} kj:{} m:{} term:{}"\
+            self.logger.info("i:{} j:{} Aij:{} ki:{} kj:{} m:{} term:{}"\
                              .format(node._nodeId, targetNodeId, Aij, ki, kj, m, term))
             
         # 
@@ -501,12 +502,19 @@ class Louvain(object):
         
         returns 1/2 the sum of all edges in the graph
         '''
+        self.logger.debug("BEGIN")
         if not self._m :
+#             m = 0
+#             for clusterId, cluster in self._clustersLookup.items():
+#                 m += cluster._getM()
+#             self._m = m
             m = 0
-            for clusterId, cluster in self._clustersLookup.items():
-                m += cluster._getM()
-            self._m = m
+            for edge in self._edges :
+                m += edge._weight
+                
+            self._m = 0.5 * m
     
+        self.logger.debug("END _m:{}".format(self._m))    
         return self._m
     
     ############################################################
@@ -567,7 +575,7 @@ class Louvain(object):
         '''
         TODO
         '''     
-        self.logger.debug("BEGIN")
+        self.logger.info("BEGIN nId:{} from:{} to:{}".format(node._nodeId, fromCluster, targetCluster))
         
         changeIfRemoveNode = self.changeInModularityIfNodeRemoved(node, fromCluster)
         changeIfAddNode = self.changeInModularityIfNodeAdded(node, targetCluster)
@@ -592,8 +600,8 @@ class Louvain(object):
 #             self.logger.info("node._weightsInClusterDict:{}".format(node._weightsInClusterDict.keys()))            
 #             #raise ValueError(eMsg)        
             
-        ret = changeIfAddNode + changeIfRemoveNode
-        self.logger.debug("ret:{} changeIfAddNode:{} loss:{}".format(ret, changeIfAddNode, changeIfRemoveNode, isLouvainInit=False))
+        ret = changeIfAddNode - changeIfRemoveNode
+        self.logger.info("ret:{} changeIfAddNode:{} loss:{}".format(ret, changeIfAddNode, changeIfRemoveNode, isLouvainInit=False))
         self.logger.debug("END\n")
         return ret
         
@@ -690,127 +698,138 @@ class Louvain(object):
             end = timer()
             Q = self._calculateQ() # AEDWIP: TODO: FIXME: remove debug
             self.logger.info("Q:{}".format(Q))
-            self.logger.info("\tEND   EPOCH Count:{} num clusters{} numMoves:{} time:{}\n"\
+            self.logger.info("\tEND   EPOCH Count:{} num clusters{} numMoves:{} time:{}\n\n"\
                              .format(epochCount, self.countClusters(), numMoves, 
                                       timedelta(seconds=end-start)))
                 
         phaseIEnd = timer()      
-        self.logger.info("END louvainID:{} num non empty clusters: {} time:{}\n"\
+        self.logger.info("END louvainID:{} num non empty clusters: {} time:{}\n\n"\
                          .format(self._louvainId, self.countClusters(), timedelta(seconds=phaseIEnd-phaseIStart))) 
         
+#     ############################################################ 
+#     def SAVE_phaseIICreateNewEdges(self, isLouvainInit=False):      
+#         '''
+#         creates edges from leafLouvain clusters
+#         
+#         does not calculate weights use betweenEdgeWeightsDict to adjust weights
+#         
+#         returns (nodeEdgesDict, betweenEdgeWeightsDict)
+#             nodeEdgesDict 
+#                 key is new nodeId, value set of edges
+#             
+#             betweenEdgeWeightsDict 
+#                 key is (srcId:targetId) value is list of weight of leaf edges
+#                 be careful not to double weight. keys will be double entry (a,b) and (b,a)
+#                
+#         '''
+#         self.logger.info("BEGIN")   
+#         
+#         # key is new nodeId == leaf clusterId: set of edges
+#         # use set to prevent duplicate edges
+#         nodeEdgesDict = dict() 
+#         #UNKNONWN_WEIGHT = None # place holder. we need to calculate weights later
+#         
+#         # key is tuple (srcId:targetId) value is list of weight of leaf edges
+#         # use a list to make debugging easier
+#         # most of our unit test use edge weight = 1. anadata will be distance value
+#         # be careful not to double weight. keys will be double entry (a,b) and (b,a)
+#         betweenEdgeWeightsDict = dict() 
+#         
+#         for leafNodeId, leafNode in self._leafLouvain._nodeLookup.items():
+#             leafNodeClusterId = leafNode._clusterId
+#             
+#             # to make debugging easier our new node ids will be the leaf cluster ids            
+#             newNodeId = leafNodeClusterId
+#             
+#             for adjLeafNodeClusteId, adjLeafNodeSet in leafNode._nodesInClusterDict.items():
+#                 if adjLeafNodeClusteId == leafNodeClusterId:
+#                     # edges inside leaf clusters 
+#                     create a self loop
+#                     its weight should be the summ of the edges in the cluster
+#                
+#                 # create edges between clusters
+#                 if adjLeafNodeSet:
+#                     # https://www.pythoncentral.io/how-to-check-if-a-list-tuple-or-dictionary-is-empty-in-python/
+#                     # weird python syntax to test if list, set, dict is empty or not
+#                     
+#                     if not newNodeId in nodeEdgesDict:
+#                         nodeEdgesDict[newNodeId] = set()
+#                         
+#                     for adjNodeId in adjLeafNodeSet:
+#                         adjNode = self._leafLouvain._nodeLookup[adjNodeId]
+#                         newTargetNodeId = adjNode._clusterId
+#                         The weight should be the sum of the edges between the two leaf clusters
+#                         e = Edge(weight=UNKNONWN_WEIGHT, srcId=newNodeId, targetId=newTargetNodeId)
+#                         nodeEdgesDict[newNodeId].add(e) 
+#                         
+#                         if not leafNodeClusterId in betweenEdgeWeightsDict:
+#                             betweenEdgeWeightsDict[newNodeId] = []
+#                         
+#                         w = adjNode._edgesDict[leafNodeId]._weight
+#                         key = (newNodeId,newTargetNodeId)
+#                         if not key in betweenEdgeWeightsDict:
+#                             betweenEdgeWeightsDict[key] = []
+#                         betweenEdgeWeightsDict[key].append(w)
+#                         
+#         self.logger.info("END\n") 
+#         return nodeEdgesDict, betweenEdgeWeightsDict, 
+     
     ############################################################ 
-    def _phaseIICreateNewEdges(self, isLouvainInit=False):      
+    def _phaseIICreateGraph(self):      
         '''
-        creates edges from leafLouvain clusters
+        creates clusters, nodes and edges from leafLouvain clusters
         
-        does not calculate weights use betweenEdgeWeightsDict to adjust weights
-        
-        returns (nodeEdgesDict, betweenEdgeWeightsDict)
-            nodeEdgesDict 
-                key is new nodeId, value set of edges
-            
-            betweenEdgeWeightsDict 
-                key is (srcId:targetId) value is list of weight of leaf edges
-                be careful not to double weight. keys will be double entry (a,b) and (b,a)
-               
+        updates:
+            self._nodeLookup, self._clustersLookup, self._edges
         '''
         self.logger.info("BEGIN")   
-        
-        # key is new nodeId == leaf clusterId: set of edges
-        # use set to prevent duplicate edges
-        nodeEdgesDict = dict() 
-        #UNKNONWN_WEIGHT = None # place holder. we need to calculate weights later
-        
-        # key is tuple (srcId:targetId) value is list of weight of leaf edges
-        # use a list to make debugging easier
-        # most of our unit test use edge weight = 1. anadata will be distance value
-        # be careful not to double weight. keys will be double entry (a,b) and (b,a)
-        betweenEdgeWeightsDict = dict() 
-        
-        for leafNodeId, leafNode in self._leafLouvain._nodeLookup.items():
-            leafNodeClusterId = leafNode._clusterId
+        for leafClusterId, leafCluster in self._leafLouvain._clustersLookup.items():
+            if not leafCluster._nodeList:
+                self.logger.info("leafCluster._clusterId:{} was empty".format(leafClusterId))
+                continue
             
-            # to make debugging easier our new node ids will be the leaf cluster ids            
-            newNodeId = leafNodeClusterId
+            # create a new node for each cluster in the previous louvain level
+            newNodeId = leafClusterId
+            newNode = Node(leafClusterId, newNodeId)
+            self._nodeLookup[newNodeId] = newNode
             
-            for adjLeafNodeClusteId, adjLeafNodeSet in leafNode._nodesInClusterDict.items():
-                if adjLeafNodeClusteId == leafNodeClusterId:
-                    # edges inside leaf clusters 
-                    create a self loop
-                    its weight should be the summ of the edges in the cluster
-               
-                # create edges between clusters
-                if adjLeafNodeSet:
-                    # https://www.pythoncentral.io/how-to-check-if-a-list-tuple-or-dictionary-is-empty-in-python/
-                    # weird python syntax to test if list, set, dict is empty or not
+            # create a summary of the weights between clusters in leaf graph
+            # and the weights in the leaf cluster
+            newClusterEdgeWeightsDict = {}  # key = leafClusterId, value = weight
+            for leafNode in leafCluster._nodeList:
+                for tmpClusterId, weight  in leafNode._weightsInClusterDict.items():
+                    if not tmpClusterId in newClusterEdgeWeightsDict:
+                        newClusterEdgeWeightsDict[tmpClusterId] = 0
+                    newClusterEdgeWeightsDict[tmpClusterId] += weight
                     
-                    if not newNodeId in nodeEdgesDict:
-                        nodeEdgesDict[newNodeId] = set()
-                        
-                    for adjNodeId in adjLeafNodeSet:
-                        adjNode = self._leafLouvain._nodeLookup[adjNodeId]
-                        newTargetNodeId = adjNode._clusterId
-                        The weight should be the sum of the edges between the two leaf clusters
-                        e = Edge(weight=UNKNONWN_WEIGHT, srcId=newNodeId, targetId=newTargetNodeId)
-                        nodeEdgesDict[newNodeId].add(e) 
-                        
-                        if not leafNodeClusterId in betweenEdgeWeightsDict:
-                            betweenEdgeWeightsDict[newNodeId] = []
-                        
-                        w = adjNode._edgesDict[leafNodeId]._weight
-                        key = (newNodeId,newTargetNodeId)
-                        if not key in betweenEdgeWeightsDict:
-                            betweenEdgeWeightsDict[key] = []
-                        betweenEdgeWeightsDict[key].append(w)
-                        
-        self.logger.info("END\n") 
-        return nodeEdgesDict, betweenEdgeWeightsDict, 
-        
-    ############################################################     
-    def _calculatePhaseIIEdgeWeights(self):
-        '''
-        The second phase of the algorithm consists in building a new network whose nodes
-        are now the communities found during the first phase. To do so, the weights of 
-        the links between the new nodes are given by the sum of the weight of the links
-        between nodes in the corresponding two communities         
-        '''
-        aedwip
-        self.logger.info("BEGIN")
-        # calculate edge weights
-        for nodeId in nodeEdgesDict.keys():
-            edges = nodeEdgesDict[nodeId]
-            for e in edges:
-                key = (nodeId,e._targetId)
-                listOfWeights = betweenEdgeWeightsDict[key]
-                e._weight = sum(listOfWeights)
+            # create edges for new Node
+            # this includes a self loop that is used to preserve
+            # density corresponding to the nodes in the leafCluster
+            # All the other edges correspond to edges between clusters in the 
+            # leaf graph
+            for targetNodeId, weight in newClusterEdgeWeightsDict.items():
+                newEdge = Edge(weight, newNodeId, targetNodeId)
+                newNode._addEdge(newEdge)
+                self._edges.append(newEdge)
                 
-        #print()
-        for k,v in nodeEdgesDict.items():
-            self.logger.debug("nodeEdgesDict nodeId:{} edges:{}".format(k,v))
             
-        #print()
-        for k,v in betweenEdgeWeightsDict.items():
-            self.logger.debug("betweenEdgeWeightsDict key:{} listOfWeights:{}".format(k,v)) 
+        # create a new clusters
+        for newNodeId, newNode in self._nodeLookup.items():
+            newCluster = Cluster(newNodeId, [newNode])
+            self._clustersLookup[newCluster._clusterId] = newCluster
             
-        self.logger.info("END\n")
-                   
-    ############################################################     
-    def _initPhaseIIObjGraph(self, nodeEdgesDict, betweenEdgeWeightsDict):
-        '''
-        we need to construct the full object graph before calculating
-        any of the values
-                
-        do not be lazy! it leads to bugs
+        self.logger.info("END\n")   
         
-        coded in haste. assume of all the code is same package
-        no need to implement accessor functions. This lead to 
-        lots of issue. OO Encapsulation would make obj graph initialization
-        less error prone
-        
-        '''
-        self.logger.info("BEGIN lovainId:{}".format(self._louvainId))
-        
-        self._calculatePhaseIIEdgeWeights()
+#     ############################################################     
+#     def _calculatePhaseIIEdgeWeights(self):
+#         '''
+#         The second phase of the algorithm consists in building a new network whose nodes
+#         are now the communities found during the first phase. To do so, the weights of 
+#         the links between the new nodes are given by the sum of the weight of the links
+#         between nodes in the corresponding two communities         
+#         '''
+#         aedwip
+#         self.logger.info("BEGIN")
 #         # calculate edge weights
 #         for nodeId in nodeEdgesDict.keys():
 #             edges = nodeEdgesDict[nodeId]
@@ -825,27 +844,103 @@ class Louvain(object):
 #             
 #         #print()
 #         for k,v in betweenEdgeWeightsDict.items():
-#             self.logger.debug("betweenEdgeWeightsDict key:{} listOfWeights:{}".format(k,v))        
-                            
-        # create nodes and clusters
-        for newNodeId in nodeEdgesDict.keys():
-            # create new node
-            newClusterId = newNodeId
-            newNode = Node(newClusterId, newNodeId) 
-            self._nodeLookup[newNodeId] = newNode
-            # create new cluster
-            newCluster = Cluster(newClusterId, [newNode])
-            self._clustersLookup[newClusterId] = newCluster            
-            
-        # add edges to nodes       
-        for newNodeId, edgeSet in nodeEdgesDict.items():
-            #edgeList = nodeEdgesDict[newNodeId]
-            #newNode.addEdges(edgeList,  self._nodeLookup) 
-            newNode = self._nodeLookup[newNodeId]
-            for e in edgeSet: 
-                newNode._addEdge(e)
-                
+#             self.logger.debug("betweenEdgeWeightsDict key:{} listOfWeights:{}".format(k,v)) 
+#             
+#         self.logger.info("END\n")
+                   
+#     ############################################################     
+#     def SAVE_initPhaseIIObjGraph(self, nodeEdgesDict, betweenEdgeWeightsDict):
+#         '''
+#         we need to construct the full object graph before calculating
+#         any of the values
+#                 
+#         do not be lazy! it leads to bugs
+#         
+#         coded in haste. assume of all the code is same package
+#         no need to implement accessor functions. This lead to 
+#         lots of issue. OO Encapsulation would make obj graph initialization
+#         less error prone
+#         
+#         '''
+#         self.logger.info("BEGIN lovainId:{}".format(self._louvainId))
+#         
+#         self._calculatePhaseIIEdgeWeights()
+# #         # calculate edge weights
+# #         for nodeId in nodeEdgesDict.keys():
+# #             edges = nodeEdgesDict[nodeId]
+# #             for e in edges:
+# #                 key = (nodeId,e._targetId)
+# #                 listOfWeights = betweenEdgeWeightsDict[key]
+# #                 e._weight = sum(listOfWeights)
+# #                 
+# #         #print()
+# #         for k,v in nodeEdgesDict.items():
+# #             self.logger.debug("nodeEdgesDict nodeId:{} edges:{}".format(k,v))
+# #             
+# #         #print()
+# #         for k,v in betweenEdgeWeightsDict.items():
+# #             self.logger.debug("betweenEdgeWeightsDict key:{} listOfWeights:{}".format(k,v))        
+#                             
+#         # create nodes and clusters
+#         for newNodeId in nodeEdgesDict.keys():
+#             # create new node
+#             newClusterId = newNodeId
+#             newNode = Node(newClusterId, newNodeId) 
+#             self._nodeLookup[newNodeId] = newNode
+#             # create new cluster
+#             newCluster = Cluster(newClusterId, [newNode])
+#             self._clustersLookup[newClusterId] = newCluster            
+#             
+#         # add edges to nodes       
+#         for newNodeId, edgeSet in nodeEdgesDict.items():
+#             #edgeList = nodeEdgesDict[newNodeId]
+#             #newNode.addEdges(edgeList,  self._nodeLookup) 
+#             newNode = self._nodeLookup[newNodeId]
+#             for e in edgeSet: 
+#                 newNode._addEdge(e)
+#                 
+#         
+#         # init node caches
+#         for nId in self._nodeLookup.keys():
+#             node = self._nodeLookup[nId]
+#             # because we used _addEdge() instead of addEdges()
+#             # we need to make sure cache is set up
+#             node._initKiinCache(self._nodeLookup)      
+#             
+#         # force nodes to calc cached values
+#         for nodeId in self._nodeLookup.keys():
+#             node = self._nodeLookup[nodeId]
+#             node.getSumAdjWeights()
+#             node.getSumOfWeightsInsideCluster(nodeId, self._nodeLookup)
+#             
+#         # force clusters to calc cached values
+#         for clusterId in self._clustersLookup.keys():
+#             # run lazy eval
+#             cluster = self._clustersLookup[clusterId]
+#             cluster.getSumOfWeights()
+#             cluster.getSumOfWeightsInsideCluster(self._nodeLookup) 
+#                                
+#         self.logger.info("END louvainId:{}\n".format(self._louvainId))     
+    
+    ############################################################                    
+    def _phaseII(self, isLouvainInit=False):      
+        '''
+        TODO creates graph from leafLouvain
+        '''
+        self.logger.info("BEGIN louvainID:{}".format(self._louvainId)) 
+#         nodeEdgesDict, betweenEdgeWeightsDict = self._phaseIICreateNewEdges()    
+#         self._initPhaseIIObjGraph(nodeEdgesDict, betweenEdgeWeightsDict) 
+        self._phaseIICreateGraph()
+        self._phaseIIObjInitGraph()
         
+        self.logger.info("END louvainID:{} numCluster:{}\n".format(self._louvainId, self.countClusters())) 
+
+    ############################################################                
+    def _phaseIIObjInitGraph(self):
+        '''
+        TODO
+        '''
+        self.logger.info("BEGIN")
         # init node caches
         for nId in self._nodeLookup.keys():
             node = self._nodeLookup[nId]
@@ -864,20 +959,10 @@ class Louvain(object):
             # run lazy eval
             cluster = self._clustersLookup[clusterId]
             cluster.getSumOfWeights()
-            cluster.getSumOfWeightsInsideCluster(self._nodeLookup) 
-                               
-        self.logger.info("END louvainId:{}\n".format(self._louvainId))     
-    
-    def _phaseII(self, isLouvainInit=False):      
-        '''
-        TODO creates graph from leafLouvain
-        '''
-        self.logger.info("BEGIN louvainID:{}".format(self._louvainId)) 
-        nodeEdgesDict, betweenEdgeWeightsDict = self._phaseIICreateNewEdges()    
-        self._initPhaseIIObjGraph(nodeEdgesDict, betweenEdgeWeightsDict) 
+            cluster.getSumOfWeightsInsideCluster(self._nodeLookup)         
+            
+        self.logger.info("END\n")
         
-        self.logger.info("END louvainID:{} numCluster:{}\n".format(self._louvainId, self.countClusters())) 
-
     ############################################################                
     def __repr__(self):
         self._forceAllLazyEval()

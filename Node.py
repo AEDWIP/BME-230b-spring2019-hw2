@@ -136,17 +136,17 @@ class Node(object):
             
         return self._adjacentEdgeWeights 
     
-    ############################################################
-    def getM(self):   
-        '''
-        TODO: remove this function 
-        
-        The nodes contribution to m in 
-        "Fast unfolding of communities in large networks"
-        
-        returns 1/2 * self.getSumAdjWeights()
-        '''
-        return 0.5 * self.getSumAdjWeights()
+#     ############################################################
+#     def getM(self):   
+#         '''
+#         TODO: remove this function 
+#         
+#         The nodes contribution to m in 
+#         "Fast unfolding of communities in large networks"
+#         
+#         returns 1/2 * self.getSumAdjWeights()
+#         '''
+#         return 0.5 * self.getSumAdjWeights()
          
    
     ############################################################
