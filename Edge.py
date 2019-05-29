@@ -8,7 +8,11 @@ import logging
 ############################################################
 class Edge(object):
     '''
-    TODO
+    public functions:
+        __init__(self, weight, srcId, targetId)
+        __repr__(self)
+        __hash__(self)
+        __eq__(self, other)        
     '''
     logger = logging.getLogger(__name__)
         
@@ -28,7 +32,6 @@ class Edge(object):
         '''
         enable Edge objects to be used in sets and dictionary
         '''
-#         uniqueId = str(self._weight) + str(self._srcId) + str(self._targetId)
         return hash((self._weight, self._srcId, self._targetId))
 
     ############################################################                    

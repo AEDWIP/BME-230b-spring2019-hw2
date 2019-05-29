@@ -9,7 +9,12 @@ import logging
 ############################################################
 class Cluster(object):
     '''
-    TODO:
+    public functions:
+        __init__(self, clusterId, nodeList)
+        __repr__(self)
+        getSumOfWeightsInsideCluster(self, graphNodesLookup)
+        getSumOfWeights(self)
+        moveNode(self, targetCluster, node, graphNodesLookup, isLouvainInit=False)    
     '''
 
     logger = logging.getLogger(__name__)
@@ -35,21 +40,7 @@ class Cluster(object):
             
         self.logger.debug("c:{} ret:\n{}".format(self._clusterId, ret))
         return ret
-    
-#     ############################################################
-#     def _getM(self):
-#         '''
-#         the partial m term in the Louvain paper
-#         "Fast unfolding of communities in large networks"
-#         
-#         returns 1/2 the sum of all edges in the the cluster
-#         '''
-#         m = 0
-#         for node in self._nodeList:
-#             m += node.getM() 
-#             
-#         return m       
-    
+        
     ############################################################
     def _getNodes(self):
         '''
@@ -77,11 +68,6 @@ class Cluster(object):
             for n in self._nodeList:
                 self.logger.debug("clusterId:{} nodeId:{}".format(self._clusterId, n._nodeId))
                 kiin = n.getSumOfWeightsInsideCluster(self._clusterId, graphNodesLookup)
-#                 if not kiin: # TODO: AEDWIP
-#                     self.logger.info("kiin WTF?")
-# #                 elif not self._weightsInsideCluster: value of zero drops us into this block
-# #                     self.logger.info("_weightsInsideCluster WTF? if value is zero okay:{}".format(self._weightsInsideCluster))
-
                 self._weightsInsideCluster += kiin
             
         return self._weightsInsideCluster                   
@@ -160,7 +146,6 @@ class Cluster(object):
         # we gain twice. there is an edge between the node being moved
         # and a node in the target cluster. There is also a node from the cluster with and 
         # edge back to the node being moved
-        
         self._weightsInsideCluster += 2 * kiin
         
         self._nodeList.append(node)
